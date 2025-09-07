@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Trabajador - TiendaTech</title>
+    <script src="/js/role-utils.js" defer></script>
+
+    
+    <link rel="stylesheet" href="style2.css"/>
+</head>
+<body class="tt-admin">
+<div class="sidebar">
+    <div class="logo">TiendaTech<br><small>Panel Trabajador</small></div>
+    <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
+    <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
+    <div class="nav-item">Cerrar sesión</div>
+</div>
+
+<div class="main-content">
+    <div class="admin-header">
+        <h1>Panel de Trabajador</h1>
+            <div class="user-info"></div>
+    </div>
+
+    <!-- Sección Gestión de Productos -->
+    <div id="products" class="admin-section active">
+            <h2 class="section-title">Gestión de Productos</h2>
+        <div class="action-grid">
+            <div class="action-card">
+                <h3>➕ Agregar Producto</h3>
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" class="form-control" placeholder="Ej: Laptop Gaming">
+                </div>
+                <div class="form-group">
+                    <label>Precio</label>
+                    <input type="number" class="form-control" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select class="form-control">
+                        <option>Computadoras</option>
+                        <option>Accesorios</option>
+                        <option>Smartphones</option>
+                        <option>Gaming</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea class="form-control" rows="3" placeholder="Descripción del producto"></textarea>
+                </div>
+                <button class="btn btn-primary">Agregar Producto</button>
+            </div>
+
+            <div class="action-card">
+                <h3>✏️ Editar Producto</h3>
+                <div class="form-group">
+                    <label>Buscar Producto</label>
+                    <input type="text" class="form-control" placeholder="Buscar por nombre o ID">
+                </div>
+                <div class="form-group">
+                    <label>ID del Producto</label>
+                    <input type="text" class="form-control" placeholder="ID automático">
+                </div>
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" class="form-control" placeholder="Cantidad disponible">
+                </div>
+                <button class="btn btn-warning">Buscar</button>
+                <button class="btn btn-primary">Actualizar</button>
+            </div>
+        </div>
+
+        <div class="data-table">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Categoría</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>001</td>
+                    <td>Laptop Gaming ROG</td>
+                    <td>$1,299.99</td>
+                    <td>15</td>
+                    <td>Computadoras</td>
+                    <td>
+                        <button class="btn btn-warning btn--sm">Editar</button>
+                        <button class="btn btn-danger btn--sm">Eliminar</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>002</td>
+                    <td>Mouse Gamer RGB</td>
+                    <td>$59.99</td>
+                    <td>45</td>
+                    <td>Accesorios</td>
+                    <td>
+                        <button class="btn btn-warning btn--sm">Editar</button>
+                        <button class="btn btn-danger btn--sm">Eliminar</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- Sección Reportes -->
+    <div id="reports" class="admin-section">
+            <h2 class="section-title">Reportes</h2>
+        <div class="action-grid">
+            <div class="action-card">
+                <h3>📈 Estadísticas Generales</h3>
+                <p>🛍️ Total Productos: <strong>156</strong></p>
+                <p>👥 Total Usuarios: <strong>1,245</strong></p>
+                <p>🚫 Usuarios Bloqueados: <strong>23</strong></p>
+                <p>💰 Ventas del Mes: <strong>$45,678</strong></p>
+            </div>
+
+            <div class="action-card">
+                <h3>📅 Reportes por Fecha</h3>
+                <div class="form-group">
+                    <label>Fecha Inicio</label>
+                    <input type="date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Fecha Fin</label>
+                    <input type="date" class="form-control">
+                </div>
+                <button class="btn btn-primary">Generar Reporte</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    function showSection(sectionId, el) {
+        // Ocultar todas las secciones
+        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+        // Quitar active de todos los nav items
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        // Mostrar la sección seleccionada y activar el item
+        document.getElementById(sectionId)?.classList.add('active');
+        el?.classList.add('active');
+    }
+
+    // Funcionalidad adicional para botones
+    document.addEventListener('DOMContentLoaded', function() {
+        // Agregar eventos a los botones
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.textContent.trim();
+
+                // Simular acciones
+                if(action.includes('Agregar') || action.includes('Actualizar') || action.includes('Guardar')) {
+                    this.style.backgroundColor = '#4caf50';
+                    this.textContent = '✓ Completado';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                        this.textContent = action;
+                    }, 2000);
+                }
+
+                if(action.includes('Eliminar') || action.includes('Bloquear')) {
+                    if(confirm('¿Estás seguro de realizar esta acción?')) {
+                        this.style.backgroundColor = '#ff5722';
+                        this.textContent = '✓ Realizado';
+                        setTimeout(() => {
+                            this.style.backgroundColor = '';
+                            this.textContent = action;
+                        }, 2000);
+                    }
+                }
+            });
+        });
+    });
+</script>
+<script>
+// Espera que role-utils.js esté cargado con defer
+document.addEventListener('DOMContentLoaded', () => {
+  const u = RoleUtils.ensureLoggedIn();
+  if (!u) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    location.href = '/Login.html?next=' + next; // respeta el nombre real del archivo
+    return;
+  }
+  const role = RoleUtils.resolveRoleName(u);
+  if (role !== 'trabajador') {
+    location.href = '/index.html';
+    return;
+  }
+  const name = RoleUtils.resolveUserName(u);
+  const ui = document.querySelector('.user-info');
+  if (ui) ui.textContent = `👤 ${role.charAt(0).toUpperCase() + role.slice(1)}: ${name}`;
+  document.title = 'Panel Trabajador - TiendaTech';
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de compras - TiendaTech</title>
+    <link rel="stylesheet" href="style2.css">
+    <script src="/js/auth-menu.js?v=4" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+</head>
+<body>
+<div class="page-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">TiendaTech</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Buscar...">
+        </div>
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    </header>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+
+    <!-- Menú Hamburguesa -->
+    <nav class="hamburger-menu" id="hamburgerMenu">
+        <button class="menu-close" onclick="closeMenu()">✕</button>
+        <a href="#" class="menu-item">Inicio</a>
+        <a href="#" class="menu-item">Cuenta</a>
+        <a href="#" class="menu-item">Carrito</a>
+        <a href="#" class="menu-item" >Cerrar sesión</a>
+    </nav>
+
+<!-- Main Container -->
+<main class = "content-wrap">
+<div class="container mt-4">
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-12 col-lg-7">
+            <div id="cart-items">
+                <!-- Cart Item 1 -->
+                <div class="cart-item">
+                    <div class="row align-items-center">
+                        <div class="col-3 col-md-2">
+                            <div class="product-image-small">
+                                Imagen
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-5">
+                            <h6 class="mb-1">Smartphone Samsung Galaxy A54</h6>
+                            <small class="text-muted">Marca: Samsung</small><br>
+                            <small class="text-muted">Color: Negro</small>
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <div class="quantity-controls">
+                                <div class="quantity-btn" onclick="decreaseQuantity(1)">
+                                    <i class="bi bi-dash"></i>
+                                </div>
+                                <input type="number" class="quantity-input" value="1" min="1" id="qty-1" onchange="updateCartTotals()">
+                                <div class="quantity-btn" onclick="increaseQuantity(1)">
+                                    <i class="bi bi-plus"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2 mt-2 mt-md-0">
+                            <div class="fw-bold">$299.99</div>
+                        </div>
+                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
+                            <i class="bi bi-trash remove-btn" onclick="removeItem(1)"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Item 2 -->
+                <div class="cart-item">
+                    <div class="row align-items-center">
+                        <div class="col-3 col-md-2">
+                            <div class="product-image-small">
+                                Imagen
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-5">
+                            <h6 class="mb-1">Auriculares Bluetooth Sony WH-1000XM4</h6>
+                            <small class="text-muted">Marca: Sony</small><br>
+                            <small class="text-muted">Color: Negro</small>
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <div class="quantity-controls">
+                                <div class="quantity-btn" onclick="decreaseQuantity(2)">
+                                    <i class="bi bi-dash"></i>
+                                </div>
+                                <input type="number" class="quantity-input" value="2" min="1" id="qty-2" onchange="updateCartTotals()">
+                                <div class="quantity-btn" onclick="increaseQuantity(2)">
+                                    <i class="bi bi-plus"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2 mt-2 mt-md-0">
+                            <div class="fw-bold">$199.99</div>
+                        </div>
+                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
+                            <i class="bi bi-trash remove-btn" onclick="removeItem(2)"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Item 3 -->
+                <div class="cart-item">
+                    <div class="row align-items-center">
+                        <div class="col-3 col-md-2">
+                            <div class="product-image-small">
+                                Imagen
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-5">
+                            <h6 class="mb-1">Laptop ASUS VivoBook 15</h6>
+                            <small class="text-muted">Marca: ASUS</small><br>
+                            <small class="text-muted">RAM: 8GB, SSD: 256GB</small>
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <div class="quantity-controls">
+                                <div class="quantity-btn" onclick="decreaseQuantity(3)">
+                                    <i class="bi bi-dash"></i>
+                                </div>
+                                <input type="number" class="quantity-input" value="1" min="1" id="qty-3" onchange="updateCartTotals()">
+                                <div class="quantity-btn" onclick="increaseQuantity(3)">
+                                    <i class="bi bi-plus"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2 mt-2 mt-md-0">
+                            <div class="fw-bold">$549.99</div>
+                        </div>
+                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
+                            <i class="bi bi-trash remove-btn" onclick="removeItem(3)"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty Cart Message -->
+            <div id="empty-cart" class="empty-cart" style="display: none;">
+                <i class="bi bi-cart-x"></i>
+                <h4>Tu carrito está vacío</h4>
+                <p>¡Explora nuestros productos y encuentra algo que te guste!</p>
+                <button class="continue-shopping-btn" onclick="continueShopping()">
+                    Continuar comprando
+                </button>
+            </div>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="col-12 col-lg-5">
+            <div class="cart-summary">
+                <h5 class="mb-4">Resumen del pedido</h5>
+
+                <div class="summary-row">
+                    <span>Subtotal (4 productos):</span>
+                    <span id="subtotal">$1,249.97</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Envío:</span>
+                    <span id="shipping">$15.00</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Impuestos:</span>
+                    <span id="taxes">$126.50</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Total:</span>
+                    <span id="total">$1,391.47</span>
+                </div>
+
+                <button class="checkout-btn" onclick="proceedToCheckout()">
+                    <i class="bi bi-credit-card me-2"></i>
+                    Proceder al pago
+                </button>
+
+                <div style="margin-top: 15px;">
+                    <button class="continue-shopping-btn" onclick="continueShopping()">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Continuar comprando
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+
+<!-- Bottom Navigation -->
+    <footer class="footer">
+        <nav class="footer-nav">
+            <a href="index.html" >Inicio</a>
+            <a href="cuenta.html" >Cuenta</a>
+            <a href="Carrito.html" class="active"> Carrito</a>
+        </nav>
+    </footer>
+</div>
+
+
+<script>
+(function () {
+  const REDIRECT_TO = 'login.html'; // ajusta si tu login se llama distinto
+
+  const menu = document.getElementById('hamburgerMenu');
+  if (!menu) return;
+
+  // ---- Detecta si hay sesión activa ----
+  function hasActiveSession(){
+    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+    let ok = false;
+    try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+    return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+  }
+
+  // ---- Busca el enlace "Cerrar sesión" y aplica estilo/estado ----
+  function getLogoutLink(){
+    return Array.from(menu.querySelectorAll('a.menu-item'))
+      .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+  }
+
+  function updateLogoutVisibility(){
+    const a = getLogoutLink();
+    if (!a) return;
+    if (hasActiveSession()){
+      a.classList.remove('logout-disabled');
+      a.removeAttribute('aria-disabled');
+      a.tabIndex = 0;
+    } else {
+      a.classList.add('logout-disabled');
+      a.setAttribute('aria-disabled','true');
+      a.tabIndex = -1;
+    }
+  }
+
+  // ---- Delegación de clicks dentro del menú ----
+  menu.addEventListener('click', async function (ev) {
+    const a = ev.target.closest('a.menu-item');
+    if (!a) return;
+
+    const label = (a.textContent || '').trim().toLowerCase();
+    if (label !== 'cerrar sesión') return;
+
+    // si está inactivo, no hace nada
+    if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+      ev.preventDefault();
+      return;
+    }
+
+    ev.preventDefault();
+
+    // (Opcional) notificar al backend
+    try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+
+    // limpiar sesión local
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+
+    // limpiar cookies no-HttpOnly (si las hubiera)
+    try {
+      document.cookie.split(';').forEach(c=>{
+        document.cookie = c.replace(/^ +/,'')
+          .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+      });
+    } catch {}
+
+    try { closeMenu(); } catch {}
+    window.location.href = REDIRECT_TO;
+  });
+
+  // Inicializa y mantén sincronizado si cambia el storage (otra pestaña)
+  document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+  window.addEventListener('storage', updateLogoutVisibility);
+  // por si el panel se abre/cierra y quieres refrescar
+  document.addEventListener('visibilitychange', updateLogoutVisibility);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    function toggleMenu() {
+            const menu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+    }
+
+    function closeMenu() {
+            const menu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.remove('active');
+            overlay.classList.remove('active');
+    }
+    function increaseQuantity(itemId) {
+        const input = document.getElementById(`qty-${itemId}`);
+        input.value = parseInt(input.value) + 1;
+        updateCartTotals();
+    }
+
+    function decreaseQuantity(itemId) {
+        const input = document.getElementById(`qty-${itemId}`);
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+            updateCartTotals();
+        }
+    }
+
+    function removeItem(itemId) {
+        if (confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
+            const cartItem = document.querySelector(`#qty-${itemId}`).closest('.cart-item');
+            cartItem.remove();
+            updateCartTotals();
+            checkEmptyCart();
+        }
+    }
+
+    function updateCartTotals() {
+        let subtotal = 0;
+        const cartItems = document.querySelectorAll('.cart-item');
+
+        cartItems.forEach((item) => {
+            const qtyInput = item.querySelector('.quantity-input');
+            const priceElement = item.querySelector('.fw-bold');
+
+            if (qtyInput && priceElement) {
+                const quantity = parseInt(qtyInput.value);
+                const price = parseFloat(priceElement.textContent.replace('$', ''));
+                subtotal += price * quantity;
+            }
+        });
+
+        const shipping = 15.00;
+        const taxes = subtotal * 0.1;
+        const total = subtotal + shipping + taxes;
+
+        document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('shipping').textContent = `$${shipping.toFixed(2)}`;
+        document.getElementById('taxes').textContent = `$${taxes.toFixed(2)}`;
+        document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+
+        // Update item count
+        const totalItems = Array.from(document.querySelectorAll('.quantity-input'))
+            .reduce((sum, input) => sum + parseInt(input.value), 0);
+
+        const subtotalElement = document.getElementById('subtotal');
+        const parentText = subtotalElement.parentNode;
+        parentText.childNodes[0].textContent = `Subtotal (${totalItems} productos): `;
+    }
+
+    function checkEmptyCart() {
+        const cartItems = document.querySelectorAll('.cart-item');
+        const emptyCartMessage = document.getElementById('empty-cart');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const cartSummary = document.querySelector('.cart-summary').parentElement;
+
+        if (cartItems.length === 0) {
+            cartItemsContainer.style.display = 'none';
+            cartSummary.style.display = 'none';
+            emptyCartMessage.style.display = 'block';
+        }
+    }
+
+    function proceedToCheckout() {
+        alert('Redirigiendo al proceso de pago...');
+    }
+
+    function continueShopping() {
+        alert('Redirigiendo a la página de productos...');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartTotals();
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+        const u = raw ? JSON.parse(raw) : null;
+        if (!u) {
+        const next = encodeURIComponent(location.pathname + location.search);
+        location.href = '/Login.html?next=' + next;
+        }
+    } catch {
+        const next = encodeURIComponent(location.pathname + location.search);
+        location.href = '/Login.html?next=' + next;
+    }
+    });
+</script>
+
+</body>
+</html>

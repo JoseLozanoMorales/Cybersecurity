@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Información del producto - TiendaTech</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style2.css">
+  <script src="/js/auth-menu.js?v=4" defer></script>
+
+</head>
+<body>
+<!-- Header -->
+<!-- <div class="header-custom p-3">
+  <div class="d-flex justify-content-center align-items-center">
+    <h1 class="h5 mb-0">Información del producto</h1>
+  </div>
+</div> -->
+
+<!-- Search Bar -->
+    <header class="header">
+        <div class="logo">TiendaTech</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Buscar...">
+        </div>
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    </header>
+
+
+    <nav class="hamburger-menu" id="hamburgerMenu">
+        <button class="menu-close" onclick="closeMenu()">✕</button>
+        <a href="#" class="menu-item">Inicio</a>
+        <a href="#" class="menu-item">Cuenta</a>
+        <a href="#" class="menu-item">Carrito</a>
+        <a href="#" class="menu-item" >Cerrar sesión</a>
+    </nav>
+
+
+<!-- Main Container -->
+<div class="container mt-4">
+  <!-- Product Information Section -->
+  <div class="mb-4">
+    <div class="row g-3">
+      <div class="col-12 col-md-6 d-flex justify-content-center justify-content-md-start">
+        <div class="product-image" onclick="uploadImage()">
+          <div>Imagen del producto</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="product-info">
+          <div class="product-info-item">Nombre del producto</div>
+          <div class="product-info-item">Precio</div>
+          <div class="product-info-item">Marca</div>
+          <div class="product-info-item" onclick="showCharacteristics()">Características</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews Section -->
+  <div class="mb-5">
+    <div class="review-box">
+      <div class="review-title">Reseñas</div>
+      <div class="review-grid">
+        <div class="review-item review-add-btn" onclick="addReview()">
+          <div class="text-center">
+            <div style="font-size: 24px; margin-bottom: 5px;">+</div>
+            Agregar reseña
+          </div>
+        </div>
+        <div class="review-item"></div>
+        <div class="review-item"></div>
+        <div class="review-item"></div>
+        <div class="review-item"></div>
+        <div class="review-item"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+    <!-- Footer -->
+    <footer class="footer">
+        <nav class="footer-nav">
+            <a href="index.html" class="active">Inicio</a>
+            <a href="cuenta.html" >Cuenta</a>
+            <a href="Carrito.html">Carrito</a>
+        </nav>
+    </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+
+
+
+<script>
+(function () {
+  const REDIRECT_TO = 'login.html'; // ajusta si tu login se llama distinto
+
+  const menu = document.getElementById('hamburgerMenu');
+  if (!menu) return;
+
+  // ---- Detecta si hay sesión activa ----
+  function hasActiveSession(){
+    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+    let ok = false;
+    try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+    return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+  }
+
+  // ---- Busca el enlace "Cerrar sesión" y aplica estilo/estado ----
+  function getLogoutLink(){
+    return Array.from(menu.querySelectorAll('a.menu-item'))
+      .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+  }
+
+  function updateLogoutVisibility(){
+    const a = getLogoutLink();
+    if (!a) return;
+    if (hasActiveSession()){
+      a.classList.remove('logout-disabled');
+      a.removeAttribute('aria-disabled');
+      a.tabIndex = 0;
+    } else {
+      a.classList.add('logout-disabled');
+      a.setAttribute('aria-disabled','true');
+      a.tabIndex = -1;
+    }
+  }
+
+  // ---- Delegación de clicks dentro del menú ----
+  menu.addEventListener('click', async function (ev) {
+    const a = ev.target.closest('a.menu-item');
+    if (!a) return;
+
+    const label = (a.textContent || '').trim().toLowerCase();
+    if (label !== 'cerrar sesión') return;
+
+    // si está inactivo, no hace nada
+    if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+      ev.preventDefault();
+      return;
+    }
+
+    ev.preventDefault();
+
+    // (Opcional) notificar al backend
+    try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+
+    // limpiar sesión local
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+
+    // limpiar cookies no-HttpOnly (si las hubiera)
+    try {
+      document.cookie.split(';').forEach(c=>{
+        document.cookie = c.replace(/^ +/,'')
+          .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+      });
+    } catch {}
+
+    try { closeMenu(); } catch {}
+    window.location.href = REDIRECT_TO;
+  });
+
+  // Inicializa y mantén sincronizado si cambia el storage (otra pestaña)
+  document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+  window.addEventListener('storage', updateLogoutVisibility);
+  // por si el panel se abre/cierra y quieres refrescar
+  document.addEventListener('visibilitychange', updateLogoutVisibility);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+        function toggleMenu() {
+            const menu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const menu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
+            menu.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+  function uploadImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const productImage = document.querySelector('.product-image');
+          productImage.style.backgroundImage = `url(${e.target.result})`;
+          productImage.style.backgroundSize = 'cover';
+          productImage.style.backgroundPosition = 'center';
+          productImage.innerHTML = '<div style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px; color: white; font-size: 10px;">Cambiar imagen</div>';
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  }
+
+  function showCharacteristics() {
+    alert('Mostrar características del producto');
+  }
+
+  function addReview() {
+    alert('Agregar nueva reseña');
+  }
+</script>
+</body>
+</html>

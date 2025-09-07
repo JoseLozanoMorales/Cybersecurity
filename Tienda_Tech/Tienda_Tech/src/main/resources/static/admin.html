@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel Administrativo - TiendaTech</title>
+
+  <!-- Carga utilidades comunes (guards / helpers). Actualiza v= según tu proyecto -->
+  <script src="/js/auth-menu.js?v=9" defer></script>
+
+  
+
+  <link rel="stylesheet" href="style2.css"/></head>
+<body class="tt-admin">
+  <div class="sidebar">
+    <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
+    <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
+    <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
+    <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
+    <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
+      <div class="nav-item" onclick="showSection('settings', this)">Cerrar sesión</div>
+
+  </div>
+
+  <div class="main-content">
+    <div class="admin-header">
+      <h1>Panel de Administración</h1>
+      <div class="user-info">👤 Administrador: Admin</div>
+    </div>
+
+    <!-- Productos -->
+    <div id="products" class="admin-section active">
+      <div class="section-title">📦 Gestión de Productos</div>
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button class="btn btn-primary" id="btnAgregarProducto">Agregar producto</button>
+      </div>
+
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Precio Unitario</th>
+              <th>Enlace</th>
+              <th>Fecha</th>
+              <th>Stock</th>
+              <th>Marca ID</th>
+              <th>Gama ID</th>
+              <th>IVA ID</th>
+              <th>Costo</th>
+              <th>Habilitado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbProductos">
+            <tr><td colspan="12" class="tt-muted-row">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Usuarios -->
+    <div id="users" class="admin-section">
+      <div class="section-title">👥 Gestión de Usuarios</div>
+
+      <div class="action-grid">
+        <div class="action-card">
+          <h3>✏️ Editar Usuario</h3>
+          <div class="form-group"><label>Buscar Usuario</label><input type="text" class="form-control" placeholder="Email o nombre de usuario"></div>
+          <div class="form-group"><label>Nuevo Email</label><input type="email" class="form-control" placeholder="nuevo@email.com"></div>
+          <div class="form-group"><label>Rol</label>
+            <select class="form-control"><option>Usuario</option><option>Administrador</option><option>Moderador</option></select>
+          </div>
+          <button class="btn btn-primary">Buscar Usuario</button>
+          <button class="btn btn-warning">Actualizar</button>
+        </div>
+
+        <div class="action-card">
+          <h3>➕ Crear Usuario</h3>
+          <div class="form-group"><label>Nombre</label>    <input type="text" maxlength="255" class="form-control" placeholder="Nombre completo" id="v_nombre"></div>
+          <div class="form-group"><label>Cédula</label>    <input type="text" maxlength="10"  class="form-control" placeholder="Número de cédula" id="v_cedula"></div>
+          <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
+          <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
+          <div class="form-group"><label>Usuario</label>   <input type="text"               class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
+          <div class="form-group"><label>Contraseña</label><input type="password"           class="form-control" placeholder="Contraseña" id="v_contrasenia"></div>
+          <div class="form-group"><label>Rol</label>
+            <select class="form-control" id="v_id_rol">
+              <option value="1">admin</option>
+              <option value="3">trabajador</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="crearUsuario()">Crear Usuario</button>
+        </div>
+      </div>
+
+      <div class="data-table">
+        <table>
+          <thead><tr><th>ID</th><th>Usuario</th><th>Email</th><th>Fecha Registro</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>101</td><td>juan_perez</td><td>juan@email.com</td><td>2024-01-15</td>
+              <td><span class="status active">Activo</span></td>
+              <td><button class="btn btn-warning btn--sm">Editar</button>
+                  <button class="btn btn-warning btn--sm">Bloquear</button>
+                  <button class="btn btn-danger btn--sm">Eliminar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Reportes -->
+    <div id="reports" class="admin-section">
+      <div class="section-title">📊 Reportes del Sistema</div>
+      <div class="action-grid">
+        <div class="action-card">
+          <h3>📈 Estadísticas Generales</h3>
+          <p>🛍️ Total Productos: <strong>156</strong></p>
+          <p>👥 Total Usuarios: <strong>1,245</strong></p>
+          <p>🚫 Usuarios Bloqueados: <strong>23</strong></p>
+          <p>💰 Ventas del Mes: <strong>$45,678</strong></p>
+        </div>
+        <div class="action-card">
+          <h3>📅 Reportes por Fecha</h3>
+          <div class="form-group"><label>Fecha Inicio</label><input type="date" class="form-control"></div>
+          <div class="form-group"><label>Fecha Fin</label><input type="date" class="form-control"></div>
+          <button class="btn btn-primary">Generar Reporte</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuración -->
+    <div id="settings" class="admin-section">
+      <div class="section-title">⚙️ Configuración del Sistema</div>
+      <div class="action-grid">
+        <div class="action-card">
+          <h3>🔧 Configuraciones Generales</h3>
+          <div class="form-group"><label>Nombre de la Tienda</label><input type="text" class="form-control" value="TiendaTech"></div>
+          <div class="form-group"><label>Email de Contacto</label><input type="email" class="form-control" value="admin@tiendatech.com"></div>
+          <div class="form-group"><label>Moneda</label>
+            <select class="form-control"><option>USD ($)</option><option>EUR (€)</option></select>
+          </div>
+          <button class="btn btn-primary">Guardar Cambios</button>
+        </div>
+        <div class="action-card">
+          <h3>🔐 Seguridad</h3>
+          <div class="form-group"><label>Cambiar Contraseña Admin</label><input type="password" class="form-control" placeholder="Nueva contraseña"></div>
+          <div class="form-group"><label>Confirmar Contraseña</label><input type="password" class="form-control" placeholder="Confirmar contraseña"></div>
+          <button class="btn btn-warning">Cambiar Contraseña</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal Nuevo Producto ===== -->
+  <div id="modalNuevoProducto" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdlTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="mdlTitle">Agregar producto</div>
+        <button class="modal-close" type="button" id="btnCerrarModal" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modal-grid">
+        <!-- Columna izquierda: formulario base -->
+        <form id="formNuevoProducto">
+          <div class="group">
+            <label>Nombre <span class="tt-req">*</span></label>
+            <input class="control" id="np_nombre" placeholder="Ingrese el nombre del producto" required />
+          </div>
+          <div class="group">
+            <label>Enlace</label>
+            <input class="control" id="np_enlace" placeholder="https://ejemplo.com/producto" />
+          </div>
+          <div class="grid-2">
+            <div class="group">
+              <label>Categoría <span class="tt-req">*</span></label>
+              <select class="control" id="np_categoria" required></select>
+            </div>
+            <div class="group">
+              <label>Marca <span class="tt-req">*</span></label>
+              <select class="control" id="np_marca" required></select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="group">
+              <label>Precio <span class="tt-req">*</span></label>
+              <input type="number" step="0.01" min="0" class="control" id="np_precio" placeholder="0.00" required />
+            </div>
+            <div class="group">
+              <label>Stock <span class="tt-req">*</span></label>
+              <input type="number" min="0" class="control" id="np_stock" placeholder="0" required />
+            </div>
+          </div>
+
+          <!-- NUEVO: Costo -->
+          <div class="group">
+            <label>Costo <span class="tt-req">*</span></label>
+            <input type="number" step="0.01" min="0" class="control" id="np_costo" placeholder="0.00" required />
+          </div>
+
+          <div class="group">
+            <label>Galería <span class="tt-req">*</span></label>
+            <div class="dashed">
+              <div class="tt-mb-2"><span class="icon plus"></span> Agregar imágenes (máx. 15)</div>
+              <input id="np_imgs" type="file" accept="image/*" multiple hidden />
+              <div>
+                <button class="btn btn-outline" type="button" id="btnSelImgs">Seleccionar imágenes</button>
+                <span id="np_imgs_info" class="muted tt-ml-2">Ningún archivo seleccionado</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btnCancelarModal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Agregar Producto</button>
+          </div>
+        </form>
+
+        <!-- Columna derecha: campos dinámicos por categoría -->
+        <div class="right-card">
+          <div id="np_fields_title"></div>
+          <div id="np_fields"></div>
+          <div id="np_fields_empty" class="right-empty">
+            <div class="tt-text-center">
+              <div class="tt-icon-xl tt-mb-1">⚙️</div>
+              <div>Selecciona una categoría para ver campos específicos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ===== Guard de ADMIN + nombre en el header =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+      if (!raw) { location.replace('Login.html?next=' + encodeURIComponent('cuenta%20-%20admin.html')); return; }
+      let u; try { u = JSON.parse(raw); } catch { u = null; }
+      const id = parseInt(u?.id_rol ?? u?.idRol ?? u?.rol_id ?? 0, 10);
+      const nm = String(u?.rol ?? u?.role ?? u?.roleName ?? '').toLowerCase();
+      const isAdmin = id === 1 || nm === 'admin';
+      if (!isAdmin) { location.replace('cuenta.html'); return; }
+      const tag = document.querySelector('.user-info');
+      if (tag) tag.textContent = '👤 Administrador: ' + (u?.nombre || u?.usuario || 'Admin');
+    });
+
+    // ===== Navegación lateral =====
+    function showSection(sectionId, el){
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    // ===== UX botones demo =====
+    document.addEventListener('DOMContentLoaded', function(){
+      document.querySelectorAll('.btn').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const action = this.textContent.trim();
+          if(action.match(/Agregar|Actualizar|Guardar/)){
+            this.style.backgroundColor = '#4caf50'; this.textContent = '✓ Completado';
+            setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+          } else if(action.match(/Eliminar|Bloquear/)){
+            if(confirm('¿Estás seguro de realizar esta acción?')){
+              this.style.backgroundColor = '#ff5722'; this.textContent = '✓ Realizado';
+              setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+            }
+          }
+        });
+      });
+    });
+
+    // ===== Crear usuario (Cliente usa SP crear_cliente; otros roles requieren endpoint propio) =====
+    async function crearUsuario(){
+      const payload = {
+        nombre:     document.getElementById('v_nombre').value.trim(),
+        cedula:     document.getElementById('v_cedula').value.trim(),
+        correo:     document.getElementById('v_correo').value.trim(),
+        telefono:   document.getElementById('v_telefono').value.trim(),
+        contrasena: document.getElementById('v_contrasenia').value,
+        usuario:    document.getElementById('v_usuario').value.trim()
+      };
+      const idRol = parseInt(document.getElementById('v_id_rol').value, 10);
+
+      try {
+        let url, body;
+        if (idRol === 2){
+          // Cliente: usa el endpoint existente que invoca SP crear_cliente
+          url  = '/api/usuarios/crear';
+          body = { ...payload, idMetodoPago: null };
+        } else {
+          // Admin/Trabajador: requiere un endpoint del backend para roles ≠ cliente
+          url  = '/api/usuarios/crear-usuario';
+          body = { ...payload, idRol };
+        }
+
+        const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || ('HTTP ' + res.status));
+        alert('✅ ' + (text || 'Operación realizada'));
+      } catch (err) {
+        alert('❌ Error: ' + (err.message || err));
+      }
+    }
+
+    // ===== Productos: listar desde API y pintar tabla =====
+    const API_PRODUCTS = '/api/productos';
+    const $p = (s) => document.querySelector(s);
+    function coalesce(...vals){ for(const v of vals){ if(v!==undefined && v!==null) return v; } return undefined; }
+    function fmtUSD(n){ const x = Number(n||0); return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(x); }
+    function fmtDate(d){ if(!d) return ''; const dt = new Date(d); return isNaN(dt) ? String(d) : dt.toLocaleDateString(); }
+    function renderEmpty(msg){ $p('#tbProductos').innerHTML = `<tr><td colspan="12" class="tt-muted-row">${msg}</td></tr>`; }
+    function mapProduct(raw){
+      return {
+        id:          coalesce(raw.producto_id, raw.productoId, raw.id, raw.id_producto),
+        nombre:      coalesce(raw.nombre, raw.name, ''),
+        precio:      coalesce(raw.preciounitario, raw.precioUnitario, raw.precio, raw.price, 0),
+        enlace:      coalesce(raw.enlace, raw.url, ''),
+        fecha:       coalesce(raw.fecha, raw.createdAt, raw.fecha_creacion),
+        stock:       coalesce(raw.stock, raw.cantidad, 0),
+        marca_id:    coalesce(raw.marca_id, raw.marcaId),
+        gama_id:     coalesce(raw.gama_id, raw.gamaId),
+        iva_id:      coalesce(raw.iva_id, raw.ivaId),
+        costo:       coalesce(raw.costo, 0),
+        habilitado:  coalesce(raw.habilitado, raw.activo, true)
+      };
+    }
+    function renderProductos(items){
+      if(!Array.isArray(items) || !items.length){ renderEmpty('Sin productos'); return; }
+      const rows = items.map(p => {
+        const enlaceHtml = p.enlace ? `<a href="${p.enlace}" target="_blank" rel="noopener" class="link--external">link</a>` : '';
+        return `<tr>
+          <td>${p.id ?? ''}</td>
+          <td>${p.nombre ?? ''}</td>
+          <td>${fmtUSD(p.precio)}</td>
+          <td>${enlaceHtml}</td>
+          <td>${fmtDate(p.fecha)}</td>
+          <td>${p.stock ?? 0}</td>
+          <td>${p.marca_id ?? ''}</td>
+          <td>${p.gama_id ?? ''}</td>
+          <td>${p.iva_id ?? ''}</td>
+          <td>${fmtUSD(p.costo)}</td>
+          <td>${p.habilitado ? '<span class="status active">Sí</span>' : '<span class="status blocked">No</span>'}</td>
+          <td>
+            <button class="btn btn-warning btn--sm">Editar</button>
+            <button class="btn btn-danger btn--sm">Eliminar</button>
+          </td>
+        </tr>`;
+      }).join('');
+      $p('#tbProductos').innerHTML = rows;
+    }
+    async function loadProductos(){
+      try{
+        const res = await fetch(API_PRODUCTS);
+        if(!res.ok){ renderEmpty('Error cargando productos'); return; }
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.content || data.items || []);
+        renderProductos(list.map(mapProduct));
+      }catch(err){ renderEmpty('No se pudo conectar con /api/productos'); }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ loadProductos(); } catch(_){} });
+
+    // ===== MODAL: lógica mínima =====
+      // ===== MODAL: lógica mínima =====
+  const CATEGORIES = [
+    'Fuente de poder','GPU','Motherboard','CPU','RAM','CPU COOLER',
+    'Almacenamiento','Cubierta','Periféricos','Accesorios'
+  ];
+
+  const BRANDS = [
+    'Intel','AMD','HP','Samsung','Apple','Sony','Corsair','EVGA',
+    'ASUS','MSI','Kingston','Seagate','Western Digital','Thermalright'
+  ];
+
+  // Campos específicos por categoría (nombres alineados al SP v2)
+  const CATEGORY_FIELDS = {
+    'Fuente de poder': [
+      { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
+    ],
+    'GPU': [
+      { name:'tamanio', label:'Tamaño (mm)', type:'number' },
+      { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
+    ],
+    'Motherboard': [
+      { name:'socket', label:'Socket', type:'text' },
+      { name:'velocidad_ram', label:'Velocidad RAM (MHz)', type:'number' },
+      { name:'chipset', label:'Chipset', type:'text' }
+    ],
+    'CPU': [
+      { name:'sockets', label:'Sockets', type:'text' },
+      { name:'generacion', label:'Generación', type:'number' }
+    ],
+    'RAM': [
+      { name:'velocidades', label:'Velocidades (MHz)', type:'number' }
+    ],
+    'CPU COOLER': [
+      { name:'tamanio', label:'Tamaño (mm)', type:'number' },
+      { name:'socket',  label:'Socket', type:'text' }
+    ],
+    'Almacenamiento': [
+      // Se renderiza aparte (capacidad + unidad + tipo)
+    ],
+    'Cubierta': [
+      { name:'tamanio_gpu', label:'Tamaño de GPU (mm)', type:'number' },
+      { name:'tamanio_refrigeracion', label:'Tamaño de refrigeración (mm)', type:'number' }
+    ],
+    'Periféricos': [
+      { name:'tipo', label:'Tipo', type:'text' }
+    ],
+    'Accesorios': [
+      // sin campos extra
+    ]
+  };
+
+  /* Endpoints sugeridos (ajústalos a los que tengas en backend).
+     Ya tienes: /api/sp/almacenamientos, /api/sp/cpu
+     Agregamos el resto siguiendo el mismo patrón. */
+  const CATEGORY_ENDPOINT = {
+    'Almacenamiento':  '/api/sp/almacenamientos',
+    'CPU':             '/api/sp/cpu',
+    'CPU COOLER':      '/api/sp/cpu-cooler',
+    'Fuente de poder': '/api/sp/fuentes',
+    'GPU':             '/api/sp/gpu',
+    'Motherboard':     '/api/sp/motherboards',
+    'RAM':             '/api/sp/ram',
+    'Cubierta':        '/api/sp/cubiertas',
+    'Periféricos':     '/api/sp/perifericos',
+    'Accesorios':      '/api/sp/accesorios'
+  };
+
+  // IDs de ejemplo para demo (idealmente, poblar desde API)
+  const BRAND_ID = {
+    'Intel': 1, 'AMD': 2, 'HP': 3, 'Samsung': 4, 'Apple': 5, 'Sony': 6,
+    'Corsair': 7, 'EVGA': 8, 'ASUS': 9, 'MSI': 10, 'Kingston': 11,
+    'Seagate': 12, 'Western Digital': 13, 'Thermalright': 14
+  };
+  const DEFAULT_GAMA_ID = 1;
+  const DEFAULT_IVA_ID  = 1;
+
+  // Helpers
+  const $ = (s) => document.querySelector(s);
+  function fillSelectOptions(sel, arr){
+    sel.innerHTML = '<option value="">Seleccionar</option>' +
+      arr.map(v=>`<option value="${v}">${v}</option>`).join('');
+  }
+  function getExtra(name){
+    return document.querySelector(`#np_fields [data-extra="${name}"]`)?.value?.trim() ?? '';
+  }
+  function collectExtras(cat){
+    const defs = CATEGORY_FIELDS[cat] || [];
+    const out = {};
+    defs.forEach(d=>{
+      const el = document.querySelector(`#np_fields [data-extra="${d.name}"]`);
+      if(!el) return;
+      let val = el.value.trim();
+      if (val === '') return;
+      out[d.name] = d.type === 'number' ? Number(val) : val;
+    });
+    return out;
+  }
+  function renderDynamicFields(cat){
+    const box = $('#np_fields');
+    const title = $('#np_fields_title');
+    const empty = $('#np_fields_empty');
+    box.innerHTML = ''; title.innerHTML = ''; empty.style.display = 'flex';
+
+    if(!cat){ return; }
+    title.innerHTML = `<h4>${cat}</h4>`;
+    empty.style.display = 'none';
+
+    // Caso especial: Almacenamiento (capacidad + unidad + tipo)
+    if (cat === 'Almacenamiento') {
+      const g1 = document.createElement('div');
+      g1.className = 'group';
+      g1.innerHTML = `
+        <label>Capacidad</label>
+        <div class="input-unit">
+          <input class="control" type="number" min="0" step="1"
+                 data-extra="capacidad" placeholder="Ingrese capacidad" />
+          <select class="control control--unit" id="np_unidad_capacidad"
+                  data-extra="capacidad_unidad" aria-label="Unidad">
+            <option value="GB" selected>GB</option>
+            <option value="TB">TB</option>
+          </select>
+        </div>`;
+      box.appendChild(g1);
+
+      const g2 = document.createElement('div');
+      g2.className = 'group';
+      g2.innerHTML = `<label>Tipo</label>
+                      <input class="control" data-extra="tipo" placeholder="Ingrese tipo (p.ej. NVMe, SATA, HDD)"/>`;
+      box.appendChild(g2);
+      return;
+    }
+
+    // Render genérico
+    const defs = CATEGORY_FIELDS[cat] || [];
+    defs.forEach(f=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'group';
+      const inputType = f.type === 'number' ? 'number' : 'text';
+      const stepAttr  = f.type === 'number' ? ' step="1" ' : '';
+      wrap.innerHTML = `<label>${f.label}</label>
+                        <input class="control" ${stepAttr} type="${inputType}"
+                               data-extra="${f.name}" placeholder="Ingrese ${f.label.toLowerCase()}"/>`;
+      box.appendChild(wrap);
+    });
+  }
+  function clearDynamicFields(){ $('#np_fields').innerHTML=''; $('#np_fields_title').innerHTML=''; $('#np_fields_empty').style.display='flex'; }
+  function updateImagesInfo(){
+    const files = $('#np_imgs').files;
+    $('#np_imgs_info').textContent = (files && files.length)? `${files.length} archivo(s) seleccionado(s)` : 'Ningún archivo seleccionado';
+  }
+
+  // Poblado inicial del modal y eventos
+  document.addEventListener('DOMContentLoaded', () => {
+    fillSelectOptions($('#np_categoria'), CATEGORIES);
+    fillSelectOptions($('#np_marca'), BRANDS);
+    $('#btnAgregarProducto').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = false; $('#np_nombre').focus(); });
+    $('#btnCerrarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
+    $('#btnCancelarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
+    const backdrop = document.getElementById('modalNuevoProducto');
+    backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !backdrop.hidden){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
+    $('#np_categoria').addEventListener('change', (e)=> renderDynamicFields(e.target.value));
+    $('#btnSelImgs').addEventListener('click', ()=> $('#np_imgs').click());
+    $('#np_imgs').addEventListener('change', updateImagesInfo);
+
+    // Submit: ahora soporta TODAS las categorías
+    $('#formNuevoProducto').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      const categoria = $('#np_categoria').value;
+      const nombre    = $('#np_nombre').value.trim();
+      const enlace    = $('#np_enlace').value.trim() || null;
+      const precio    = Number($('#np_precio').value);
+      const costo     = Number($('#np_costo').value);
+      const stock     = parseInt($('#np_stock').value, 10) || 0;
+      const marcaTxt  = $('#np_marca').value;
+      const marca_id  = BRAND_ID[marcaTxt] ?? 1;
+
+      if (!nombre || !categoria || !marcaTxt || isNaN(precio) || isNaN(costo)) {
+        alert('Completa los campos obligatorios');
+        return;
+      }
+
+      const base = {
+        nombre,
+        preciounitario: precio,
+        enlace,
+        stock,
+        marca_id,
+        gama_id: DEFAULT_GAMA_ID,
+        iva_id:  DEFAULT_IVA_ID,
+        costo
+      };
+
+      // Construir payload específico
+      let payload = { ...base };
+      if (categoria === 'Almacenamiento') {
+        const valor = Number(getExtra('capacidad')) || 0;
+        const unidad = document.getElementById('np_unidad_capacidad')?.value || 'GB';
+        // El backend normaliza 1000GB -> 1TB; aquí solo enviamos en GB para mantener tu flujo actual
+        const capacidadGB = unidad === 'TB' ? (valor * 1000) : valor;
+        payload = { ...payload, capacidad: capacidadGB, tipo: (getExtra('tipo') || 'SSD') };
+      } else {
+        payload = { ...payload, ...collectExtras(categoria) };
+      }
+
+      const url = CATEGORY_ENDPOINT[categoria];
+      if (!url) {
+        alert('No hay endpoint configurado para esta categoría.');
+        return;
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || ('HTTP ' + res.status));
+
+        alert('✅ Producto agregado correctamente');
+        $('#modalNuevoProducto').hidden = true;
+        clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo();
+        loadProductos();
+      } catch (err) {
+        alert('❌ Error: ' + (err.message || err));
+      }
+    });
+  });
+  </script>
+</body>
+</html>

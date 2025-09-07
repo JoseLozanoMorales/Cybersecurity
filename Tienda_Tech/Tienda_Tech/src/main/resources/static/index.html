@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TiendaTech</title>
+  <link rel="stylesheet" href="style2.css">
+  <script src="/js/auth-menu.js?v=4" defer></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">TiendaTech</div>
+    <div class="search-container">
+      <input type="text" class="search-bar" placeholder="Buscar...">
+    </div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+  </header>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay" onclick="closeMenu"></div>
+
+  <!-- Menú Hamburguesa -->
+  <nav class="hamburger-menu" id="hamburgerMenu">
+    <button class="menu-close" onclick="closeMenu()">✕</button>
+    <a href="index.html"   class="menu-item">Inicio</a>
+    <a href="cuenta.html"  class="menu-item requires-auth">Cuenta</a>
+    <a href="Carrito.html" class="menu-item requires-auth">Carrito</a>
+    <a href="#"            class="menu-item">Cerrar sesión</a>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+    <!-- 1. Slider Container -->
+    <section class="content-container">
+      <div class="slider-container">
+        <button class="slider-nav left">‹</button>
+        <div class="slider-content">
+          <div class="slider-title">SLIDER</div>
+          <div class="slider-subtitle">Productos nuevos</div>
+        </div>
+        <button class="slider-nav right">›</button>
+      </div>
+    </section>
+
+    <!-- 2. Carrusel Container -->
+    <section class="content-container">
+      <div class="carousel-container">
+        <h2 class="carousel-title">Los más vendidos</h2>
+        <div class="carousel-wrapper">
+          <button class="carousel-nav left">‹</button>
+          <div class="carousel-products">
+            <div class="product-card">Producto 1</div>
+            <div class="product-card">Producto 2</div>
+            <div class="product-card">Producto 3</div>
+            <div class="product-card">Producto 4</div>
+            <div class="product-card">Producto 5</div>
+          </div>
+          <button class="carousel-nav right">›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PC Builder Container -->
+    <section class="content-container">
+      <div class="pc-builder-container">
+        <h2 class="pc-builder-title">Crea tu propia PC</h2>
+        <p class="pc-builder-description">
+          Elige tus componentes<br>
+          deseados sin preocuparte<br>
+          por la compatibilidad
+        </p>
+        <button class="pc-builder-btn">Ver más</button>
+      </div>
+    </section>
+
+    <!-- 4. Categories Grid Container -->
+    <section class="content-container">
+      <div class="categories-container">
+        <h2 class="categories-title">Todas las categorías</h2>
+        <div class="categories-grid">
+          <div class="category-card">Motherboards</div>
+          <div class="category-card">Almacenamiento</div>
+          <div class="category-card">Tarjetas de video</div>
+          <div class="category-card">Celulares</div>
+          <div class="category-card">Teclados</div>
+          <div class="category-card">Procesadores</div>
+          <div class="category-card">Memorias RAM</div>
+          <div class="category-card">Fuentes de poder</div>
+          <div class="category-card">Laptops</div>
+          <div class="category-card">Ratones</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <nav class="footer-nav">
+      <a href="index.html">Inicio</a>
+      <a href="cuenta.html"  class="requires-auth">Cuenta</a>
+      <a href="Carrito.html" class="requires-auth">Carrito</a>
+    </nav>
+  </footer>
+
+  <!-- Logout dentro del menú -->
+  <script>
+  (function () {
+    const REDIRECT_TO = 'Login.html'; // nombre real del login
+
+    const menu = document.getElementById('hamburgerMenu');
+    if (!menu) return;
+
+    function hasActiveSession(){
+      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+      let ok = false;
+      try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+      return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+    }
+
+    function getLogoutLink(){
+      return Array.from(menu.querySelectorAll('a.menu-item'))
+        .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+    }
+
+    function updateLogoutVisibility(){
+      const a = getLogoutLink();
+      if (!a) return;
+      if (hasActiveSession()){
+        a.classList.remove('logout-disabled');
+        a.removeAttribute('aria-disabled');
+        a.tabIndex = 0;
+      } else {
+        a.classList.add('logout-disabled');
+        a.setAttribute('aria-disabled','true');
+        a.tabIndex = -1;
+      }
+    }
+
+    menu.addEventListener('click', async function (ev) {
+      const a = ev.target.closest('a.menu-item');
+      if (!a) return;
+
+      const label = (a.textContent || '').trim().toLowerCase();
+      if (label !== 'cerrar sesión') return;
+
+      if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+        ev.preventDefault();
+        return;
+      }
+
+      ev.preventDefault();
+
+      try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+      try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+
+      sessionStorage.removeItem('user');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+
+      try {
+        document.cookie.split(';').forEach(c=>{
+          document.cookie = c.replace(/^ +/,'')
+            .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+        });
+      } catch {}
+
+      try { closeMenu(); } catch {}
+      window.location.href = REDIRECT_TO;
+    });
+
+    document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+    window.addEventListener('storage', updateLogoutVisibility);
+    document.addEventListener('visibilitychange', updateLogoutVisibility);
+  })();
+  </script>
+
+  <!-- UI básica -->
+  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('hamburgerMenu');
+      const overlay = document.getElementById('overlay');
+      menu.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+
+    function closeMenu() {
+      const menu = document.getElementById('hamburgerMenu');
+      const overlay = document.getElementById('overlay');
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const sliderLeft = document.querySelector('.slider-nav.left');
+      const sliderRight = document.querySelector('.slider-nav.right');
+
+      sliderLeft.addEventListener('click', function() { console.log('Slider: Anterior'); });
+      sliderRight.addEventListener('click', function() { console.log('Slider: Siguiente'); });
+
+      const carouselLeft = document.querySelector('.carousel-nav.left');
+      const carouselRight = document.querySelector('.carousel-nav.right');
+
+      carouselLeft.addEventListener('click', function() { console.log('Carrusel: Anterior'); });
+      carouselRight.addEventListener('click', function() { console.log('Carrusel: Siguiente'); });
+
+      document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', function() {
+          console.log('Categoría seleccionada:', this.textContent);
+        });
+      });
+
+      const pcBuilderBtn = document.querySelector('.pc-builder-btn');
+      pcBuilderBtn.addEventListener('click', function() {
+        console.log('PC Builder: Ver más');
+      });
+    });
+  </script>
+
+  <!-- Opción 1: Interceptor con wireGuards + MutationObserver -->
+  <script>
+  (function(){
+    const LOGIN_PAGE = '/Login.html';
+
+    function isLogged() {
+      try {
+        const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+        if (raw && JSON.parse(raw)) return true;
+      } catch {}
+      return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+    }
+
+    function guardClick(ev) {
+      const a = ev.currentTarget;
+      if (isLogged()) return; // dejar pasar
+      ev.preventDefault();
+      const target = a.getAttribute('href') || '/';
+      const next = encodeURIComponent(target);
+      location.href = `${LOGIN_PAGE}?next=${next}`;
+    }
+
+    // Tolerante si recibe un Event u otro objeto
+    function wireGuards(rootOrEvent) {
+      const ctx = (rootOrEvent && typeof rootOrEvent.querySelectorAll === 'function')
+        ? rootOrEvent
+        : document;
+
+      ctx.querySelectorAll('a.requires-auth').forEach(a => {
+        a.removeEventListener('click', guardClick);
+        a.addEventListener('click', guardClick);
+      });
+    }
+
+    // FIX: pasa document explícitamente
+    document.addEventListener('DOMContentLoaded', () => wireGuards(document));
+
+    // Re-wire si cambia el DOM (abrir/cerrar menú, etc.)
+    new MutationObserver(() => wireGuards(document))
+      .observe(document.body, { subtree: true, childList: true });
+  })();
+  </script>
+</body>
+</html>

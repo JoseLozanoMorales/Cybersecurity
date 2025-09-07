@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultados de búsqueda - TiendaTech</title>
+  <link rel="stylesheet" href="style2.css">
+  <script src="/js/auth-menu.js?v=4" defer></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+</head>
+<body>
+
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">TiendaTech</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Buscar...">
+        </div>
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    </header>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+
+    <!-- Menú Hamburguesa -->
+    <nav class="hamburger-menu" id="hamburgerMenu">
+        <button class="menu-close" onclick="closeMenu()">✕</button>
+        <a href="#" class="menu-item">Inicio</a>
+        <a href="#" class="menu-item">Cuenta</a>
+        <a href="#" class="menu-item">Carrito</a>
+        <a href="#" class="menu-item" >Cerrar sesión</a>
+    </nav>
+
+  <!-- Results Container -->
+<div class="results-container">
+  <div class="results-title" id="resultsTitle">Resultados de la búsqueda</div>
+
+  <div id="resultsContainer">
+    <div class="product-card" onclick="viewProduct(1)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Smartphone Samsung Galaxy A54</div>
+        <div class="product-price">$299.99</div>
+        <div class="product-brand">Samsung</div>
+      </div>
+    </div>
+
+    <div class="product-card" onclick="viewProduct(2)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Laptop HP Pavilion 15</div>
+        <div class="product-price">$649.99</div>
+        <div class="product-brand">HP</div>
+      </div>
+    </div>
+
+    <div class="product-card" onclick="viewProduct(3)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Auriculares Sony WH-1000XM4</div>
+        <div class="product-price">$199.99</div>
+        <div class="product-brand">Sony</div>
+      </div>
+    </div>
+
+    <div class="product-card" onclick="viewProduct(4)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Tablet iPad Air 10.9"</div>
+        <div class="product-price">$449.99</div>
+        <div class="product-brand">Apple</div>
+      </div>
+    </div>
+
+    <div class="product-card" onclick="viewProduct(5)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Monitor LG UltraWide 29"</div>
+        <div class="product-price">$279.99</div>
+        <div class="product-brand">LG</div>
+      </div>
+    </div>
+
+    <div class="product-card" onclick="viewProduct(6)">
+      <div class="product-image">Imagen</div>
+      <div class="product-details">
+        <div class="product-name">Teclado Mecánico Corsair K70</div>
+        <div class="product-price">$129.99</div>
+        <div class="product-brand">Corsair</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-results d-none" id="noResults">
+    <p>No se encontraron productos.</p>
+  </div>
+</div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <nav class="footer-nav">
+            <a href="#inicio">Inicio</a>
+            <a href="#cuenta">Cuenta</a>
+            <a href="#carrito">Carrito</a>
+        </nav>
+    </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function () {
+  const REDIRECT_TO = 'login.html'; // ajusta si tu login se llama distinto
+
+  const menu = document.getElementById('hamburgerMenu');
+  if (!menu) return;
+
+  // ---- Detecta si hay sesión activa ----
+  function hasActiveSession(){
+    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+    let ok = false;
+    try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+    return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+  }
+
+  // ---- Busca el enlace "Cerrar sesión" y aplica estilo/estado ----
+  function getLogoutLink(){
+    return Array.from(menu.querySelectorAll('a.menu-item'))
+      .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+  }
+
+  function updateLogoutVisibility(){
+    const a = getLogoutLink();
+    if (!a) return;
+    if (hasActiveSession()){
+      a.classList.remove('logout-disabled');
+      a.removeAttribute('aria-disabled');
+      a.tabIndex = 0;
+    } else {
+      a.classList.add('logout-disabled');
+      a.setAttribute('aria-disabled','true');
+      a.tabIndex = -1;
+    }
+  }
+
+  // ---- Delegación de clicks dentro del menú ----
+  menu.addEventListener('click', async function (ev) {
+    const a = ev.target.closest('a.menu-item');
+    if (!a) return;
+
+    const label = (a.textContent || '').trim().toLowerCase();
+    if (label !== 'cerrar sesión') return;
+
+    // si está inactivo, no hace nada
+    if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+      ev.preventDefault();
+      return;
+    }
+
+    ev.preventDefault();
+
+    // (Opcional) notificar al backend
+    try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+
+    // limpiar sesión local
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+
+    // limpiar cookies no-HttpOnly (si las hubiera)
+    try {
+      document.cookie.split(';').forEach(c=>{
+        document.cookie = c.replace(/^ +/,'')
+          .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+      });
+    } catch {}
+
+    try { closeMenu(); } catch {}
+    window.location.href = REDIRECT_TO;
+  });
+
+  // Inicializa y mantén sincronizado si cambia el storage (otra pestaña)
+  document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+  window.addEventListener('storage', updateLogoutVisibility);
+  // por si el panel se abre/cierra y quieres refrescar
+  document.addEventListener('visibilitychange', updateLogoutVisibility);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+
+
+
+  function toggleMenu() {
+      const menu = document.getElementById('hamburgerMenu');
+      const overlay = document.getElementById('overlay');
+      menu.classList.toggle('active');
+      overlay.classList.toggle('active');
+  }
+
+  function closeMenu() {
+      const menu = document.getElementById('hamburgerMenu');
+      const overlay = document.getElementById('overlay');
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+  }
+  const products = [
+    { id: 1, name: "Smartphone Samsung Galaxy A54", price: "$299.99", brand: "Samsung" },
+    { id: 2, name: "Laptop HP Pavilion 15", price: "$649.99", brand: "HP" },
+    { id: 3, name: "Auriculares Sony WH-1000XM4", price: "$199.99", brand: "Sony" },
+    { id: 4, name: "Tablet iPad Air 10.9\"", price: "$449.99", brand: "Apple" },
+    { id: 5, name: "Monitor LG UltraWide 29\"", price: "$279.99", brand: "LG" },
+    { id: 6, name: "Teclado Mecánico Corsair K70", price: "$129.99", brand: "Corsair" }
+  ];
+
+  function viewProduct(id) {
+    alert(`Ver producto ID: ${id}`);
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function() {
+    const term = this.value.toLowerCase().trim();
+    const filtered = term === '' ? products : products.filter(p =>
+            p.name.toLowerCase().includes(term) || p.brand.toLowerCase().includes(term)
+    );
+
+    document.getElementById('resultsTitle').textContent = term === '' ?
+            'Resultados de la búsqueda' : `Resultados: "${term}" (${filtered.length})`;
+
+    const container = document.getElementById('resultsContainer');
+    const noResults = document.getElementById('noResults');
+
+    if (filtered.length === 0) {
+      container.classList.add('d-none');
+      noResults.classList.remove('d-none');
+    } else {
+      container.classList.remove('d-none');
+      noResults.classList.add('d-none');
+      container.innerHTML = filtered.map(p => `
+                <div class="product-card" onclick="viewProduct(${p.id})">
+                    <div class="product-image">Imagen</div>
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-price">${p.price}</div>
+                        <div class="product-brand">${p.brand}</div>
+                    </div>
+                </div>
+            `).join('');
+    }
+  });
+</script>
+</body>
+</html>

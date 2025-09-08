@@ -26,6 +26,7 @@ public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         "usuarioId", u.getUsuarioId(),
         "usuario",   u.getUsuario(),
         "nombre",    u.getNombre(),
+        "cedula",    u.getCedula(),
         "correo",    u.getCorreo(),
         "telefono",  u.getTelefono(),
         "id_rol",    u.getIdRol()

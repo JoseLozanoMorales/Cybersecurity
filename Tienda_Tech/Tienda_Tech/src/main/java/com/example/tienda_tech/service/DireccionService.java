@@ -1,123 +1,104 @@
 package com.example.tienda_tech.service;
 
-import com.example.tienda_tech.dto.DireccionCreateRequest;
 import com.example.tienda_tech.dto.DireccionDTO;
-import com.example.tienda_tech.dto.DireccionUpdateRequest;
 import com.example.tienda_tech.model.Ciudad;
 import com.example.tienda_tech.model.Direccion;
-// import com.example.tienda_tech.model.Provincia;
 import com.example.tienda_tech.model.Usuario;
 import com.example.tienda_tech.repository.CiudadRepository;
 import com.example.tienda_tech.repository.DireccionRepository;
-// import com.example.tienda_tech.repository.ProvinciaRepository;
 import com.example.tienda_tech.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class DireccionService {
 
-    private final DireccionRepository direccionRepository;
-    private final UsuarioRepository usuarioRepository;
-    private final CiudadRepository ciudadRepository;
-    // private final ProvinciaRepository provinciaRepository;
-
-    public DireccionService(
-            DireccionRepository direccionRepository,
-            UsuarioRepository usuarioRepository,
-            CiudadRepository ciudadRepository
-            ) {
-        this.direccionRepository = direccionRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.ciudadRepository = ciudadRepository;
-        // this.provinciaRepository = provinciaRepository;
-    }
+    private final DireccionRepository repo;
+    private final UsuarioRepository usuarioRepo;
+    private final CiudadRepository ciudadRepo;
 
     @Transactional(readOnly = true)
-    public List<DireccionDTO> listar(Integer usuarioId) {
-        return direccionRepository.findByUsuario_UsuarioId(usuarioId)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public List<DireccionDTO> listar(Integer usuarioId){
+        return repo.findByUsuario_UsuarioIdAndHabilitadoTrue(usuarioId)
+                .stream().map(this::toDTO).toList();
     }
 
     @Transactional
-    public DireccionDTO crear(Integer usuarioId, DireccionCreateRequest req) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
+    public DireccionDTO crear(Integer usuarioId, DireccionDTO dto){
+        if (dto.getCiudadId()==null) throw new IllegalArgumentException("ciudadId es obligatorio");
+        String calle = dto.getCalle()==null ? "" : dto.getCalle().trim();
+        if (calle.isEmpty()) throw new IllegalArgumentException("calle es obligatoria");
+
+        Usuario u = usuarioRepo.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no existe"));
 
-        Ciudad ciudad = (req.getCiudadId() != null)
-                ? ciudadRepository.findById(req.getCiudadId())
-                    .orElseThrow(() -> new IllegalArgumentException("Ciudad no existe"))
-                : null;
-
-        // Provincia provincia = (req.getProvinciaId() != null)
-        //         ? provinciaRepository.findById(req.getProvinciaId())
-        //             .orElseThrow(() -> new IllegalArgumentException("Provincia no existe"))
-        //         : null;
+        Ciudad c = ciudadRepo.findById(dto.getCiudadId())
+                .orElseThrow(() -> new IllegalArgumentException("Ciudad no existe"));
 
         Direccion d = new Direccion();
-        d.setUsuario(usuario);
-        d.setCalle(req.getCalle());
-        d.setReferencia(req.getReferencia());
-        d.setCiudad(ciudad);
-        // d.setProvincia(provincia);
+        d.setUsuario(u);
+        d.setCiudad(c);
+        d.setCalle(calle);
+        d.setReferencia(dto.getReferencia()==null ? null : dto.getReferencia().trim());
+        d.setHabilitado(true);
 
-        Direccion guardada = direccionRepository.save(d);
-        return toDTO(guardada);
+        return toDTO(repo.save(d));
     }
 
     @Transactional
-    public DireccionDTO actualizar(Integer usuarioId, Integer direccionId, DireccionUpdateRequest req) {
-        Direccion d = direccionRepository.findById(direccionId)
+    public DireccionDTO actualizar(Integer usuarioId, Short direccionId, DireccionDTO dto){ // <- Short
+        Direccion d = repo.findById(direccionId)
                 .orElseThrow(() -> new IllegalArgumentException("Dirección no existe"));
 
-        if (d.getUsuario() == null || !d.getUsuario().getUsuarioId().equals(usuarioId)) {
+        if (d.getUsuario()==null || !d.getUsuario().getUsuarioId().equals(usuarioId))
             throw new IllegalStateException("La dirección no pertenece al usuario");
-        }
 
-        if (req.getCalle() != null) d.setCalle(req.getCalle());
-        if (req.getReferencia() != null) d.setReferencia(req.getReferencia());
+        if (dto.getCalle()!=null)      d.setCalle(dto.getCalle().trim());
+        if (dto.getReferencia()!=null) d.setReferencia(dto.getReferencia().trim());
 
-        if (req.getCiudadId() != null) {
-            Ciudad c = ciudadRepository.findById(req.getCiudadId())
+        if (dto.getCiudadId()!=null){
+            Ciudad c = ciudadRepo.findById(dto.getCiudadId())
                     .orElseThrow(() -> new IllegalArgumentException("Ciudad no existe"));
             d.setCiudad(c);
         }
-        // if (req.getProvinciaId() != null) {
-        //     Provincia p = provinciaRepository.findById(req.getProvinciaId())
-        //             .orElseThrow(() -> new IllegalArgumentException("Provincia no existe"));
-        //     d.setProvincia(p);
-        // }
-
-        Direccion guardada = direccionRepository.save(d);
-        return toDTO(guardada);
+        return toDTO(repo.save(d));
     }
 
     @Transactional
-    public void eliminar(Integer usuarioId, Integer direccionId) {
-        Direccion d = direccionRepository.findById(direccionId)
+    public void eliminar(Integer usuarioId, Short direccionId){ // <- Short
+        Direccion d = repo.findById(direccionId)
                 .orElseThrow(() -> new IllegalArgumentException("Dirección no existe"));
-
-        if (d.getUsuario() == null || !d.getUsuario().getUsuarioId().equals(usuarioId)) {
+        if (d.getUsuario()==null || !d.getUsuario().getUsuarioId().equals(usuarioId))
             throw new IllegalStateException("La dirección no pertenece al usuario");
-        }
-        direccionRepository.delete(d);
+
+        d.setHabilitado(false); // soft-delete
+        repo.save(d);
     }
 
-    private DireccionDTO toDTO(Direccion d) {
+    private DireccionDTO toDTO(Direccion d){
         DireccionDTO dto = new DireccionDTO();
-        dto.setDireccionId(d.getDireccionId());
-        if (d.getUsuario() != null && d.getUsuario().getUsuarioId() != null) {
-            dto.setUsuarioId(Long.valueOf(d.getUsuario().getUsuarioId()));
-        }
+        dto.setDireccionId(d.getDireccionId()); // Short
+        dto.setUsuarioId(
+                d.getUsuario() != null ? d.getUsuario().getUsuarioId() : null
+        ); // Integer
+        dto.setCiudadId(
+                d.getCiudad() != null ? d.getCiudad().getCiudadId() : null
+        ); // Short
+        dto.setCiudadNombre(
+                d.getCiudad() != null ? d.getCiudad().getNombre() : null
+        );
+        // si no manejas provincia en Ciudad, deja null
+        dto.setProvinciaNombre(null);
+
         dto.setCalle(d.getCalle());
         dto.setReferencia(d.getReferencia());
-        // dto.setProvinciaNombre(d.getProvincia() != null ? d.getProvincia().getNombre() : null);
-        dto.setCiudadNombre(d.getCiudad() != null ? d.getCiudad().getNombre() : null);
+        dto.setHabilitado(
+                d.getHabilitado() != null ? d.getHabilitado() : Boolean.TRUE
+        );
         return dto;
     }
 }

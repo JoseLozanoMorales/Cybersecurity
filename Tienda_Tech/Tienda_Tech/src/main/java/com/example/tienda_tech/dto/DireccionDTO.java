@@ -1,12 +1,18 @@
 package com.example.tienda_tech.dto;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 public class DireccionDTO {
-    private Integer direccionId;
-    private Long usuarioId;
-    private String calle;
-    private String referencia;
-    private String ciudadNombre;
+    private Short direccionId;
+    private Integer usuarioId;        // viene en el path, lo devolvemos al listar
+    private String  calle;
+    private String  referencia;
+    private Short   ciudadId;
+
+    // para pintar (opcionales)
+    private String  ciudadNombre;
+    private String  provinciaNombre;
+    private Boolean habilitado;
 }

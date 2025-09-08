@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CiudadDTO {
-    private Long ciudadId;
+    private Short ciudadId;
     private String nombre;
+    private Short provinciaId;
 }

@@ -1,31 +1,41 @@
 // src/main/java/com/example/tienda_tech/controller/ProvinciaController.java
 package com.example.tienda_tech.controller;
-import java.util.Map;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import com.example.tienda_tech.repository.ProvinciaRepository;
+import com.example.tienda_tech.dto.ProvinciaDTO;
+import com.example.tienda_tech.service.ProvinciaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/provincias")
-@CrossOrigin // opcional si sirves el HTML fuera de Spring
+@RequiredArgsConstructor
+@RequestMapping("/api/provincias")// opcional si sirves el HTML fuera de Spring
 public class ProvinciaController {
 
-    private final ProvinciaRepository provinciaRepo;
+    private final ProvinciaService svc;
 
-    public ProvinciaController(ProvinciaRepository provinciaRepo) {
-        this.provinciaRepo = provinciaRepo;
-    }
-    // ProvinciaController.java
     @GetMapping
-    public List<Map<String, Object>> listar() {
-        return provinciaRepo.findAll().stream()
-            .map(p -> Map.<String, Object>of(
-                "provinciaId", p.getProvinciaId(),
-                "nombre",      p.getNombre()
-            ))
-            .collect(Collectors.toList());
+    public List<ProvinciaDTO> listar() {
+        return svc.listar();
     }
 
+    @PostMapping
+    public ResponseEntity<Void> crear(@RequestBody ProvinciaDTO dto) {
+        svc.crear(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> actualizar(@PathVariable Long id, @RequestBody ProvinciaDTO dto) {
+        svc.actualizar(id, dto);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        svc.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

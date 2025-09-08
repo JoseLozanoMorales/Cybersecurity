@@ -106,6 +106,6 @@ public class ProductoSpController {
         service.actualizarProductoJsonV2(id, req);
         return ResponseEntity.ok(java.util.Map.of("ok", true));
     }
-
+    
 
 }

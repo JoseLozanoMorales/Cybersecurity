@@ -19,7 +19,7 @@ public class Direccion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "direccion_id")
-    private Integer direccionId;
+    private Short direccionId;
 
 
     @Column(name = "calle")      private String calle;
@@ -33,4 +33,6 @@ public class Direccion {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    @Column(name = "habilitado")
+    private Boolean habilitado;
 }

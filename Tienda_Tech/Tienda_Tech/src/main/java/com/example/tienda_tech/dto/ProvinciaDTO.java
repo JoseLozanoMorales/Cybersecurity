@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class ProvinciaDTO {
-    private Long provinciaId;
+    private Short provinciaId; //cambie a short
     private String nombre;
+    private String accion;
 }

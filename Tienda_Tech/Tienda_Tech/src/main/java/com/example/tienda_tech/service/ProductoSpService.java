@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.RowMapper;
 @Service
 public class ProductoSpService {
 

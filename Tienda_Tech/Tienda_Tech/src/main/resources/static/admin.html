@@ -16,9 +16,10 @@
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
     <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
+    <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
     <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
     <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
-      <div class="nav-item" onclick="showSection('settings', this)">Cerrar sesión</div>
+    <div class="nav-item" onclick="logout()">Cerrar sesión</div>
 
   </div>
 
@@ -108,6 +109,85 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Puntos de Entrega -->
+    <div id="delivery" class="admin-section">
+      <div class="section-title">📍 Gestión de Puntos de Entrega</div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+
+        <!-- Provincias -->
+        <div class="action-card">
+          <h3>🏛️ Provincias</h3>
+
+          <div class="form-group">
+            <label>Nombre de la Provincia</label>
+            <input type="text" class="form-control" placeholder="Ej: Guayas, Pichincha..." id="provincia_nombre" maxlength="100">
+          </div>
+          <button class="btn btn-primary" onclick="agregarProvincia()">➕ Agregar</button>
+
+          <hr style="margin: 1.5rem 0;">
+
+          <div class="form-group">
+            <label>Editar / Eliminar</label>
+            <select class="form-control" id="select_provincia" onchange="manejarSeleccionProvincia()">
+              <option value="">Seleccionar provincia</option>
+            </select>
+          </div>
+
+          <div id="provincia_acciones" style="display: none;">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Nuevo nombre" id="provincia_nuevo_nombre" maxlength="100">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-warning" onclick="editarProvincia()">✏️ Editar</button>
+              <button class="btn btn-danger" onclick="eliminarProvincia()">🗑️ Eliminar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ciudades -->
+        <div class="action-card">
+          <h3>🏘️ Ciudades</h3>
+
+          <div class="form-group">
+            <label>Provincia</label>
+            <select class="form-control" id="ciudad_provincia">
+              <option value="">Seleccionar provincia</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nombre de la Ciudad</label>
+            <input type="text" class="form-control" placeholder="Ej: Guayaquil, Quito..." id="ciudad_nombre" maxlength="100">
+          </div>
+          <button class="btn btn-primary" onclick="agregarCiudad()">➕ Agregar</button>
+
+          <hr style="margin: 1.5rem 0;">
+
+          <div class="form-group">
+            <label>Editar / Eliminar</label>
+            <select class="form-control" id="select_ciudad" onchange="manejarSeleccionCiudad()">
+              <option value="">Seleccionar ciudad</option>
+            </select>
+          </div>
+
+          <div id="ciudad_acciones" style="display: none;">
+            <div class="form-group">
+              <select class="form-control" id="ciudad_nueva_provincia">
+                <option value="">Nueva provincia</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Nuevo nombre" id="ciudad_nuevo_nombre" maxlength="100">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-warning" onclick="editarCiudad()">✏️ Editar</button>
+              <button class="btn btn-danger" onclick="eliminarCiudad()">🗑️ Eliminar</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -234,6 +314,20 @@
   </div>
 
   <script>
+    //cerrar sesion - agregado gaibor
+    async function logout() {
+      try {
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
+
+        await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      } finally {
+        location.replace('Login.html');
+      }
+    }
+
     // ===== Guard de ADMIN + nombre en el header =====
     document.addEventListener('DOMContentLoaded', () => {
       const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -595,6 +689,301 @@
       }
     });
   });
+  </script>
+
+
+  <script>
+    // ===== Ciudades (usa /api/ciudades y necesita provincias para selects) =====
+    const API_CIUDADES = '/api/ciudades';
+    const $C = (id) => document.getElementById(id);
+
+    let CIUDADES = [];            // [{ id, nombre, provincia_id }]
+    let PROVINCIAS_CACHE = [];    // [{ id, nombre }], la llenamos desde provincias.js o con GET
+
+    // Helpers
+    async function httpJsonC(url, opts = {}) {
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+      const txt = await res.text();
+      const data = txt ? JSON.parse(txt) : null;
+      if (!res.ok) throw new Error(data?.message || txt || ('HTTP ' + res.status));
+      return data;
+    }
+    function showBoxC(el){ if (el) el.style.removeProperty('display'); }
+    function hideBoxC(el){ if (el) el.style.display = 'none'; }
+    function toIntC(v){ const n = parseInt(v,10); return isNaN(n) ? null : n; }
+
+    // Map
+    function mapCiudad(dto){
+      return {
+        id:           dto.ciudadId ?? dto.id ?? dto.ciudad_id,
+        nombre:       dto.nombre ?? dto.name,
+        provincia_id: dto.provinciaId ?? dto.provincia_id ?? dto.id_provincia
+      };
+    }
+    function provinciaNombre(id){
+      const p = PROVINCIAS_CACHE.find(x => String(x.id) === String(id));
+      return p?.nombre || '';
+    }
+
+    // Provincias para selects de ciudad
+    function renderProvinciasEnCiudad(){
+      const opts = ['<option value="">Seleccionar provincia</option>']
+              .concat(PROVINCIAS_CACHE.map(p => `<option value="${p.id}">${p.nombre}</option>`))
+              .join('');
+      const selAlta = $C('ciudad_provincia');
+      const selNueva = $C('ciudad_nueva_provincia');
+      if (selAlta)  selAlta.innerHTML = opts;
+      if (selNueva) selNueva.innerHTML = ['<option value="">Nueva provincia</option>'].concat(
+              PROVINCIAS_CACHE.map(p => `<option value="${p.id}">${p.nombre}</option>`)).join('');
+    }
+
+    // Render ciudades (select de edición)
+    function renderSelectCiudades(){
+      const sel = $C('select_ciudad');
+      if (!sel) return;
+      const opts = ['<option value="">Seleccionar ciudad</option>']
+              .concat(CIUDADES.map(c => {
+                const tagProv = provinciaNombre(c.provincia_id);
+                return `<option value="${c.id}" data-prov="${c.provincia_id}">${c.nombre}${tagProv ? ' — '+tagProv : ''}</option>`;
+              })).join('');
+      sel.innerHTML = opts;
+      sel.onchange = manejarSeleccionCiudad;
+    }
+
+    // Carga ciudades
+    async function loadCiudades(){
+      try{
+        const data = await httpJsonC(API_CIUDADES, { method: 'GET' });
+        CIUDADES = (Array.isArray(data) ? data : []).map(mapCiudad).filter(x => x.id != null);
+      }catch(e){
+        console.error('loadCiudades:', e);
+        CIUDADES = [];
+      }finally{
+        renderSelectCiudades();
+      }
+    }
+
+    // Panel de edición ciudad
+    function manejarSeleccionCiudad(){
+      const sel = $C('select_ciudad');
+      const box = $C('ciudad_acciones');
+      const id  = sel?.value || '';
+      if (!id) { hideBoxC(box); return; }
+      const c = CIUDADES.find(x => String(x.id) === String(id));
+      if ($C('ciudad_nuevo_nombre'))     $C('ciudad_nuevo_nombre').value = c?.nombre || '';
+      if ($C('ciudad_nueva_provincia'))  $C('ciudad_nueva_provincia').value = c?.provincia_id || '';
+      showBoxC(box);
+    }
+
+    // === CRUD ===
+
+    // Crear ciudad -> POST /api/ciudades
+    async function agregarCiudad(){
+      const provinciaId = toIntC($C('ciudad_provincia')?.value);   // <-- nombre camelCase
+      const nombre = ($C('ciudad_nombre')?.value || '').trim();
+
+      if (!provinciaId){ alert('Selecciona una provincia'); return; }
+      if (!nombre){ alert('Ingresa el nombre de la ciudad'); return; }
+
+      const payload = { nombre, provinciaId };                    // <-- clave correcta
+
+      await httpJsonC('/api/ciudades', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      $C('ciudad_nombre').value = '';
+      $C('ciudad_provincia').value = '';
+      await loadCiudades();
+      alert('✅ Ciudad agregada');
+    }
+
+    // Editar ciudad -> PUT /api/ciudades/{id}
+    async function editarCiudad(){
+      const id = toIntC($C('select_ciudad')?.value);
+      if(!id){ alert('Selecciona una ciudad'); return; }
+
+      const nombre = ($C('ciudad_nuevo_nombre')?.value || '').trim();
+      const provincia_id = toIntC($C('ciudad_nueva_provincia')?.value);
+      if (!provincia_id){ alert('Selecciona la nueva provincia'); return; } // <-- obligatorio
+
+      await httpJsonC(`${API_CIUDADES}/${id}`, {
+        method:'PUT',
+        body: JSON.stringify({ nombre: nombre || undefined, provinciaId: provincia_id })
+      });
+
+      await loadCiudades();
+      hideBoxC($C('ciudad_acciones'));
+      if ($C('select_ciudad')) $C('select_ciudad').value = '';
+      alert('✅ Ciudad actualizada');
+    }
+
+    // Eliminar ciudad -> DELETE /api/ciudades/{id}
+    async function eliminarCiudad(){
+      const id = toIntC($C('select_ciudad')?.value);
+      if(!id){ alert('Selecciona una ciudad'); return; }
+      if(!confirm('¿Eliminar la ciudad seleccionada?')) return;
+      try{
+        await httpJsonC(`${API_CIUDADES}/${id}`, { method:'DELETE' });
+        await loadCiudades();
+        hideBoxC($C('ciudad_acciones'));
+        if ($C('select_ciudad')) $C('select_ciudad').value = '';
+        alert('🗑️ Ciudad eliminada');
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    // Escucha la actualización de provincias desde provincias.js
+    window.addEventListener('tt:provincias-updated', (ev) => {
+      PROVINCIAS_CACHE = Array.isArray(ev.detail) ? ev.detail : [];
+      renderProvinciasEnCiudad();
+    });
+
+    // Si por alguna razón provincias no cargó aún, intenta traerlas una vez
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (PROVINCIAS_CACHE.length === 0) {
+        try{
+          const res = await fetch('/api/provincias');
+          const data = await res.json();
+          PROVINCIAS_CACHE = (Array.isArray(data) ? data : [])
+                  .map(d => ({ id: d.provinciaId ?? d.id ?? d.provincia_id, nombre: d.nombre }))
+                  .filter(x => x.id != null);
+          renderProvinciasEnCiudad();
+        }catch(e){ console.warn('No se pudieron precargar provincias desde ciudades:', e); }
+      }
+      await loadCiudades();
+    });
+
+    // Exponer globales para onclick="..."
+    window.agregarCiudad   = agregarCiudad;
+    window.editarCiudad    = editarCiudad;
+    window.eliminarCiudad  = eliminarCiudad;
+    window.manejarSeleccionCiudad = manejarSeleccionCiudad;
+  </script>
+
+  <script>
+    // ===== Provincias (usa /api/provincias) =====
+    const API_PROVINCIAS = '/api/provincias';
+    const $P = (id) => document.getElementById(id);
+
+    let PROVINCIAS = []; // [{ id, nombre }]
+
+    // Helpers
+    async function httpJsonP(url, opts = {}) {
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+      const txt = await res.text();
+      const data = txt ? JSON.parse(txt) : null;
+      if (!res.ok) throw new Error(data?.message || txt || ('HTTP ' + res.status));
+      return data;
+    }
+    function showBoxP(el){ if (el) el.style.removeProperty('display'); }
+    function hideBoxP(el){ if (el) el.style.display = 'none'; }
+
+    // Mapeo DTO -> modelo de UI
+    function mapProvincia(dto){ return { id: dto.provinciaId ?? dto.id ?? dto.provincia_id, nombre: dto.nombre }; }
+
+    // Render de selects donde aparecen provincias
+    function renderSelectProvincias(){
+      const opts = ['<option value="">Seleccionar provincia</option>']
+              .concat(PROVINCIAS.map(p => `<option value="${p.id}">${p.nombre}</option>`))
+              .join('');
+
+      const selEditar    = $P('select_provincia');
+      const selAltaCiu   = $P('ciudad_provincia');
+      const selNuevaProv = $P('ciudad_nueva_provincia');
+
+      if (selEditar)    { selEditar.innerHTML = opts; selEditar.onchange = manejarSeleccionProvincia; }
+      if (selAltaCiu)   { selAltaCiu.innerHTML = opts; }
+      if (selNuevaProv) {
+        selNuevaProv.innerHTML = ['<option value="">Nueva provincia</option>']
+                .concat(PROVINCIAS.map(p => `<option value="${p.id}">${p.nombre}</option>`)).join('');
+      }
+
+      // Notifica a otros scripts (ciudades.js) que hay provincias listas
+      window.dispatchEvent(new CustomEvent('tt:provincias-updated', { detail: PROVINCIAS }));
+    }
+
+    // Cargar lista
+    async function loadProvincias(){
+      try{
+        const data = await httpJsonP(API_PROVINCIAS, { method: 'GET' });
+        PROVINCIAS = (Array.isArray(data) ? data : []).map(mapProvincia).filter(x => x.id != null);
+      }catch(e){
+        console.error('loadProvincias:', e);
+        PROVINCIAS = [];
+      }finally{
+        renderSelectProvincias();
+      }
+    }
+
+    // Mostrar/ocultar panel de edición
+    function manejarSeleccionProvincia(){
+      const sel = $P('select_provincia');
+      const box = $P('provincia_acciones');
+      const id  = sel?.value || '';
+      if (!id) { hideBoxP(box); return; }
+      const p = PROVINCIAS.find(x => String(x.id) === String(id));
+      if ($P('provincia_nuevo_nombre')) $P('provincia_nuevo_nombre').value = p?.nombre || '';
+      showBoxP(box);
+    }
+
+    // Utilidad para obtener ID actual
+    function getProvinciaId(){
+      const raw = ($P('select_provincia')?.value || $P('provincia_id')?.value || '').trim();
+      const n = parseInt(raw, 10);
+      return isNaN(n) ? null : n;
+    }
+
+    // === CRUD ===
+
+    // Crear -> POST /api/provincias
+    async function agregarProvincia(){
+      const nombre = ($P('provincia_nombre')?.value || '').trim();
+      if(!nombre){ alert('Ingresa el nombre'); return; }
+      try{
+        await httpJsonP(API_PROVINCIAS, { method:'POST', body: JSON.stringify({ nombre }) });
+        if ($P('provincia_nombre')) $P('provincia_nombre').value = '';
+        await loadProvincias();
+        alert('✅ Provincia agregada');
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    // Editar -> PUT /api/provincias/{id}
+    async function editarProvincia(){
+      const id = getProvinciaId();
+      if(!id){ alert('Selecciona la provincia'); return; }
+      const nombre = ($P('provincia_nuevo_nombre')?.value || '').trim(); // puede ir vacío
+      try{
+        await httpJsonP(`${API_PROVINCIAS}/${id}`, { method:'PUT', body: JSON.stringify({ nombre }) });
+        hideBoxP($P('provincia_acciones'));
+        if ($P('select_provincia')) $P('select_provincia').value = '';
+        await loadProvincias();
+        alert('✅ Provincia actualizada');
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    // Eliminar -> DELETE /api/provincias/{id}
+    async function eliminarProvincia(){
+      const id = getProvinciaId();
+      if(!id){ alert('Selecciona la provincia'); return; }
+      if(!confirm('¿Eliminar/inhabilitar la provincia?')) return;
+      try{
+        await httpJsonP(`${API_PROVINCIAS}/${id}`, { method:'DELETE' });
+        hideBoxP($P('provincia_acciones'));
+        if ($P('select_provincia')) $P('select_provincia').value = '';
+        await loadProvincias();
+        alert('🗑️ Provincia eliminada');
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    // init
+    document.addEventListener('DOMContentLoaded', loadProvincias);
+
+    // Exponer funciones globales (porque usas onclick="...")
+    window.agregarProvincia   = agregarProvincia;
+    window.editarProvincia    = editarProvincia;
+    window.eliminarProvincia  = eliminarProvincia;
+    window.manejarSeleccionProvincia = manejarSeleccionProvincia;
   </script>
 </body>
 </html>

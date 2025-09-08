@@ -1,44 +1,40 @@
 // src/main/java/com/example/tienda_tech/controller/CiudadController.java
 package com.example.tienda_tech.controller;
-import java.util.Map;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import com.example.tienda_tech.repository.CiudadRepository;
+import com.example.tienda_tech.dto.CiudadDTO;
+import com.example.tienda_tech.service.CiudadService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
+@Validated
 @RestController
-@RequestMapping("/api")
-@CrossOrigin // opcional si sirves el HTML fuera de Spring
+@RequiredArgsConstructor
+@RequestMapping("/api/ciudades")
 public class CiudadController {
+    private final CiudadService svc;
 
-    private final CiudadRepository ciudadRepo;
+    @GetMapping
+    public List<CiudadDTO> listar(){ return svc.listar(); }
 
-    public CiudadController(CiudadRepository ciudadRepo) {
-        this.ciudadRepo = ciudadRepo;
+    @PostMapping
+    public ResponseEntity<Void> crear(@Validated @RequestBody CiudadDTO dto){
+        svc.crear(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // CiudadController.java
-    @GetMapping("/ciudades")
-    public List<Map<String, Object>> todas() {
-        return ciudadRepo.findAll().stream()
-            .map(c -> Map.<String, Object>of(
-                "ciudadId",    c.getCiudadId(),
-                "nombre",      c.getNombre(),
-                "provinciaId", c.getProvinciaId()
-            ))
-            .collect(Collectors.toList());
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> actualizar(@PathVariable Short id, @Validated @RequestBody CiudadDTO dto){
+        svc.actualizar(id, dto);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/provincias/{provinciaId}/ciudades")
-    public List<Map<String, Object>> porProvincia(@PathVariable Short provinciaId) {
-        return ciudadRepo.findByProvinciaId(provinciaId).stream()
-            .map(c -> Map.<String, Object>of(
-                "ciudadId",    c.getCiudadId(),
-                "nombre",      c.getNombre(),
-                "provinciaId", c.getProvinciaId()
-            ))
-            .collect(Collectors.toList());
-}
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Short id){
+        svc.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

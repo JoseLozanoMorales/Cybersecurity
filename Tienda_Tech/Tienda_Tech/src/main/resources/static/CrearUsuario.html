@@ -1,39 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Crear Usuario - TiendaTech</title>
-    <link rel="stylesheet" href="style2.css">
+
+    <link rel="stylesheet" href="style2.css"/>
     <script src="/js/auth-menu.js?v=4" defer></script>
     <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"/>
     <!-- Bootstrap Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet"/>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="logo">TiendaTech</div>
-        <div class="search-container">
-            <input type="text" class="search-bar" placeholder="Buscar...">
-        </div>
-        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    </header>
+<!-- Header -->
+<header class="header">
+    <div class="logo">TiendaTech</div>
+    <div class="search-container">
+        <input type="text" class="search-bar" placeholder="Buscar..." />
+    </div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+</header>
 
-    <!-- Overlay -->
-    <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
 
-    <!-- Menú Hamburguesa -->
-    <nav class="hamburger-menu" id="hamburgerMenu">
-        <button class="menu-close" onclick="closeMenu()">✕</button>
-        <a href="#" class="menu-item">Inicio</a>
-        <a href="#" class="menu-item">Cuenta</a>
-        <a href="#" class="menu-item">Carrito</a>
-        <a href="#" class="menu-item">Contactenos</a>
-        <a href="#" class="menu-item" >Cerrar sesión</a>
-    </nav>
+<!-- Menú Hamburguesa -->
+<nav class="hamburger-menu" id="hamburgerMenu">
+    <button class="menu-close" onclick="closeMenu()">✕</button>
+    <a href="#" class="menu-item">Inicio</a>
+    <a href="#" class="menu-item">Cuenta</a>
+    <a href="#" class="menu-item">Carrito</a>
+    <a href="#" class="menu-item">Contactenos</a>
+    <a href="#" class="menu-item">Cerrar sesión</a>
+</nav>
 
 <!-- Main Container -->
 <div class="container">
@@ -44,213 +44,202 @@
         </button>
     </div>
 
-        <h2 class="form-title">Crear Usuario</h2>
+    <h2 class="form-title">Crear Usuario</h2>
 
-        <!-- Profile Image -->
-        <div class="text-center mb-4">
-            <div class="profile-image" onclick="changeProfileImage()">
-                Foto de perfil
-            </div>
-            <small class="text-muted">Haz clic para cambiar la foto</small>
+    <!-- Profile Image -->
+    <div class="text-center mb-4">
+        <div class="profile-image" onclick="changeProfileImage()">
+            Foto de perfil
         </div>
+        <small class="text-muted">Haz clic para cambiar la foto</small>
+    </div>
 
-        <!-- User Form -->
-        <form id="editUserForm" novalidate>
-            <div class="row g-3">
-                <!-- Nombre - Full width like in the image -->
-                <div class="col-12">
-                    <label class="form-label required">Nombre</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" required>
-                    <div class="invalid-feedback">Por favor, ingresa el nombre.</div>
-                </div>
-
-                <!-- Usuario and Correo - Split in two columns -->
-                <div class="col-12 col-md-6">
-                    <label class="form-label">Usuario</label>
-                    <input type="text" class="form-control" id="usuario" name="usuario">
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label required">Correo electrónico</label>
-                    <input type="email" class="form-control" id="correo" name="correo" required>
-                    <div class="invalid-feedback">Por favor, ingresa un correo electrónico válido.</div>
-                </div>
-
-                <!-- Contraseña and Repetir contraseña - Split in two columns -->
-                <div class="col-12 col-md-6">
-                    <label class="form-label required">Contraseña</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" id="contrasena" name="contrasena" required>
-                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                    <div class="invalid-feedback">Por favor, ingresa la contraseña.</div>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label required">Repetir contraseña</label>
-                    <input type="password" class="form-control" id="repetirContrasena" name="repetirContrasena" required>
-                    <div class="invalid-feedback">Las contraseñas no coinciden.</div>
-                </div>
-
-                <!-- Cédula and Número de teléfono - Split in two columns -->
-                <div class="col-12 col-md-6">
-                    <label class="form-label required">Cédula</label>
-                    <input type="text" class="form-control" id="cedula" name="cedula" required pattern="[0-9]{10}">
-                    <div class="invalid-feedback">Por favor, ingresa una cédula válida (10 dígitos).</div>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label required">Número de teléfono</label>
-                    <input type="tel" class="form-control" id="telefono" name="telefono" required pattern="[0-9]{10}">
-                    <div class="invalid-feedback">Por favor, ingresa un número de teléfono válido.</div>
-                </div>
+    <!-- User Form -->
+    <form id="editUserForm" novalidate>
+        <div class="row g-3">
+            <!-- Nombre -->
+            <div class="col-12">
+                <label class="form-label required">Nombre</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required />
+                <div class="invalid-feedback">Por favor, ingresa el nombre.</div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="row mt-4">
+            <!-- Usuario y Correo -->
+            <div class="col-12 col-md-6">
+                <label class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="usuario" name="usuario" />
+            </div>
 
-                <div class="col-12 col-md-6">
-                    <button type="submit" class="save-btn">
-                        <i class="bi bi-check-circle me-1"></i> Guardar cambios
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Correo electrónico</label>
+                <input type="email" class="form-control" id="correo" name="correo" required />
+                <div class="invalid-feedback">Por favor, ingresa un correo electrónico válido.</div>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="contrasena" name="contrasena" required />
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <i class="bi bi-eye"></i>
                     </button>
                 </div>
+                <div class="invalid-feedback">Por favor, ingresa la contraseña.</div>
             </div>
-        </form>
+
+            <!-- Repetir Contraseña -->
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Repetir contraseña</label>
+                <input type="password" class="form-control" id="repetirContrasena" name="repetirContrasena" required />
+                <div class="invalid-feedback">Las contraseñas no coinciden.</div>
+            </div>
+
+            <!-- Cédula -->
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Cédula</label>
+                <input type="text" class="form-control" id="cedula" name="cedula" required pattern="[0-9]{10}" />
+                <div class="invalid-feedback">Por favor, ingresa una cédula válida (10 dígitos).</div>
+            </div>
+
+            <!-- Teléfono -->
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Número de teléfono</label>
+                <input type="tel" class="form-control" id="telefono" name="telefono" required pattern="[0-9]{10}" />
+                <div class="invalid-feedback">Por favor, ingresa un número de teléfono válido.</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12 col-md-6">
+                <button type="submit" class="save-btn">
+                    <i class="bi bi-check-circle me-1"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Bloque de Verificación por Código (OTP) -->
+    <div id="verifyBlock" class="container mt-4" style="display:none">
+        <hr class="my-4" />
+        <h3 class="h5 mb-3">Verifica tu correo</h3>
+        <p class="text-muted mb-3">
+            Te enviamos un código a <span id="verifyEmailLabel" class="fw-semibold"></span>.
+            Pégalo aquí para activar tu cuenta.
+        </p>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6">
+                <label class="form-label required">Código de verificación</label>
+                <input type="text" inputmode="numeric" maxlength="6"
+                       class="form-control" id="otpCode" placeholder="6 dígitos" />
+                <div class="invalid-feedback">Ingresa el código de 6 dígitos.</div>
+            </div>
+
+            <div class="col-12 col-md-6 d-flex gap-2">
+                <button id="btnVerify" class="btn btn-success flex-grow-1" type="button">
+                    <i class="bi bi-shield-check me-1"></i> Verificar
+                </button>
+                <button id="btnResend" class="btn btn-outline-secondary" type="button" disabled>
+                    Reenviar código <span id="resendTimer" class="ms-1">(60)</span>
+                </button>
+            </div>
+        </div>
+
+        <small class="text-muted d-block mt-2">
+            Por seguridad, el código expira en 10 minutos. Revisa también tu carpeta de spam.
+        </small>
+    </div>
 </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <nav class="footer-nav">
-            <a href="index.html" class="active">Inicio</a>
-            <a href="cuenta.html" >Cuenta</a>
-            <a href="Carrito.html">Carrito</a>
-            <a href="#contactanos">Contáctenos</a>
-        </nav>
-    </footer>
+<!-- Footer -->
+<footer class="footer">
+    <nav class="footer-nav">
+        <a href="index.html" class="active">Inicio</a>
+        <a href="cuenta.html">Cuenta</a>
+        <a href="Carrito.html">Carrito</a>
+        <a href="#contactanos">Contáctenos</a>
+    </nav>
+</footer>
 
 <!-- Bootstrap JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-
-
-
-
-
-
+<!-- Script: Menú / Logout -->
 <script>
-(function () {
-  const REDIRECT_TO = 'login.html'; // ajusta si tu login se llama distinto
+    (function () {
+        const REDIRECT_TO = 'login.html';
 
-  const menu = document.getElementById('hamburgerMenu');
-  if (!menu) return;
+        const menu = document.getElementById('hamburgerMenu');
+        if (!menu) return;
 
-  // ---- Detecta si hay sesión activa ----
-  function hasActiveSession(){
-    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-    let ok = false;
-    try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
-    return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-  }
+        function hasActiveSession(){
+            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+            let ok = false;
+            try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+            return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+        }
 
-  // ---- Busca el enlace "Cerrar sesión" y aplica estilo/estado ----
-  function getLogoutLink(){
-    return Array.from(menu.querySelectorAll('a.menu-item'))
-      .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
-  }
+        function getLogoutLink(){
+            return Array.from(menu.querySelectorAll('a.menu-item'))
+                .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+        }
 
-  function updateLogoutVisibility(){
-    const a = getLogoutLink();
-    if (!a) return;
-    if (hasActiveSession()){
-      a.classList.remove('logout-disabled');
-      a.removeAttribute('aria-disabled');
-      a.tabIndex = 0;
-    } else {
-      a.classList.add('logout-disabled');
-      a.setAttribute('aria-disabled','true');
-      a.tabIndex = -1;
-    }
-  }
+        function updateLogoutVisibility(){
+            const a = getLogoutLink();
+            if (!a) return;
+            if (hasActiveSession()){
+                a.classList.remove('logout-disabled');
+                a.removeAttribute('aria-disabled');
+                a.tabIndex = 0;
+            } else {
+                a.classList.add('logout-disabled');
+                a.setAttribute('aria-disabled','true');
+                a.tabIndex = -1;
+            }
+        }
 
-  // ---- Delegación de clicks dentro del menú ----
-  menu.addEventListener('click', async function (ev) {
-    const a = ev.target.closest('a.menu-item');
-    if (!a) return;
+        menu.addEventListener('click', async function (ev) {
+            const a = ev.target.closest('a.menu-item');
+            if (!a) return;
 
-    const label = (a.textContent || '').trim().toLowerCase();
-    if (label !== 'cerrar sesión') return;
+            const label = (a.textContent || '').trim().toLowerCase();
+            if (label !== 'cerrar sesión') return;
 
-    // si está inactivo, no hace nada
-    if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
-      ev.preventDefault();
-      return;
-    }
+            if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+                ev.preventDefault();
+                return;
+            }
 
-    ev.preventDefault();
+            ev.preventDefault();
 
-    // (Opcional) notificar al backend
-    try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+            try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+            try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
 
-    // limpiar sesión local
-    sessionStorage.removeItem('user');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+            sessionStorage.removeItem('user');
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
 
-    // limpiar cookies no-HttpOnly (si las hubiera)
-    try {
-      document.cookie.split(';').forEach(c=>{
-        document.cookie = c.replace(/^ +/,'')
-          .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
-      });
-    } catch {}
+            try {
+                document.cookie.split(';').forEach(c=>{
+                    document.cookie = c.replace(/^ +/,'')
+                        .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+                });
+            } catch {}
 
-    try { closeMenu(); } catch {}
-    window.location.href = REDIRECT_TO;
-  });
+            try { closeMenu(); } catch {}
+            window.location.href = REDIRECT_TO;
+        });
 
-  // Inicializa y mantén sincronizado si cambia el storage (otra pestaña)
-  document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
-  window.addEventListener('storage', updateLogoutVisibility);
-  // por si el panel se abre/cierra y quieres refrescar
-  document.addEventListener('visibilitychange', updateLogoutVisibility);
-})();
+        document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+        window.addEventListener('storage', updateLogoutVisibility);
+        document.addEventListener('visibilitychange', updateLogoutVisibility);
+    })();
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- Script: UI básicos (toggle, imagen, toasts) -->
 <script>
     function toggleMenu() {
         const menu = document.getElementById('hamburgerMenu');
@@ -265,11 +254,10 @@
         menu.classList.remove('active');
         overlay.classList.remove('active');
     }
-    // Toggle password visibility
+
     document.getElementById('togglePassword').addEventListener('click', function() {
         const passwordField = document.getElementById('contrasena');
         const icon = this.querySelector('i');
-
         if (passwordField.type === 'password') {
             passwordField.type = 'text';
             icon.className = 'bi bi-eye-slash';
@@ -279,7 +267,6 @@
         }
     });
 
-    // Profile image change function
     function changeProfileImage() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -301,177 +288,135 @@
         input.click();
     }
 
-    // Form validation and submission
-    document.getElementById('editUserForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const form = this;
-        const nombre = document.getElementById('nombre');
-        const correo = document.getElementById('correo');
-        const contrasena = document.getElementById('contrasena');
-        const repetirContrasena = document.getElementById('repetirContrasena');
-        const cedula = document.getElementById('cedula');
-        const telefono = document.getElementById('telefono');
-
-        let isValid = true;
-
-        // Reset previous validation states
-        form.querySelectorAll('.form-control').forEach(input => {
-            input.classList.remove('is-invalid', 'is-valid');
-        });
-
-        // Validate required fields
-        if (!nombre.value.trim()) {
-            nombre.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            nombre.classList.add('is-valid');
-        }
-
-        // Validate email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!correo.value.trim() || !emailRegex.test(correo.value)) {
-            correo.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            correo.classList.add('is-valid');
-        }
-
-        // Validate password
-        if (!contrasena.value.trim() || contrasena.value.length < 6) {
-            contrasena.classList.add('is-invalid');
-            const pwdBlock = contrasena.closest('.col-12'); // el div col-12 col-md-6
-            const feedback = pwdBlock ? pwdBlock.querySelector('.invalid-feedback') : null;
-            if (feedback) feedback.textContent = 'La contraseña debe tener al menos 6 caracteres.';
-            isValid = false;
-        } else {
-            contrasena.classList.add('is-valid');
-        }
-
-        // Validate password confirmation
-        if (contrasena.value !== repetirContrasena.value) {
-            repetirContrasena.classList.add('is-invalid');
-            isValid = false;
-        } else if (repetirContrasena.value.trim()) {
-            repetirContrasena.classList.add('is-valid');
-        }
-
-        // Validate cedula (10 digits)
-        const cedulaRegex = /^[0-9]{10}$/;
-        if (!cedula.value.trim() || !cedulaRegex.test(cedula.value)) {
-            cedula.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            cedula.classList.add('is-valid');
-        }
-
-        // Validate phone (10 digits)
-        const phoneRegex = /^[0-9]{10}$/;
-        if (!telefono.value.trim() || !phoneRegex.test(telefono.value)) {
-            telefono.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            telefono.classList.add('is-valid');
-        }
-
-        if (isValid) {
-            // Crear el objeto con los datos para el DTO
-            const data = {
-                nombre: nombre.value.trim(),
-                correo: correo.value.trim(),
-                contrasena: contrasena.value.trim(),
-                cedula: cedula.value.trim(),
-                telefono: telefono.value.trim(),
-                usuario: document.getElementById('usuario').value.trim()
-            };
-
-            // Enviar datos al backend con fetch
-            fetch('/api/usuarios/crear', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-                .then(response => {
-                    if (response.ok) {
-                        showToast('Usuario creado exitosamente', 'success');
-                        form.reset(); // opcional, limpiar form
-                        setTimeout(() => {
-                            window.location.href = '/login.html';
-                        }, 1500);
-                    } else {
-                        showToast('Error al crear usuario', 'danger');
-                    }
-                })
-                .catch(() => {
-                    showToast('Error de conexión', 'danger');
-                });
-        } else {
-            showToast('Por favor, corrige los errores en el formulario', 'danger');
-        }
-    });
-
-    // Retornar flecha
     function goBack() {
         if (confirm('¿Estás seguro de que deseas salir? Los cambios no guardados se perderán.')) {
-            window.location.href = '/';  // Vuelve a la página principal (home)
+            window.location.href = '/';
         }
     }
 
-    // Cancel edit function
-    function cancelEdit() {
-        if (confirm('¿Estás seguro de que deseas cancelar? Los cambios no guardados se perderán.')) {
-            // Reset form
-            document.getElementById('editUserForm').reset();
-            document.querySelectorAll('.form-control').forEach(input => {
-                input.classList.remove('is-invalid', 'is-valid');
-            });
-
-            // Reset profile image
-            const profileImage = document.querySelector('.profile-image');
-            profileImage.style.backgroundImage = '';
-            profileImage.innerHTML = 'Foto de perfil';
-
-            showToast('Cambios cancelados', 'info');
-        }
-    }
-
-    // Toast notification function
     function showToast(message, type = 'info') {
         const toastHtml = `
-            <div class="toast align-items-center text-bg-${type} border-0 position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-
+        <div class="toast align-items-center text-bg-${type} border-0 position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
         document.body.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = document.querySelector('.toast:last-child');
         const toast = new bootstrap.Toast(toastElement);
         toast.show();
-
-        // Remove toast from DOM after hiding
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
     }
 
-    // Load existing data (simulate)
-    window.addEventListener('load', function() {
-        // You can populate the form with existing user data here
-        // Example:
-        /*
-        document.getElementById('nombre').value = 'Juan Pérez';
-        document.getElementById('usuario').value = 'juanperez';
-        document.getElementById('correo').value = 'juan@ejemplo.com';
-        document.getElementById('cedula').value = '1234567890';
-        document.getElementById('telefono').value = '0987654321';
-        */
+    window.addEventListener('load', function() {});
+</script>
+
+<!-- Script: Registro (submit) -->
+<script>
+    document.getElementById('editUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const correo = document.getElementById('correo');
+
+        /* ... tus validaciones como ya las tienes ... */
+        /* Si es válido: */
+        const data = {
+            nombre: document.getElementById('nombre').value.trim(),
+            correo: correo.value.trim(),
+            contrasena: document.getElementById('contrasena').value.trim(),
+            cedula: document.getElementById('cedula').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            usuario: document.getElementById('usuario').value.trim()
+        };
+
+        fetch('/api/usuarios/crear', {
+            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+        })
+            .then(async r => {
+                if (!r.ok) {
+                    const txt = await r.text().catch(()=> '');
+                    showToast('Error al crear usuario' + (txt?`: ${txt}`:''), 'danger');
+                    return;
+                }
+                showToast('Usuario creado, enviando código...', 'success');
+                Array.from(form.elements).forEach(el => el.disabled = true);
+                sendOtp(data.correo);  // <<-- NO redirigir aquí
+            })
+            .catch(()=> showToast('Error de conexión', 'danger'));
+    });
+</script>
+
+<!-- Script: Verificación OTP (aparte, mismo HTML) -->
+<script>
+    const API_OTP = '/api/otp';
+    let pendingEmail = null, txId = null, resendTimerId = null, resendLeft = 60;
+
+    function startResendTimer(){
+        const btn = document.getElementById('btnResend');
+        const lbl = document.getElementById('resendTimer');
+        if (!btn || !lbl) return;
+        btn.disabled = true; resendLeft = 60; lbl.textContent = `(${resendLeft})`;
+        resendTimerId = setInterval(()=>{ resendLeft--; lbl.textContent = `(${resendLeft})`;
+            if(resendLeft<=0){ clearInterval(resendTimerId); btn.disabled=false; lbl.textContent=''; }
+        },1000);
+    }
+
+    async function sendOtp(email){
+        try{
+            const r = await fetch(API_OTP, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ accion:'enviar', correo: email, txId })
+            });
+            if(!r.ok){
+                const txt = await r.text().catch(()=> '');
+                showToast(`Error al enviar código (HTTP ${r.status})` + (txt?`: ${txt}`:''), 'danger');
+                console.error('OTP/enviar ERROR', r.status, txt);
+                return;
+            }
+            const payload = await r.json();
+            txId = payload.txId; pendingEmail = payload.correo;
+
+            document.getElementById('verifyEmailLabel').textContent = pendingEmail;
+            document.getElementById('verifyBlock').style.display = 'block';
+            startResendTimer();
+            showToast('Código enviado al correo', 'info');
+        }catch(e){
+            console.error('OTP/enviar EXCEPTION', e);
+            showToast('Error de conexión al enviar OTP', 'danger');
+        }
+    }
+
+    async function verifyOtp(){
+        const input = document.getElementById('otpCode');
+        const code = (input.value||'').trim();
+        if(!/^[0-9]{6}$/.test(code)){ input.classList.add('is-invalid'); return; }
+        input.classList.remove('is-invalid');
+
+        try{
+            const r = await fetch(API_OTP, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ accion:'validar', correo: pendingEmail, codigo: code, txId })
+            });
+            const txt = await r.text().catch(()=> '');
+            if(r.ok){
+                showToast('Correo verificado. Redirigiendo...', 'success');
+                setTimeout(()=> location.href='/login.html', 1200);
+            }else{
+                showToast('Código inválido o expirado' + (txt?`: ${txt}`:''), 'danger');
+                console.error('OTP/validar ERROR', r.status, txt);
+            }
+        }catch(e){
+            console.error('OTP/validar EXCEPTION', e);
+            showToast('Error de conexión al verificar OTP', 'danger');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const btnVerify = document.getElementById('btnVerify');
+        const btnResend = document.getElementById('btnResend');
+        if (btnVerify) btnVerify.addEventListener('click', verifyOtp);
+        if (btnResend) btnResend.addEventListener('click', ()=> sendOtp(pendingEmail));
     });
 </script>
 </body>

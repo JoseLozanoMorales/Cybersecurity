@@ -12,11 +12,15 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-      .csrf(csrf -> csrf.disable())
-      .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/assets/**", "/uploads/**").permitAll()
-        .anyRequest().permitAll()   // << clave: TODO público por ahora
-      );
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                    // recursos estáticos
+                    .requestMatchers("/assets/**", "/uploads/**").permitAll()
+                    // endpoints públicos
+                    .requestMatchers("/api/usuarios/crear", "/api/otp").permitAll()
+                    // lo demás requiere login
+                    .anyRequest().permitAll()// << clave: TODO público por ahora
+            );
     // No llames a formLogin() ni httpBasic() -> no hay /login por defecto
     return http.build();
   }

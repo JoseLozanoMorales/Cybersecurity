@@ -46,13 +46,16 @@
 
     <h2 class="form-title">Editar datos de usuario</h2>
 
-    <!-- Profile Image -->
-    <div class="text-center mb-4">
-      <div class="profile-image" onclick="changeProfileImage()">
-        Foto de perfil
-      </div>
-      <small class="text-muted">Haz clic para cambiar la foto</small>
+  <!-- Imagencita actualizate porfis -->
+  <div class="text-center mb-4">
+    <div id="avatarEdit" class="profile-image" role="button" title="Haz clic para cambiar la foto">
+      <img id="avatar-edit" alt="Foto de perfil"
+          style="width:128px;height:128px;border-radius:50%;object-fit:cover;" />
     </div>
+    <input type="file" id="avatarFile" accept="image/*" hidden />
+    <small class="text-muted">Haz clic para cambiar la foto</small>
+  </div>
+
 
     <!-- User Form -->
     <form id="editUserForm" method="post" novalidate>
@@ -241,6 +244,71 @@
       if (cached.usuario)  iUsuario.value  = cached.usuario;
       if (cached.correo)   iCorreo.value   = cached.correo;
       if (cached.telefono) iTelefono.value = cached.telefono;
+
+    // --- Avatar: pintar actual y manejar subida ---
+
+    const imgAvatar   = document.getElementById('avatar-edit');
+    const fileAvatar  = document.getElementById('avatarFile');
+    const btnAvatar   = document.getElementById('avatarEdit');
+
+    function resolveAvatarUrlForView() {
+      // intenta desde cache; si no, la ruta estándar del servidor
+      const cachedUrl = cached.avatar_path || cached.avatarPath || null;
+      if (cachedUrl) return `${cachedUrl}?t=${Date.now()}`;
+      if (userId)    return `/uploads/avatars/${userId}/avatar.png?t=${Date.now()}`;
+      return `/assets/avatars/defaults/user.png`;
+    }
+    imgAvatar.addEventListener('error', () => {
+      imgAvatar.src = '/assets/avatars/defaults/user.png?t=' + Date.now();
+    });
+    // pintar actual
+    imgAvatar.src = resolveAvatarUrlForView();
+
+    // abrir selector de archivo al hacer clic en el avatar
+    btnAvatar.addEventListener('click', () => fileAvatar.click());
+
+    // subir archivo y refrescar imagen
+    fileAvatar.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file || !userId) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const resp = await fetch(`/api/usuarios/${userId}/avatar`, { method: 'POST', body: fd });
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || data.ok === false) {
+          throw new Error(data.error || `HTTP ${resp.status}`);
+        }
+
+        // url “limpia” que guarda el backend; cache-buster para refrescar la vista
+        const baseUrl = data.url || `/uploads/avatars/${userId}/avatar.png`;
+        imgAvatar.src = `${baseUrl}?t=${Date.now()}`;
+
+        // persiste en cache local para que otras páginas lo usen
+        try {
+          const raw = sessionStorage.getItem('user') || localStorage.getItem('user') || '{}';
+          const u   = JSON.parse(raw);
+          u.avatar_path = baseUrl;
+          sessionStorage.setItem('user', JSON.stringify(u));
+          localStorage.setItem('user', JSON.stringify(u));
+          cached = u; // sincroniza la variable local
+        } catch (_) {}
+        const bust = Date.now();
+        document.querySelectorAll('img[data-avatar="user"]').forEach(el => {
+          el.src = `${baseUrl}?t=${bust}`;
+        });
+        alert('✅ Avatar actualizado');
+      } catch (err) {
+        alert('❌ No se pudo actualizar el avatar: ' + (err.message || err));
+      } finally {
+        // permitir volver a elegir el mismo archivo
+        fileAvatar.value = '';
+      }
+    });
+
 
       // 4) Envío
       form.addEventListener('submit', async (e) => {

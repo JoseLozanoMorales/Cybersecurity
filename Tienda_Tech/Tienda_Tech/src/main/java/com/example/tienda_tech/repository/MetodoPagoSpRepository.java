@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 @Repository
 public class MetodoPagoSpRepository {
 
@@ -57,6 +56,7 @@ public class MetodoPagoSpRepository {
     }
 
     // ==== Queries auxiliares ====
+///ESTO NO VALE, NO DEBE SER USADO
 
     private static final DateTimeFormatter VENCE_FMT = DateTimeFormatter.ofPattern("MM/yyyy");
 

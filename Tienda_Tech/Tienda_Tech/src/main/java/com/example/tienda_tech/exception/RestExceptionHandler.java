@@ -1,6 +1,7 @@
 package com.example.tienda_tech.exception;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,28 +11,29 @@ import java.util.Map;
 @RestControllerAdvice
 public class RestExceptionHandler {
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<?> bad(BadRequestException e) {
-        return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
-    }
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<?> badRequest(IllegalArgumentException ex) {
+    return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+  }
 
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<?> conflict(ConflictException e) {
-        return ResponseEntity.status(409).body(Map.of("success", false, "error", e.getMessage()));
-    }
+  @ExceptionHandler(DataAccessException.class)
+  public ResponseEntity<?> sql(DataAccessException ex) {
+    String msg = ex.getMostSpecificCause() != null
+        ? ex.getMostSpecificCause().getMessage()
+        : ex.getMessage();
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<?> notFound(NotFoundException e) {
-        return ResponseEntity.status(404).body(Map.of("success", false, "error", e.getMessage()));
-    }
+    // Heurística: si el mensaje indica choque de restricciones/“límite”, lo tratamos como 409
+    HttpStatus status = (msg != null && msg.toLowerCase().contains("límite"))
+        ? HttpStatus.CONFLICT
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<?> di(DataIntegrityViolationException e) {
-        return ResponseEntity.status(409).body(Map.of("success", false, "error", "Conflicto con datos (restricción de unicidad o FK)."));
-    }
+    return ResponseEntity.status(status).body(Map.of("error", msg));
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> generic(Exception e) {
-        return ResponseEntity.status(500).body(Map.of("success", false, "error", "Error interno", "detail", e.getMessage()));
-    }
+  // (Opcional) último catch-all
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<?> generic(Exception ex) {
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(Map.of("error", "Error interno", "detail", ex.getMessage()));
+  }
 }

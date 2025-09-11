@@ -238,5 +238,71 @@
     alert('Agregar nueva reseña');
   }
 </script>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+
+  const imgBox   = document.querySelector('.product-image');
+  const infoBox  = document.querySelector('.product-info');
+
+  function money(n){
+    const x = Number(n);
+    return isFinite(x) ? `$${x.toFixed(2)}` : '$0.00';
+  }
+
+  async function load(){
+    if(!id){ alert('Falta parámetro id'); return; }
+    try{
+      const res = await fetch(`/api/productos/${encodeURIComponent(id)}`, { credentials:'include' });
+      if(!res.ok){ throw new Error('No se pudo cargar el producto'); }
+      const p = await res.json();
+
+      // Imagen principal
+      const url = p.imagenId ? `/api/galeria/${p.imagenId}/img` : '/img/placeholder.png';
+      imgBox.style.backgroundImage    = `url("${url}")`;
+      imgBox.style.backgroundSize     = 'cover';
+      imgBox.style.backgroundPosition = 'center';
+      imgBox.innerHTML = '';
+
+      // Texto
+      const items = infoBox.querySelectorAll('.product-info-item');
+      if(items[0]) items[0].textContent = p.nombre || '';
+      if(items[1]) items[1].textContent = money(p.precio);
+      if(items[2]) items[2].textContent = p.marca  || '';
+
+      // (Opcional) miniaturas a partir de p.galeria
+      // Ejemplo simple: click cambia la imagen principal
+      if (Array.isArray(p.galeria) && p.galeria.length > 0){
+        const thumbs = document.createElement('div');
+        thumbs.className = 'd-flex gap-2 mt-3 flex-wrap';
+        p.galeria.forEach(g => {
+          const a = document.createElement('a');
+          a.href  = 'javascript:void(0)';
+          a.onclick = () => {
+            imgBox.style.backgroundImage = `url("/api/galeria/${g.id}/img")`;
+          };
+          const im = document.createElement('img');
+          im.src = `/api/galeria/${g.id}/img`;
+          im.alt = 'miniatura';
+          im.style.width = '60px';
+          im.style.height = '60px';
+          im.style.objectFit = 'cover';
+          im.style.borderRadius = '6px';
+          a.appendChild(im);
+          thumbs.appendChild(a);
+        });
+        infoBox.appendChild(thumbs);
+      }
+    }catch(err){
+      console.error(err);
+      alert('No se pudo cargar la información del producto');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', load);
+})();
+</script>
+
 </body>
 </html>

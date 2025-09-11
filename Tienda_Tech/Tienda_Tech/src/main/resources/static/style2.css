@@ -1495,3 +1495,9 @@ body {
   flex: 0 0 88px;         /* ancho justo para GB/TB */
   padding: 10px 12px;     /* consistente con .control */
 }
+#gal_dropzone.dragover {
+  outline: 2px dashed rgba(100, 200, 120, .9);
+  background: rgba(100, 200, 120, .08);
+}
+/* en style2.css */
+#gal_dropzone.dragover { border-color:#5cb85c; background:rgba(92,184,92,.08); }

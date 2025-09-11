@@ -310,11 +310,423 @@
         </div>
       </div>
 
+
     </div>
   </div>
+    <!-- ===== Modal Galería ===== -->
+  <div id="modalGaleria" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="galTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="galTitle">Galería</div>
+        <button class="modal-close" type="button" id="gal_btnCerrar" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="group" style="margin-top:-8px;">
+        <div class="muted" id="gal_counters">—</div>
+      </div>
+
+      <div class="group">
+        <label>Subir imágenes (máx. 10MB c/u) — tipos: jpeg/png/webp</label>
+          <div class="dashed" id="gal_dropzone">
+            <div class="tt-mb-2"><span class="icon plus"></span> Selecciona imágenes (máx. 20 totales por producto)</div>
+            <input id="gal_files" type="file" accept="image/*" multiple hidden />
+            <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;">
+              <button class="btn btn-outline" type="button" id="gal_btnSel">Seleccionar</button>
+              <label style="display:flex; gap:.35rem; align-items:center;">
+                <input type="checkbox" id="gal_new_menu"> <span>Marcar subidas como “para menú”</span>
+              </label>
+              <span id="gal_sel_info" class="muted">Ningún archivo seleccionado</span>
+              <button class="btn btn-primary" id="gal_btnUpload" disabled>Subir seleccionadas</button>
+            </div>
+          </div>
+      </div>
+
+      <div class="group">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <strong>Vista:</strong>
+          <label><input type="radio" name="gal_vista" value="galeria" checked> Galería</label>
+          <label><input type="radio" name="gal_vista" value="menu"> Menú</label>
+          <div style="flex:1"></div>
+          <button class="btn btn-outline btn--sm" id="gal_btnFlags">Guardar flags/ALT</button>
+          <button class="btn btn-outline btn--sm" id="gal_btnOrden">Guardar orden de la vista</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div id="gal_grid" class="data-table" style="padding:.5rem; border-radius:.5rem;">
+          <!-- grid -->
+        </div>
+        <div class="muted" style="margin-top:.5rem;">Tip: arrastra para reordenar en la vista seleccionada. ⭐ define PORTADA.</div>
+      </div>
+    </div>
+  </div>
+  <script>
+  /* ========= GALERÍA (frontend) ========= */
+
+  const GAL_API = {
+    list:   (pid)=> `/api/productos/${pid}/galeria/lista`,    // lista de ítems con flags/posiciones
+    upload: (pid)=> `/api/productos/${pid}/galeria`,          // POST (JSON) batch
+    flags:  `/api/galeria/flags`,                             // PATCH (JSON) batch
+    reorder:(pid)=> `/api/productos/${pid}/galeria/reordenar`,// POST vista + items
+    portada:(pid,gid)=> `/api/productos/${pid}/galeria/${gid}/portada`, // POST
+    media:  (gid)=> `/api/galeria/${gid}/media`,              // GET binario
+    del:    (gid)=> `/api/galeria/${gid}`                     // DELETE ?hard=
+  };
+
+  const GAL_STATE = {
+    productoId: null,
+    nombre: '',
+    items: [],          // [{galeria_id, es_portada, para_galeria, para_menu, posicion_galeria, posicion_menu, habilitado, descripcion, mime_type, ancho, alto, peso_bytes}]
+    vista: 'galeria',   // 'galeria' | 'menu'
+    selectedFiles: [],  // [{file, para_menu, descripcion}]
+    dragging: null      // galeria_id
+  };
+
+  const $g = (s) => document.querySelector(s);
+  const $gi = (id) => document.getElementById(id);
+
+  function openGaleriaModal(productoId, nombre){
+    GAL_STATE.productoId = Number(productoId);
+    GAL_STATE.nombre = nombre || '';
+    GAL_STATE.vista = 'galeria';
+    GAL_STATE.selectedFiles = [];
+    $gi('galTitle').textContent = `Galería — #${productoId} ${nombre?('· '+nombre):''}`;
+    $gi('modalGaleria').hidden = false;
+
+    // radios vista
+    document.querySelectorAll('input[name="gal_vista"]').forEach(r=>{
+      r.checked = (r.value === 'galeria');
+      r.onchange = () => { GAL_STATE.vista = r.value; renderGalGrid(); };
+    });
+
+    // botones & selects
+    $gi('gal_btnCerrar').onclick = closeGaleriaModal;
+    $gi('gal_btnSel').onclick = ()=> $gi('gal_files').click();
+    $gi('gal_files').onchange = onGalFilesChange;
+    $gi('gal_btnUpload').onclick = subirSeleccionadas;
+    $gi('gal_btnFlags').onclick = guardarFlags;
+    $gi('gal_btnOrden').onclick = guardarOrdenVista;
+    loadGaleria();
+  }
+  // Drag & drop en el área punteada del modal de galería
+  (function wireDropZona(){
+    const dz = document.querySelector('#modalGaleria .dashed');
+    const input = document.getElementById('gal_files');
+    if (!dz || !input) return;
+
+    const addCls = () => dz.classList.add('is-over');
+    const rmCls  = () => dz.classList.remove('is-over');
+
+    ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => {
+      e.preventDefault(); e.stopPropagation(); addCls();
+    }));
+    ['dragleave','dragend'].forEach(ev => dz.addEventListener(ev, e => {
+      e.preventDefault(); e.stopPropagation(); rmCls();
+    }));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation(); rmCls();
+      const files = Array.from(e.dataTransfer?.files || []);
+      if (!files.length) return;
+
+      // Colocar los archivos en el <input type="file">
+      const dt = new DataTransfer();
+      files.forEach(f => dt.items.add(f));
+      input.files = dt.files;
+
+      // Reutiliza tu lógica existente
+      if (typeof onGalFilesChange === 'function') {
+        onGalFilesChange({ target: input });
+      }
+    });
+  })();
+
+
+  // (Opcional) Sólo mientras el modal está abierto, evita drops sobre toda la ventana:
+  function preventWindowDrop(enable){
+    const stop = (e)=>{ e.preventDefault(); e.stopPropagation(); };
+    const fnOver = enable ? (e)=>stop(e) : null;
+    const fnDrop = enable ? (e)=>stop(e) : null;
+
+    if (enable){
+      window.addEventListener('dragover', fnOver, { passive:false });
+      window.addEventListener('drop', fnDrop, { passive:false });
+    } else {
+      window.removeEventListener('dragover', fnOver);
+      window.removeEventListener('drop', fnDrop);
+    }
+  }
+
+  function closeGaleriaModal(){
+    $gi('modalGaleria').hidden = true;
+    $gi('gal_files').value = '';
+    $gi('gal_sel_info').textContent = 'Ningún archivo seleccionado';
+    GAL_STATE.selectedFiles = [];
+    preventWindowDrop(false);  // opcional
+  }
+
+  /* ==== Carga y render ==== */
+
+  async function loadGaleria(){
+    $gi('gal_grid').innerHTML = '<div class="tt-muted-row">Cargando…</div>';
+    try{
+      const res = await fetch(GAL_API.list(GAL_STATE.productoId));
+      if(!res.ok){ throw new Error('HTTP '+res.status); }
+      const data = await res.json();
+      GAL_STATE.items = Array.isArray(data) ? data : [];
+    }catch(e){
+      GAL_STATE.items = [];
+    }
+    renderCounters();
+    renderGalGrid();
+  }
+
+  function renderCounters(){
+    const total = GAL_STATE.items.length;
+    const enGal = GAL_STATE.items.filter(x=> !!x.para_galeria && x.habilitado !== false).length;
+    const enMenu= GAL_STATE.items.filter(x=> !!x.para_menu    && x.habilitado !== false).length;
+    const portada = GAL_STATE.items.find(x=> x.es_portada && x.habilitado !== false);
+    $gi('gal_counters').innerHTML =
+      `Total: <b>${total}</b> · En galería: <b>${enGal}</b> (máx 15) · En menú: <b>${enMenu}</b> (máx 5) · Portada: <b>${portada?('#'+portada.galeria_id):'—'}</b>`;
+  }
+
+  function renderGalGrid(){
+    const vista = GAL_STATE.vista; // 'galeria' | 'menu'
+    // filtro de la vista (solo las que participan en esa vista) para ordenar
+    const subset = GAL_STATE.items
+      .filter(x => x.habilitado !== false && (vista === 'galeria' ? x.para_galeria : x.para_menu))
+      .sort((a,b) => {
+        const pa = (vista==='galeria') ? (a.posicion_galeria ?? 1e9) : (a.posicion_menu ?? 1e9);
+        const pb = (vista==='galeria') ? (b.posicion_galeria ?? 1e9) : (b.posicion_menu ?? 1e9);
+        if (pa !== pb) return pa - pb;
+        return a.galeria_id - b.galeria_id;
+      });
+
+    const all = GAL_STATE.items.slice().sort((a,b)=> a.galeria_id - b.galeria_id);
+
+    // grid
+    const html = `
+    <style>
+      .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;}
+      .gal-card{border:1px solid #ddd;border-radius:10px;overflow:hidden;background:#fff; position:relative}
+      .gal-card.dragging{opacity:.6; outline:2px dashed #888}
+      .gal-thumb{aspect-ratio:1/1; display:block; width:100%; object-fit:cover; background:#f3f3f3}
+      .gal-body{padding:.5rem; display:grid; gap:.35rem; font-size:.9rem}
+      .gal-row{display:flex; align-items:center; gap:.4rem; flex-wrap:wrap}
+      .gal-pill{font-size:.75rem; background:#f3f3f3; padding:.15rem .4rem; border-radius:.5rem}
+      .gal-actions{display:flex; gap:.35rem; align-items:center}
+      .gal-star{cursor:pointer; font-size:1.1rem}
+      .gal-del{cursor:pointer;}
+      .gal-chk{display:flex; gap:.35rem; align-items:center}
+    </style>
+
+    <div class="gal-grid" id="gal_grid_inner">
+      ${all.map(x=>{
+        const inVista = subset.find(s=> s.galeria_id === x.galeria_id);
+        const pos = (vista==='galeria') ? x.posicion_galeria : x.posicion_menu;
+        const star = x.es_portada ? '⭐' : '☆';
+        const mediaUrl = GAL_API.media(x.galeria_id);
+        return `
+          <div class="gal-card" draggable="${inVista? 'true':'false'}" data-gid="${x.galeria_id}">
+            <img class="gal-thumb" loading="lazy" src="${mediaUrl}" alt="${(x.descripcion||'')}" />
+            <div class="gal-body">
+              <div class="gal-row">
+                <span class="gal-pill">#${x.galeria_id}</span>
+                ${inVista ? `<span class="gal-pill">pos: ${pos ?? '—'}</span>`: '<span class="gal-pill muted">fuera de vista</span>'}
+                <span class="gal-actions" style="margin-left:auto;">
+                  <span class="gal-star" title="Marcar portada" data-star="${x.galeria_id}">${star}</span>
+                  <button class="btn btn--sm btn-outline gal-del" title="Eliminar" data-del="${x.galeria_id}">🗑</button>
+                </span>
+              </div>
+              <div class="gal-row">
+                <label class="gal-chk"><input type="checkbox" data-flag="gal" ${x.para_galeria?'checked':''} data-gid="${x.galeria_id}"> galería</label>
+                <label class="gal-chk"><input type="checkbox" data-flag="menu" ${x.para_menu?'checked':''} data-gid="${x.galeria_id}"> menú</label>
+                <label class="gal-chk"><input type="checkbox" data-flag="hab"  ${x.habilitado!==false?'checked':''} data-gid="${x.galeria_id}"> habilitado</label>
+              </div>
+              <input class="control" data-alt="${x.galeria_id}" value="${x.descripcion ? (''+x.descripcion).replace(/"/g,'&quot;') : ''}" placeholder="ALT / descripción" />
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+
+    $gi('gal_grid').innerHTML = html;
+    // drag & drop en la vista (solo cards con draggable=true)
+    wireDragDrop();
+    // star / del / flags
+    document.querySelectorAll('[data-star]').forEach(el => el.onclick = () => marcarPortada(Number(el.dataset.star)));
+    document.querySelectorAll('[data-del]').forEach(el => el.onclick = () => eliminarImagen(Number(el.dataset.del)));
+    document.querySelectorAll('input[data-flag]').forEach(el => el.onchange = () => onFlagChange(el));
+  }
+
+  function wireDragDrop(){
+    const cards = Array.from(document.querySelectorAll('.gal-card[draggable="true"]'));
+    cards.forEach(card=>{
+      card.addEventListener('dragstart', (e)=>{
+        GAL_STATE.dragging = Number(card.dataset.gid);
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', ()=>{
+        card.classList.remove('dragging');
+        GAL_STATE.dragging = null;
+      });
+      card.addEventListener('dragover', (e)=>{
+        e.preventDefault();
+        const grid = $gi('gal_grid_inner');
+        const draggingEl = document.querySelector('.gal-card.dragging');
+        if(!draggingEl) return;
+        const afterElement = getDragAfterElement(grid, e.clientY);
+        if(afterElement == null){
+          grid.appendChild(draggingEl);
+        }else{
+          grid.insertBefore(draggingEl, afterElement);
+        }
+      });
+    });
+
+    function getDragAfterElement(container, y){
+      const els = [...container.querySelectorAll('.gal-card:not(.dragging)[draggable="true"]')];
+      return els.reduce((closest, child)=>{
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if(offset < 0 && offset > closest.offset){
+          return { offset, element: child };
+        }else{
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+  }
+
+  /* ==== Flags / portada / eliminar ==== */
+
+  function onFlagChange(input){
+    // cambia en memoria (se persiste con "Guardar flags")
+    const gid = Number(input.dataset.gid);
+    const item = GAL_STATE.items.find(x=> x.galeria_id === gid);
+    if(!item) return;
+    if(input.dataset.flag === 'gal') item.para_galeria = input.checked;
+    if(input.dataset.flag === 'menu') item.para_menu = input.checked;
+    if(input.dataset.flag === 'hab')  item.habilitado = input.checked;
+  }
+
+  async function guardarFlags(){
+    const payload = GAL_STATE.items.map(x => ({
+      galeria_id: x.galeria_id,
+      para_galeria: !!x.para_galeria,
+      para_menu:    !!x.para_menu,
+      habilitado:   (x.habilitado !== false),
+      descripcion:  $(`input[data-alt="${x.galeria_id}"]`)?.value || null
+    }));
+    const res = await fetch(GAL_API.flags, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){ alert('❌ No se pudieron guardar flags'); return; }
+    await loadGaleria();
+    alert('✅ Flags/ALT guardados');
+  }
+
+  async function marcarPortada(galeriaId){
+    const res = await fetch(GAL_API.portada(GAL_STATE.productoId, galeriaId), { method:'POST' });
+    if(!res.ok){ alert('❌ No se pudo marcar portada'); return; }
+    await loadGaleria();
+  }
+
+  async function eliminarImagen(galeriaId){
+    if(!confirm('¿Eliminar esta imagen?')) return;
+    const res = await fetch(GAL_API.del(galeriaId), { method:'DELETE' });
+    if(!res.ok){ alert('❌ No se pudo eliminar'); return; }
+    await loadGaleria();
+  }
+
+  /* ==== Orden ==== */
+  async function guardarOrdenVista(){
+    // lee el orden actual de tarjetas visibles (draggable=true)
+    const ids = [...document.querySelectorAll('.gal-card[draggable="true"]')].map(el => Number(el.dataset.gid));
+    const items = ids.map((id, i) => ({ galeriaId: id, posicion: i+1 }));
+    const payload = { vista: GAL_STATE.vista, items };
+
+    const res = await fetch(GAL_API.reorder(GAL_STATE.productoId), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){ alert('❌ No se pudo guardar el orden'); return; }
+    await loadGaleria();
+    alert('✅ Orden guardado');
+  }
+
+  /* ==== Subida de nuevas imágenes ==== */
+
+  function onGalFilesChange(e){
+    const files = Array.from(e.target.files||[]);
+    GAL_STATE.selectedFiles = files.map(f => ({ file: f, para_menu: $gi('gal_new_menu').checked, descripcion: '' }));
+    $gi('gal_sel_info').textContent = `${files.length} archivo(s) seleccionado(s)`;
+    $gi('gal_btnUpload').disabled = files.length === 0;
+  }
+
+  async function subirSeleccionadas(){
+    if(GAL_STATE.selectedFiles.length === 0) return;
+    // validaciones: tipo/tamaño
+    const allowed = ['image/jpeg','image/png','image/webp'];
+    for(const it of GAL_STATE.selectedFiles){
+      const f = it.file;
+      if(!allowed.includes(f.type)){ alert(`Tipo no permitido: ${f.name} (${f.type})`); return; }
+      if(f.size > 10*1024*1024){ alert(`Archivo supera 10MB: ${f.name}`); return; }
+    }
+
+    // límite 20 total: consulta conteo actual
+    const totalActual = GAL_STATE.items.length;
+    if(totalActual + GAL_STATE.selectedFiles.length > 20){
+      alert(`Límite 20 imágenes por producto. Ya tienes ${totalActual}.`);
+      return;
+    }
+
+    // lee como base64 (con prefijo data:)
+  const toB64 = (file)=> new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(String(r.result));  // data:mime;base64,XXXX
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+
+  const payload = [];
+  for (const it of GAL_STATE.selectedFiles) {
+    const dataURL = await toB64(it.file);
+    const clean   = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL; // <-- limpio
+
+    payload.push({
+      descripcion: it.descripcion || null,
+      mime_type: it.file.type || 'application/octet-stream',
+      contenido_base64: clean,             // <-- enviar limpio
+      para_galeria: true,
+      para_menu: !!it.para_menu,
+      habilitado: true
+    });
+  }
+
+
+    const res = await fetch(GAL_API.upload(GAL_STATE.productoId), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      alert('❌ Error al subir: ' + (txt || ('HTTP '+res.status)));
+      return;
+    }
+    // limpiar selección y recargar
+    $gi('gal_files').value = '';
+    $gi('gal_sel_info').textContent = 'Ningún archivo seleccionado';
+    GAL_STATE.selectedFiles = [];
+    $gi('gal_btnUpload').disabled = true;
+    await loadGaleria();
+    alert('✅ Imágenes subidas');
+  }
+  </script>
 
   <script>
-    //cerrar sesion - agregado gaibor
+    //cerrar sesion
     async function logout() {
       try {
         sessionStorage.removeItem('user');
@@ -439,13 +851,23 @@
           <td>${fmtUSD(p.costo)}</td>
           <td>${p.habilitado ? '<span class="status active">Sí</span>' : '<span class="status blocked">No</span>'}</td>
           <td>
+            <button class="btn btn-outline btn--sm" data-gal="${p.id}" data-nombre="${p.nombre ?? ''}">🖼 Galería</button>
             <button class="btn btn-warning btn--sm">Editar</button>
             <button class="btn btn-danger btn--sm">Eliminar</button>
           </td>
         </tr>`;
       }).join('');
       $p('#tbProductos').innerHTML = rows;
+
+      // wire: abrir modal galería
+      document.querySelectorAll('[data-gal]').forEach(btn=>{
+        btn.addEventListener('click', ()=> openGaleriaModal(
+          Number(btn.dataset.gal),
+          btn.dataset.nombre || ''
+        ));
+      });
     }
+
     async function loadProductos(){
       try{
         const res = await fetch(API_PRODUCTS);
@@ -671,22 +1093,95 @@
         return;
       }
 
-      try {
-        const res = await fetch(url, {
+    try {
+      // 1) Crear producto
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const raw = await res.text();
+      if (!res.ok) throw new Error(raw || ('HTTP ' + res.status));
+
+      // 1.1) obtener productoId de la respuesta (más robusto)
+      let productoId = null;
+
+      // intenta por content-type JSON
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      if (ct.includes('application/json')) {
+        try {
+          const j = JSON.parse(raw);
+          productoId =
+            j.productoId ?? j.producto_id ?? j.id ?? j.id_producto ?? j.productID ?? null;
+        } catch (_) {}
+      }
+
+      // intenta por Location header (REST 201 Created)
+      if (!productoId) {
+        const loc = res.headers.get('Location') || res.headers.get('location');
+        if (loc) {
+          const m = String(loc).match(/\/(\d+)(?:\?.*)?$/);
+          if (m) productoId = Number(m[1]);
+        }
+      }
+
+      // intenta por texto plano con dígitos
+      if (!productoId) {
+        const m = String(raw).match(/(\d{1,})/);
+        if (m) productoId = Number(m[1]);
+      }
+
+      if (!productoId) {
+        console.debug('Respuesta creación producto:', { status: res.status, headers: Object.fromEntries(res.headers.entries()), raw });
+        alert('✅ Producto creado, pero no pude leer el ID (no vino en JSON/Location). Revisa Network → Response/Headers.');
+        return;
+      }
+
+      // 2) Subir imágenes seleccionadas en el campo #np_imgs (opcional)
+      const files = Array.from($('#np_imgs').files || []);
+      if (files.length) {
+        if (files.length > 15) { alert('Máximo 15 imágenes'); return; }
+        const big = files.find(f => f.size > 10 * 1024 * 1024);
+        if (big) { alert(`"${big.name}" supera 10MB`); return; }
+
+        const toDataUrl = f => new Promise((ok, ko) => {
+          const r = new FileReader();
+          r.onload = () => ok(String(r.result)); // data:mime;base64,XXXXX
+          r.onerror = ko;
+          r.readAsDataURL(f);
+        });
+        const cleanB64 = s => s.includes(',') ? s.split(',')[1] : s; // quita prefijo data:
+
+        const items = [];
+        for (const f of files) {
+          const dataUrl = await toDataUrl(f);
+          items.push({
+            descripcion: f.name,
+            mime_type: f.type || 'application/octet-stream',
+            contenido_base64: cleanB64(dataUrl),
+            para_galeria: true,
+            para_menu: false,
+            habilitado: true
+          });
+        }
+
+        const up = await fetch(`/api/productos/${productoId}/galeria`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(items)
         });
-        const text = await res.text();
-        if (!res.ok) throw new Error(text || ('HTTP ' + res.status));
-
-        alert('✅ Producto agregado correctamente');
-        $('#modalNuevoProducto').hidden = true;
-        clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo();
-        loadProductos();
-      } catch (err) {
-        alert('❌ Error: ' + (err.message || err));
+        const upTxt = await up.text();
+        if (!up.ok) throw new Error(upTxt || ('HTTP ' + up.status));
       }
+
+      alert('✅ Producto y galería guardados');
+      $('#modalNuevoProducto').hidden = true;
+      clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo();
+      loadProductos();
+    } catch (err) {
+      alert('❌ Error: ' + (err.message || err));
+    }
+
     });
   });
   </script>

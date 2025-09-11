@@ -17,7 +17,7 @@
     <header class="header">
         <div class="logo">TiendaTech</div>
         <div class="search-container">
-            <input type="text" class="search-bar" placeholder="Buscar...">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Buscar...">
         </div>
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
     </header>
@@ -295,5 +295,85 @@
     }
   });
 </script>
+<script>
+(function(){
+  const params     = new URLSearchParams(location.search);
+  const catId      = params.get('cat');
+  const catNombre  = params.get('nombre') ? decodeURIComponent(params.get('nombre')) : null;
+
+  const titleEl    = document.getElementById('resultsTitle');
+  const container  = document.getElementById('resultsContainer');
+  const noResults  = document.getElementById('noResults');
+  const searchBox  = document.getElementById('searchInput');
+
+  let current = [];
+
+  if (catNombre) titleEl.textContent = `Categoría: ${catNombre}`;
+
+  async function load(){
+    try {
+      // ✅ usa el endpoint que hicimos: /api/productos/por-categoria
+      const url = `/api/productos/por-categoria?categoriaId=${encodeURIComponent(catId || '')}`;
+      const res = await fetch(url, { credentials:'include' });
+      const data = await res.json();
+
+      // ✅ si por accidente llamas a un pageable, toma data.content
+      current = Array.isArray(data) ? data : (Array.isArray(data?.content) ? data.content : []);
+      render(current);
+    } catch (e){
+      console.error(e);
+      container.innerHTML = `<p class="text-danger">Error al cargar productos.</p>`;
+    }
+  }
+
+  function render(list){
+    if (!Array.isArray(list)) { console.warn('Esperaba array, llegó:', list); list = []; }
+    if (list.length === 0){
+      container.classList.add('d-none');
+      noResults.classList.remove('d-none');
+      return;
+    }
+    container.classList.remove('d-none');
+    noResults.classList.add('d-none');
+    window.viewProduct = (id) => {
+      location.href = `informacion_producto.html?id=${encodeURIComponent(id)}`;
+    };
+    container.innerHTML = list.map(p => `
+      <div class="product-card" onclick="viewProduct(${p.id})">
+        <img class="product-image"
+             src="${p.imagenId ? `/api/galeria/${p.imagenId}/img` : '/img/placeholder.png'}"
+             alt="${p.nombre}">
+        <div class="product-details">
+          <div class="product-name">${p.nombre}</div>
+          <div class="product-price">${formatMoney(p.precio)}</div>
+          <div class="product-brand">${p.marca || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function formatMoney(x){
+    const n = Number(x);
+    return isFinite(n) ? `$${n.toFixed(2)}` : '';
+  }
+
+  if (searchBox){
+    searchBox.addEventListener('input', () => {
+      const term = searchBox.value.trim().toLowerCase();
+      const filtered = term === '' ? current :
+        current.filter(p =>
+          (p.nombre || '').toLowerCase().includes(term) ||
+          (p.marca  || '').toLowerCase().includes(term)
+        );
+      render(filtered);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', load);
+  window.viewProduct = (id) => alert(`Ver producto ID: ${id}`); // placeholder
+})();
+</script>
+
+
 </body>
 </html>

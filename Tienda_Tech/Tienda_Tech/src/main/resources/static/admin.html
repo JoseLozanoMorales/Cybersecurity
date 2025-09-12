@@ -78,7 +78,7 @@
           <button class="btn btn-primary">Buscar Usuario</button>
           <button class="btn btn-warning">Actualizar</button>
         </div>
-
+<!-- 
         <div class="action-card">
           <h3>➕ Crear Usuario</h3>
           <div class="form-group"><label>Nombre</label>    <input type="text" maxlength="255" class="form-control" placeholder="Nombre completo" id="v_nombre"></div>
@@ -86,7 +86,6 @@
           <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
           <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
           <div class="form-group"><label>Usuario</label>   <input type="text"               class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
-          <div class="form-group"><label>Contraseña</label><input type="password"           class="form-control" placeholder="Contraseña" id="v_contrasenia"></div>
           <div class="form-group"><label>Rol</label>
             <select class="form-control" id="v_id_rol">
               <option value="1">admin</option>
@@ -111,8 +110,38 @@
           </tbody>
         </table>
       </div>
+    </div> -->
+          <!-- Crear -->
+      <div class="action-card">
+        <h3>➕ Crear Usuario (admin/trabajador)</h3>
+        <p class="tt-muted-row" style="margin-top:-.25rem">
+          Al crear, <strong>se generará una contraseña</strong> y se enviará un correo con el usuario y la contraseña. Si el envío falla, <strong>no</strong> se registra.
+        </p>
+        <div class="form-group"><label>Nombre</label>    <input type="text" maxlength="255" class="form-control" placeholder="Nombre completo" id="v_nombre"></div>
+        <div class="form-group"><label>Cédula</label>    <input type="text" maxlength="10"  class="form-control" placeholder="Número de cédula" id="v_cedula"></div>
+        <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
+        <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
+        <div class="form-group"><label>Usuario (opcional)</label>   <input type="text" class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
+        <!-- Se eliminó el campo de contraseña: el backend la genera y la envía por correo -->
+        <div class="form-group"><label>Rol</label>
+          <select class="form-control" id="v_id_rol">
+            <option value="1">admin</option>
+            <option value="3">trabajador</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btnCrearUsuario" onclick="crearUsuario()">Crear Usuario</button>
+      </div>
     </div>
 
+    <div class="data-table">
+      <table>
+        <thead><tr><th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="ua_list_preview">
+        <tr><td colspan="5" class="tt-muted-row">Usa el buscador para listar usuarios…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
     <!-- Movimiento de Inventario -->
     <div id="inventory" class="admin-section">
       <div class="section-title">📦 Movimiento de Inventario</div>
@@ -902,7 +931,6 @@
         cedula:     document.getElementById('v_cedula').value.trim(),
         correo:     document.getElementById('v_correo').value.trim(),
         telefono:   document.getElementById('v_telefono').value.trim(),
-        contrasena: document.getElementById('v_contrasenia').value,
         usuario:    document.getElementById('v_usuario').value.trim()
       };
       const idRol = parseInt(document.getElementById('v_id_rol').value, 10);
@@ -1689,7 +1717,185 @@
       </div>
     </div>
   </div>
+  <script>
+  (() => {
+    'use strict';
 
+    // Helpers
+    const $ = (id) => document.getElementById(id);
+    const val = (id) => (($(id)?.value) || '').trim();
+    const digits = (s) => (s || '').replace(/\D+/g, '');
+    const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+    // Endpoints
+    const API = {
+      crearCliente: '/api/usuarios/crear',                 // EXISTENTE (cliente)
+      crearAdmin:   '/api/usuarios/crear-usuario',         // NUEVO (admin/trabajador, POST)
+      buscar:       (usuario, rolId, limit = 50) => {
+        const p = new URLSearchParams();
+        if (usuario) p.set('usuario', usuario);
+        if (rolId)   p.set('rolId', rolId);
+        if (limit)   p.set('limit', String(limit));
+        return '/api/usuarios/buscar?' + p.toString();
+      },
+      actualizarAdmin:   (id, rolId) => `/api/usuarios/admin/${id}?rolId=${rolId}`,
+      deshabilitarAdmin: (id, rolId) => `/api/usuarios/admin/${id}?rolId=${rolId}`
+    };
+
+    // fetch wrapper (JSON)
+    async function httpJson(url, opts = {}) {
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch {}
+      if (!res.ok) throw new Error((data && (data.message || data.error)) || text || `HTTP ${res.status}`);
+      return data ?? {};
+    }
+
+    // Map flexible -> UI
+    function mapUser(dto){
+      return {
+        id: dto.usuarioId ?? dto.id ?? dto.user_id ?? dto.userId,
+        usuario: dto.usuario ?? dto.username ?? dto.user ?? '',
+        correo: dto.correo ?? dto.email ?? '',
+        rolId: dto.rolId ?? dto.idRol ?? dto.id_rol ?? null,
+        estado: (dto.habilitado ?? dto.activo ?? dto.estado ?? true) ? 'Activo' : 'Inactivo',
+        nombre: dto.nombre ?? ''
+      };
+    }
+
+    // ===== Crear (admin/trabajador) – sin contraseña en el payload =====
+    async function crearUsuario() {
+      const btn = $('btnCrearUsuario');
+      if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
+
+      const idRol = parseInt(val('v_id_rol'), 10);
+      const payload = {
+        nombre:   val('v_nombre'),
+        cedula:   digits(val('v_cedula')),
+        correo:   val('v_correo'),
+        telefono: digits(val('v_telefono')),
+        usuario:  val('v_usuario'),
+        idRol:    idRol
+      };
+
+      if (!payload.nombre)   { alert('Ingresa el nombre'); return resetBtn(); }
+      if (!payload.correo || !isEmail(payload.correo)) { alert('Correo no válido'); return resetBtn(); }
+      if (payload.cedula && payload.cedula.length !== 10)   { alert('La cédula debe tener 10 dígitos'); return resetBtn(); }
+      if (payload.telefono && payload.telefono.length !== 10){ alert('El teléfono debe tener 10 dígitos'); return resetBtn(); }
+      if (![1,3].includes(idRol)) { alert('Selecciona un rol válido'); return resetBtn(); }
+
+      try {
+        await httpJson(API.crearAdmin, { method: 'POST', body: JSON.stringify(payload) });
+        alert('✅ Usuario creado. Se enviaron las credenciales por correo.');
+        ['v_nombre','v_cedula','v_correo','v_telefono','v_usuario'].forEach(k => { const el = $(k); if (el) el.value = ''; });
+      } catch (e) {
+        alert('❌ ' + e.message);
+      } finally {
+        resetBtn();
+      }
+
+      function resetBtn(){
+        if (btn) { btn.disabled = false; btn.textContent = 'Crear Usuario'; }
+      }
+    }
+
+    // ===== Buscar & seleccionar (admin/trabajador) =====
+    async function buscarUsuariosAdmin(){
+      const btn = $('ua_btn_buscar');
+      if (btn) { btn.disabled = true; btn.textContent = 'Buscando…'; }
+
+      const q = val('ua_buscar');
+      const rolId = val('ua_filtro_rol');
+
+      let list = [];
+      try {
+        const raw = await httpJson(API.buscar(q, rolId || undefined, 50), { method: 'GET' });
+        const arr = Array.isArray(raw) ? raw : (raw.items || raw.content || []);
+        list = arr.map(mapUser).filter(u => u.id != null);
+      } catch (e) {
+        alert('❌ ' + e.message);
+        list = [];
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Buscar'; }
+      }
+
+      const sel = $('ua_select_usuario');
+      sel.innerHTML = '<option value="">— Selecciona —</option>' +
+              list.map(u => {
+                const rolTxt = u.rolId === 1 ? 'admin' : (u.rolId === 3 ? 'trabajador' : (u.rolId ?? ''));
+                const label = `${u.usuario || '(sin usuario)'} — ${u.correo || 's/correo'} — ${rolTxt}`;
+                return `<option value="${u.id}" data-rol="${u.rolId ?? ''}" data-correo="${u.correo ?? ''}">${label}</option>`;
+              }).join('');
+
+      const tb = $('ua_list_preview');
+      tb.innerHTML = list.length
+              ? list.map(u => {
+                const rolTxt = u.rolId === 1 ? 'admin' : (u.rolId === 3 ? 'trabajador' : (u.rolId ?? ''));
+                return `<tr><td>${u.id}</td><td>${u.usuario}</td><td>${u.correo}</td><td>${rolTxt}</td><td>${u.estado}</td></tr>`;
+              }).join('')
+              : '<tr><td colspan="5" class="tt-muted-row">Sin resultados</td></tr>';
+    }
+
+    function onUsuarioSeleccionado(){
+      const sel = $('ua_select_usuario');
+      const opt = sel?.selectedOptions?.[0];
+      if (!opt || !opt.value) return;
+      const correo = opt.getAttribute('data-correo') || '';
+      const rol = parseInt(opt.getAttribute('data-rol') || '', 10) || 3;
+      $('ua_nuevo_email').value = correo;
+      $('ua_rol_update').value = String(rol);
+    }
+
+    // ===== Actualizar / Deshabilitar seleccionado =====
+    async function actualizarSeleccionado(){
+      const sel = $('ua_select_usuario');
+      const id = sel?.value ? parseInt(sel.value, 10) : NaN;
+      if (!id) { alert('Selecciona un usuario'); return; }
+
+      const rolId = parseInt($('ua_rol_update').value, 10);
+      const correo = val('ua_nuevo_email');
+      if (correo && !isEmail(correo)) { alert('Correo no válido'); return; }
+
+      try{
+        await httpJson(API.actualizarAdmin(id, rolId), {
+          method: 'PUT',
+          body: JSON.stringify({ correo })
+        });
+        alert('✅ Actualizado');
+        buscarUsuariosAdmin();
+      }catch(e){
+        alert('❌ ' + e.message);
+      }
+    }
+
+    async function deshabilitarSeleccionado(){
+      const sel = $('ua_select_usuario');
+      const id = sel?.value ? parseInt(sel.value, 10) : NaN;
+      if (!id) { alert('Selecciona un usuario'); return; }
+
+      const rolId = parseInt($('ua_rol_update').value, 10);
+      if (!confirm('¿Deshabilitar usuario seleccionado?')) return;
+
+      try{
+        await httpJson(API.deshabilitarAdmin(id, rolId), { method: 'DELETE' });
+        alert('🗑️ Usuario deshabilitado');
+        sel.value = '';
+        $('ua_nuevo_email').value = '';
+        buscarUsuariosAdmin();
+      }catch(e){
+        alert('❌ ' + e.message);
+      }
+    }
+
+    // Exponer funciones para onclick
+    window.crearUsuario = crearUsuario;
+    window.buscarUsuariosAdmin = buscarUsuariosAdmin;
+    window.onUsuarioSeleccionado = onUsuarioSeleccionado;
+    window.actualizarSeleccionado = actualizarSeleccionado;
+    window.deshabilitarSeleccionado = deshabilitarSeleccionado;
+  })();
+</script>
   <script>
     /* ===========================================
      *  SUBTIPOS DE MOVIMIENTO (Frontend)

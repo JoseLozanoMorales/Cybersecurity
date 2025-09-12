@@ -1501,3 +1501,288 @@ body {
 }
 /* en style2.css */
 #gal_dropzone.dragover { border-color:#5cb85c; background:rgba(92,184,92,.08); }
+                                 /* MOVIMIENTO INVENTARIO*/
+
+/* Backdrop que bloquea clics fuera del modal */
+.tt-backdrop[hidden] { display: none !important; }
+.tt-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: grid;
+  place-items: center;
+  z-index: 9999;              /* por encima de todo */
+}
+
+/* Evita scroll del body cuando el modal está abierto */
+body.tt-no-scroll {
+  overflow: hidden;
+}
+
+/* Contenedor del modal */
+.ventana-centrada {
+  background: #2b2b2b;
+  border-radius: 14px;
+  width: min(920px, 92vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+/* Header del modal */
+.ventana-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.ventana-header h2 { margin: 0; font-size: 1.15rem; }
+.ventana-header .cerrar {
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.ventana-header .cerrar:hover { color: #fff; }
+
+/* Layout horizontal del formulario */
+.mov-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* horizontal de a dos */
+  gap: 14px 16px;
+  padding: 16px 18px 18px;
+}
+.mov-grid .form-group { display: flex; flex-direction: column; gap: 6px; }
+.mov-grid .form-group label { font-size: .92rem; color: #dcdcdc; }
+.mov-grid .form-group .form-control {
+  background: #1f1f1f;
+  border: 1px solid #3a3a3a;
+  color: #eaeaea;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.form-span-2 { grid-column: 1 / -1; } /* ocupa todo el ancho */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Botón éxito acorde a tu tema */
+.btn.btn-success {
+  background: #43a047;
+  border: none;
+  color: #fff;
+}
+.btn.btn-success:hover { filter: brightness(1.05); }
+
+
+/* ESTO DE AQUÍ ES PARA EL CUADRO QUE SALE AL DAR +*/
+/* Nivel de superposición: selector por encima del modal de movimiento */
+.tt-backdrop.tt-level-2 { z-index: 10050; }   /* el modal de movimiento estaba ~9999 */
+
+/* Input + botón + */
+.product-picker-input{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+.btn.btn-icon{
+  width: 38px; height: 38px;
+  display: inline-flex; align-items:center; justify-content:center;
+  border-radius: 10px; font-size: 20px; line-height: 1;
+  background: #3a3a3a; color:#eaeaea; border: 1px solid #4a4a4a;
+}
+.btn.btn-icon:hover{ filter: brightness(1.05); }
+
+/* Modal grande del selector */
+.ventana-xl { width: min(1100px, 94vw); }
+
+/* Toolbar del selector */
+.picker-toolbar{
+  display: grid; grid-template-columns: 1fr auto; gap: 10px;
+  padding: 14px 18px 0;
+}
+
+/* Tabla del selector */
+.picker-table table thead th:last-child,
+.picker-table table tbody td:last-child { width: 1%; white-space: nowrap; }
+
+/* Paginación */
+.picker-pager{
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  padding: 12px 18px 18px;
+}
+/* Apariencia de placeholder en el <select> */
+#mov_subtipo_id.is-empty {
+  color: #9aa0a6;       /* gris suave */
+}
+
+/* Placeholder gris cuando no hay selección respecto a subtipo de movimiento*/
+#mov_subtipo_id.is-empty { color: #9aa0a6; }
+
+
+/*PARA QUE EL CAMPO COSTO UNITARIO PUEDA DAR ESA SENSACIÓN DE QUE ESTÁ BLOQUEADO*/
+#mov_costo_unitario[disabled] {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/*ESTO DE AQUÍ AYUDA A QUE SE PUEDA VER MEJOR LA VENTANA DE AGREGAR MOVIMIENTO INVENTARIO */
+
+/* ===== Ventana del modal ===== */
+#movBackdrop{
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+#ventanaMovimiento.ventana-centrada,
+#ventanaMovimiento.ventana-horizontal{
+  width: min(1040px, 96vw);
+  max-height: calc(100dvh - 40px);
+  display: grid;
+  grid-template-rows: auto 1fr;     /* header + cuerpo */
+  overflow: auto;                   /* la ventana scrollea */
+}
+
+#ventanaMovimiento .ventana-header{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel-bg, #1f1f1f);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* ===== Formulario ===== */
+#formNuevoMovimiento{
+  overflow: visible;
+  min-height: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: min-content;
+  gap: 16px;
+  padding: 16px 20px 24px;
+}
+
+#formNuevoMovimiento .form-span-2{ grid-column: 1 / -1; }
+
+/* ===== Botón Guardar sticky SIN franja ===== */
+#formNuevoMovimiento .form-actions{
+  grid-column: 1 / -1;
+  position: sticky;
+  bottom: 8px;                          /* pequeño margen al borde inferior */
+  z-index: 1;
+  background: transparent !important;   /* sin fondo */
+  border-top: none !important;          /* sin línea */
+  box-shadow: none !important;          /* sin sombra de barra */
+  padding: 0;
+  display: flex;
+  justify-content: flex-end;            /* botón a la derecha */
+}
+
+/* (opcional) una leve sombra solo al botón, no a toda la franja */
+#formNuevoMovimiento .form-actions .btn{
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  #formNuevoMovimiento{ grid-template-columns: 1fr; }
+}
+
+
+/* ESTO DE AQUÍ CONTROLA LO LARGO QUE PUEDE SER LA TABLA DE MOVIMIENTO INVENTARIO*/
+/* ===== Tabla de Movimientos: alto fijo + scroll + thead sticky ===== */
+#inventory .data-table{
+  max-height: 60vh;           /* ajusta: p.ej. 420px, 480px, etc. */
+  min-height: 220px;
+  overflow-y: auto;
+  overflow-x: auto;           /* por si las columnas no caben */
+  border-radius: 8px;
+}
+
+#inventory .data-table table{
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Encabezado pegajoso mientras haces scroll */
+#inventory .data-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* Ajusta el color para que combine con tu header */
+  background: #5c8a29;        /* <- cambia al verde que usas */
+  color: #fff;
+}
+
+/* (Opcional) una ligera sombra bajo el header */
+#inventory .data-table thead th{
+  box-shadow: 0 2px 4px rgba(0,0,0,.25);
+}
+
+
+
+    /* TABLA SCROLLEABLE PARA QUE CUANDO SE PUEDA BUSCAR LOS PRODUCTOS PARA HACER UN MOVIMIENTO INVENTARIO SEA CÓMODO */
+/* ===== Modal del selector (usa grid) ===== */
+.ventana-centrada.ventana-horizontal.ventana-xl{
+  width: min(1100px, 96vw);
+  max-height: 90vh;                          /* no más alto que la pantalla */
+  display: grid;                             /* header | filtros | tabla | pager */
+  grid-template-rows: auto auto minmax(0,1fr) auto; /* ← minmax(0,1fr) ES CLAVE */
+  gap: .75rem;
+}
+
+/* La CAJA que scrollea es esta (tu .data-table + .picker-table) */
+.data-table.picker-table{
+  overflow-y: auto !important;               /* forzar scroll si hace falta */
+  overflow-x: hidden;
+  min-height: 0;                             /* necesario dentro de grid */
+  max-height: 100%;
+  overscroll-behavior: contain;
+  border-radius: .25rem;
+}
+
+/* Tabla */
+.data-table.picker-table table{
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Encabezado pegajoso */
+.data-table.picker-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #7fb13a;                       /* tu color del header */
+  color: #fff;
+}
+
+/* (Opcional) dejar la barra de filtros visible mientras se hace scroll */
+.picker-toolbar{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Pie del modal */
+.picker-pager{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Responsive: oculta columnas no críticas en pantallas estrechas */
+@media (max-width: 720px){
+  .data-table.picker-table th:nth-child(2),
+  .data-table.picker-table td:nth-child(2),   /* Precio */
+  .data-table.picker-table th:nth-child(3),
+  .data-table.picker-table td:nth-child(3){   /* Costo unitario */
+    display: none;
+  }
+}

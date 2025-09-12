@@ -1,18 +1,28 @@
-// src/main/java/com/example/tienda_tech/repository/CategoriaQueryRepository.java
 package com.example.tienda_tech.repository;
 
-import com.example.tienda_tech.model.CategoriaProducto;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-public interface CategoriaQueryRepository extends Repository<CategoriaProducto, Integer> {
+@Repository
+public class CategoriaQueryRepository {
 
-  interface Row {
-    Integer getId_categoria();
-    String  getNombre();
+  private final JdbcTemplate jdbc;
+
+  public CategoriaQueryRepository(JdbcTemplate jdbc) {
+    this.jdbc = jdbc;
   }
 
-  @Query(value = "select * from fn_listar_categorias()", nativeQuery = true)
-  List<Row> listar();
+  // Devuelve filas tal cual vienen de la función
+  public List<CategoriaRow> listar() {
+    final String sql = "SELECT * FROM public.fn_listar_categorias()";
+    return jdbc.query(sql, (rs, i) -> new CategoriaRow(
+        rs.getInt("id_categoria"),
+        rs.getString("nombre")
+    ));
+  }
+
+  // DTO liviano para tu mapeo actual en el controlador
+  public record CategoriaRow(Integer getId_categoria, String getNombre) {}
 }

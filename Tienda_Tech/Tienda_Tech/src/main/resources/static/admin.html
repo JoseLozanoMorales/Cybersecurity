@@ -16,6 +16,7 @@
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
     <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
+    <div class="nav-item" onclick="showSection('inventory', this)">Movimiento de Inventario</div>
     <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
     <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
     <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
@@ -111,6 +112,39 @@
         </table>
       </div>
     </div>
+
+    <!-- Movimiento de Inventario -->
+    <div id="inventory" class="admin-section">
+      <div class="section-title">📦 Movimiento de Inventario</div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button class="btn btn-primary" id="btnAgregarMovimiento">➕ Nuevo Movimiento</button>
+      </div>
+
+      <!-- Tabla de movimientos -->
+      <div class="data-table">
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Producto</th>
+            <th>Subtipo</th>
+            <th>Cantidad</th>
+            <th>Costo Unitario</th>
+            <th>Costo Total</th>
+            <th>Referencia</th>
+            <th>Observación</th>
+          </tr>
+          </thead>
+          <tbody id="tbMovimientos">
+          <tr><td colspan="9" class="tt-muted-row">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
 
     <!-- Puntos de Entrega -->
     <div id="delivery" class="admin-section">
@@ -233,6 +267,88 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MOVIMIENTO INVENTARIO (MODAL CON BACKDROP) ===== -->
+  <div id="movBackdrop" class="tt-backdrop" hidden>
+    <div id="ventanaMovimiento" class="ventana-centrada ventana-horizontal" role="dialog" aria-modal="true" aria-labelledby="movTitle">
+      <div class="ventana-header">
+        <h2 id="movTitle">➕ Registrar Movimiento</h2>
+        <button class="cerrar" type="button" id="movCloseBtn" aria-label="Cerrar">×</button>
+      </div>
+
+      <form id="formNuevoMovimiento" class="mov-grid">
+        <!-- Producto (solo lectura + botón +) -->
+        <div class="form-group form-span-2">
+          <label>Producto</label>
+          <div class="product-picker-input">
+            <input
+                    id="mov_producto_nombre"
+                    class="form-control"
+                    placeholder="Selecciona un producto…"
+                    readonly
+                    required> <!-- ← paso 1: requerido -->
+            <input type="hidden" id="mov_producto_id">
+
+            <button type="button" class="btn btn-icon" id="btnAddProducto" title="Seleccionar producto">+</button>
+          </div>
+          <!-- mensaje inline -->
+          <small id="mov_producto_msg" class="field-hint error" hidden>
+            Debes seleccionar un producto.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Subtipo</label>
+          <select id="mov_subtipo_id" class="form-control" required></select>
+        </div>
+
+        <!-- NUEVO: Fecha -->
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="mov_fecha" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad</label>
+          <input
+                  type="number"
+                  id="mov_cantidad"
+                  class="form-control"
+                  min="1"
+                  step="1"
+                  inputmode="numeric"
+                  placeholder="1"
+                  required>
+        </div>
+
+        <div class="form-group">
+          <label>Costo Unitario</label>
+          <input
+                  type="text"
+                  id="mov_costo_unitario"
+                  class="form-control"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  disabled>
+        </div>
+
+        <div class="form-group">
+          <label>Referencia</label>
+          <input type="text" id="mov_referencia" class="form-control" maxlength="100">
+        </div>
+
+        <div class="form-group form-span-2">
+          <label>Observación</label>
+          <textarea id="mov_observacion" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="form-actions form-span-2">
+          <button type="submit" class="btn btn-success" id="btnGuardarMov">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   <!-- ===== Modal Nuevo Producto ===== -->
   <div id="modalNuevoProducto" class="modal-backdrop" hidden>
@@ -754,12 +870,12 @@
     });
 
     // ===== Navegación lateral =====
-    function showSection(sectionId, el){
-      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-      const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
-    }
+    // function showSection(sectionId, el){
+    //   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+    //   const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
+    //   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    //   if (el) el.classList.add('active');
+    // }
 
     // ===== UX botones demo =====
     document.addEventListener('DOMContentLoaded', function(){
@@ -1479,6 +1595,840 @@
     window.editarProvincia    = editarProvincia;
     window.eliminarProvincia  = eliminarProvincia;
     window.manejarSeleccionProvincia = manejarSeleccionProvincia;
+
+
+   //MOVIMIENTO <INVENTARIO>
+
+  //  document.getElementById('btnAgregarMovimiento').addEventListener('click', () => {
+  // document.getElementById('ventanaMovimiento').style.display = 'block';
+  //   });
+
+  // Abrir modal
+  document.getElementById('btnAgregarMovimiento').addEventListener('click', () => {
+    document.getElementById('movBackdrop').hidden = false;
+    document.body.classList.add('tt-no-scroll');
+    // foco inicial
+    const first = document.getElementById('mov_producto_id');
+    if (first) first.focus();
+  });
+
+  // Cerrar solo con la X
+  document.getElementById('movCloseBtn').addEventListener('click', () => {
+    document.getElementById('movBackdrop').hidden = true;
+    document.body.classList.remove('tt-no-scroll');
+  });
+
+  // Importante: NO cerrar al hacer clic fuera.
+  // El backdrop captura clics, pero no hay listener que cierre el modal.
+
+  // (Opcional) Bloquear Escape para que tampoco cierre
+  document.addEventListener('keydown', (ev) => {
+    if (!document.getElementById('movBackdrop').hidden && ev.key === 'Escape') {
+      ev.preventDefault();
+    }
+  });
+
+ const f = document.getElementById('mov_fecha');
+  if (f) {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    f.value = `${yyyy}-${mm}-${dd}`;
+    f.max = f.value; // opcional: no permitir fechas futuras
+  }
   </script>
+  <!-- ===== Selector de Producto ===== -->
+  <!-- ===== Selector de Producto ===== -->
+  <div id="movProdBackdrop" class="tt-backdrop tt-level-2" hidden>
+    <div class="ventana-centrada ventana-horizontal ventana-xl" role="dialog" aria-modal="true" aria-labelledby="pp_title">
+      <div class="ventana-header">
+        <h3 id="pp_title">Seleccionar producto</h3>
+        <button class="cerrar" type="button" id="movProdClose" aria-label="Cerrar">×</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="picker-toolbar" id="pp_filters"
+           style="display:grid;grid-template-columns:1fr 1.2fr .7fr .7fr .9fr .9fr auto;gap:.5rem;align-items:center">
+        <select id="pp_cat" class="form-control">
+          <option value="">Todas las categorías</option>
+        </select>
+
+        <input id="pp_name" class="form-control" placeholder="Nombre o ID…"/>
+
+        <input id="pp_stock_min" type="number" min="0" step="1" inputmode="numeric"
+               class="form-control" placeholder="Stock ≥">
+        <input id="pp_stock_max" type="number" min="0" step="1" inputmode="numeric"
+               class="form-control" placeholder="Stock ≤">
+
+        <input id="pp_fini" type="date" class="form-control" title="Desde fecha">
+        <input id="pp_ffin" type="date" class="form-control" title="Hasta fecha">
+
+        <button class="btn btn-primary" id="pp_search">Buscar</button>
+      </div>
+
+      <div class="data-table picker-table">
+        <table>
+          <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Costo unitario</th>
+            <th>Stock</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody id="pp_tbody">
+          <tr><td colspan="5" class="tt-muted-row">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="picker-pager">
+        <span id="pp_info" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===========================================
+     *  SUBTIPOS DE MOVIMIENTO (Frontend)
+     *  - Lee desde /api/subtipos-movimiento (soporta ?tipo=1|2)
+     *  - Cachea en memoria
+     *  - Pinta en <select id="mov_subtipo_id"> con optgroups
+     *  - Conserva la selección al reabrir el modal
+     * =========================================== */
+
+    /* Subtipos de movimiento con placeholder no seleccionable */
+  const API_SUBTIPOS = '/api/subtipos-movimiento';
+  let SUBTIPOS_CACHE = null;
+
+  function authHeaders() {
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+
+  function mapSubtipo(d){
+    return {
+      id:      d.subtipo_id ?? d.subtipoId ?? d.id,
+      nombre:  d.nombre ?? '',
+      tipoId:  d.tipo_id ?? d.tipoId ?? null   // 1=Entrada, 2=Salida
+    };
+  }
+
+  async function fetchSubtipos({ tipo = null } = {}){
+    const u = new URL(API_SUBTIPOS, location.origin);
+    if (tipo != null) u.searchParams.set('tipo', tipo);
+    const res = await fetch(u.toString(), {
+      headers: { 'Content-Type':'application/json', ...authHeaders() }
+    });
+    const txt = await res.text();
+    const raw = txt ? JSON.parse(txt) : [];
+    const list = (Array.isArray(raw) ? raw : (raw.content || raw.items || []))
+      .map(mapSubtipo)
+      .filter(x => x.id != null);
+    list.sort((a,b)=>(a.tipoId??0)-(b.tipoId??0) || a.nombre.localeCompare(b.nombre));
+    return list;
+  }
+
+  async function loadSubtiposOnce(){
+    if (SUBTIPOS_CACHE) return SUBTIPOS_CACHE;
+    try { SUBTIPOS_CACHE = await fetchSubtipos(); }
+    catch(e){ console.error('Error cargando subtipos:', e); SUBTIPOS_CACHE = []; }
+    return SUBTIPOS_CACHE;
+  }
+
+  function toggleSubtipoPlaceholderClass(sel){
+    if (!sel) return;
+    if (!sel.value) sel.classList.add('is-empty');
+    else sel.classList.remove('is-empty');
+  }
+
+ function renderSubtipoSelect(list, selectedId){
+  const sel = document.getElementById('mov_subtipo_id');
+  if (!sel) return;
+
+  // Placeholder no seleccionable
+  let html = `<option value="" disabled ${selectedId ? '' : 'selected'} hidden>
+                Seleccionar subtipo
+              </option>`;
+
+  // Agrupar por tipo
+  const grupos = { '1': { label:'Entradas', items:[] },
+                   '2': { label:'Salidas',  items:[] },
+                   'null': { label:'Otros', items:[] } };
+  for (const s of list){
+    (grupos[String(s.tipoId ?? 'null')] ?? grupos['null']).items.push(s);
+  }
+  for (const key of ['1','2','null']){
+    const g = grupos[key]; if (!g.items.length) continue;
+    html += `<optgroup label="${g.label}">` +
+            g.items.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('') +
+            `</optgroup>`;
+  }
+
+  // Pintar y seleccionar si aplica
+  sel.innerHTML = html;
+  if (selectedId != null) sel.value = String(selectedId);
+
+  // Apariencia placeholder + estado de costo
+  toggleSubtipoPlaceholderClass(sel);
+  updateCostoUnitarioState();
+
+  // Listener único para ambos efectos
+  if (!sel.dataset.bound){
+    sel.addEventListener('change', () => {
+      toggleSubtipoPlaceholderClass(sel);
+      updateCostoUnitarioState();
+    });
+    sel.dataset.bound = '1';
+  }
+}
+  // Cargar al abrir el modal de Movimiento
+  (function initSubtiposOnModalOpen(){
+    const btn = document.getElementById('btnAgregarMovimiento');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const sel = document.getElementById('mov_subtipo_id');
+      const keep = sel?.value || null;
+      const data = await loadSubtiposOnce();
+      renderSubtipoSelect(data, keep);
+    });
+  })();
+  </script>
+
+  <script>
+    // ¿El subtipo seleccionado es COMPRA?
+    function isCompraSelected() {
+      const sel = document.getElementById('mov_subtipo_id');
+      const txt = sel?.options?.[sel.selectedIndex]?.text || '';
+      return txt.trim().toUpperCase() === 'COMPRA';
+    }
+
+    // Habilita/inhabilita el campo de costo según el subtipo
+    function updateCostoUnitarioState() {
+      const input = document.getElementById('mov_costo_unitario');
+      if (!input) return;
+      if (isCompraSelected()) {
+        input.disabled = false;
+        input.title = '';
+      } else {
+        input.disabled = true;
+        input.value = ''; // limpiamos para no enviar costo cuando no procede
+        input.title = 'Disponible solo cuando el subtipo es COMPRA';
+      }
+    }
+  </script>
+
+  <script>
+    // CANTIDAD: solo enteros y > 0
+    (function initCantidad(){
+      const qty = document.getElementById('mov_cantidad');
+      if (!qty) return;
+
+      const sanitize = () => {
+        // quitar todo lo que no sea dígito
+        let v = qty.value.replace(/[^\d]/g, '');
+        // quitar ceros a la izquierda
+        v = v.replace(/^0+/, '');
+        qty.value = v;
+      };
+
+      // Bloquear teclas que algunos navegadores permiten en type=number
+      qty.addEventListener('keydown', (e) => {
+        const blocked = ['e','E','+','-','.',','];
+        if (blocked.includes(e.key)) e.preventDefault();
+      });
+
+      // Limpiar mientras escribe/pega
+      qty.addEventListener('input', sanitize);
+
+      // Al salir del campo, asegurar mínimo 1
+      qty.addEventListener('blur', () => {
+        sanitize();
+        if (qty.value === '' || Number(qty.value) < 1) qty.value = '1';
+      });
+
+      // Validación final al enviar el formulario
+      const form = document.getElementById('formNuevoMovimiento');
+      if (form && !form.dataset.qtyBound){
+        form.addEventListener('submit', (e) => {
+          const n = parseInt(qty.value, 10);
+          if (!Number.isInteger(n) || n < 1){
+            e.preventDefault();
+            alert('La cantidad debe ser un entero mayor a 0');
+            qty.focus();
+          }
+        });
+        form.dataset.qtyBound = '1';
+      }
+    })();
+  </script>
+  <script>
+    /* Costo unitario: máscara + validación, permite vacío */
+    (function initCostoUnitarioMask(){
+      const el = document.getElementById('mov_costo_unitario');
+      const form = document.getElementById('formNuevoMovimiento');
+      if (!el) return;
+
+      // Teclas permitidas
+      el.addEventListener('keydown', (e) => {
+        const k = e.key;
+        if (e.ctrlKey || e.metaKey) return;
+        const nav = ['Backspace','Delete','ArrowLeft','ArrowRight','Home','End','Tab'];
+        if (nav.includes(k)) return;
+        if (k === '-' || k === '+' || k === 'e' || k === 'E') { e.preventDefault(); return; }
+        if (k === '.' || k === ',') {
+          const v = el.value;
+          const hasSep = v.includes('.') || v.includes(',');
+          const selection = el.selectionStart !== el.selectionEnd;
+          if (hasSep && !selection) e.preventDefault();
+          return;
+        }
+        if (/^\d$/.test(k)) return;
+        e.preventDefault();
+      });
+
+      // Validación en vivo sin mover el caret
+      let last = '', lastPos = 0;
+      el.addEventListener('input', () => {
+        const v = el.value;
+        const ok = /^\d{0,9}([.,]\d{0,2})?$/.test(v);
+        if (ok || v === '') { last = v; lastPos = el.selectionStart || 0; }
+        else { el.value = last; el.setSelectionRange(lastPos, lastPos); }
+      });
+
+      // Normalizar al salir (mostrar con coma)
+      el.addEventListener('blur', () => {
+        const raw = el.value.trim();
+        if (raw === '') return;
+        const n = Number(raw.replace(',', '.'));
+        if (!isFinite(n) || n <= 0) { el.value = ''; return; }
+        el.value = n.toFixed(2).replace('.', ',');
+      });
+
+      // >>> Permitir vacío al enviar (solo valida si hay valor)
+      if (form && !form.dataset.costMaskBound){
+        form.addEventListener('submit', (e) => {
+          if (el.disabled) return;            // si no es COMPRA, ignorar
+          const raw = el.value.trim();
+          if (raw === '') return;             // permitir enviar sin costo
+          const n = Number(raw.replace(',', '.'));
+          if (!isFinite(n) || n <= 0) {
+            e.preventDefault();
+            alert('El costo unitario debe ser un número decimal positivo (o déjalo vacío).');
+            el.focus();
+            return;
+          }
+          // normaliza con punto para backend
+          el.value = n.toFixed(2);            // "123.45"
+        });
+        form.dataset.costMaskBound = '1';
+      }
+    })();
+  </script>
+  <script>
+    (function validarMovimientoConFeedback(){
+      const form    = document.getElementById('formNuevoMovimiento');
+      if (!form) return;
+
+      const inpNom  = document.getElementById('mov_producto_nombre');
+      const inpId   = document.getElementById('mov_producto_id');
+      const msg     = document.getElementById('mov_producto_msg');
+
+      // Refs para habilitar/deshabilitar "Guardar"
+      const btnSave = document.getElementById('btnGuardarMov');
+      const qty     = document.getElementById('mov_cantidad');
+      const subtipo = document.getElementById('mov_subtipo_id');
+      const fecha   = document.getElementById('mov_fecha'); // <input type="date" id="mov_fecha">
+
+      const hasProducto = () => {
+        const n = parseInt(inpId?.value || '0', 10);
+        return Number.isInteger(n) && n > 0;
+      };
+
+      function setProductoError(on, text='Debes seleccionar un producto.') {
+        inpNom.classList.toggle('is-invalid', on);
+        if (msg) { msg.textContent = text; msg.hidden = !on; }
+        inpNom.setCustomValidity(on ? text : '');
+      }
+
+      function updateGuardarState(){
+        const n          = parseInt(qty?.value || '0', 10);
+        const okQty      = Number.isInteger(n) && n >= 1;
+        const okSubtipo  = !!subtipo?.value;
+        const okFecha    = fecha ? !!fecha.value : true;  // true si aún no agregaste el campo
+        const okProducto = hasProducto();
+        if (btnSave) btnSave.disabled = false;
+      }
+      // Expuesta para que el picker la use al elegir producto
+      window.updateGuardarState = updateGuardarState;
+
+      qty?.addEventListener('input',  updateGuardarState);
+      subtipo?.addEventListener('change', updateGuardarState);
+      fecha?.addEventListener('change', updateGuardarState);
+
+      // Submit (CAPTURE): valida producto y bloquea el "✓ Completado" del handler de botones
+      form.addEventListener('submit', (e) => {
+        if (!hasProducto()) {
+          setProductoError(true);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          form.dataset.blockDemo = '1';   // <- evita "Completado" en el click handler
+          form.reportValidity();
+          return;
+        }
+        setProductoError(false);
+      }, { capture: true });
+
+      // Al abrir el modal, limpiar y recalcular
+      document.getElementById('btnAgregarMovimiento')?.addEventListener('click', () => {
+        setProductoError(false);
+        updateGuardarState();
+      });
+
+      // Estado inicial
+      updateGuardarState();
+    })();
+  </script>
+  <script>
+    /* ===== Enviar Movimiento -> SP ===== */
+    (function wireGuardarMovimiento() {
+      const API_MOV_SP = '/api/sp/movimiento-inventario'; // ajusta si tu ruta es otra
+      const form = document.getElementById('formNuevoMovimiento');
+      const btn  = document.getElementById('btnGuardarMov');
+      if (!form || !btn) return;
+
+      const $ = id => document.getElementById(id);
+
+      const f = {
+        id:    () => parseInt($('mov_producto_id')?.value || '0', 10),
+        sub:   () => parseInt($('mov_subtipo_id')?.value || '0', 10),
+        qty:   () => parseInt($('mov_cantidad')?.value || '0', 10),
+        fecha: () => ($('mov_fecha')?.value || '').trim(),
+        ref:   () => ($('mov_referencia')?.value || '').trim(),
+        obs:   () => ($('mov_observacion')?.value || '').trim(),
+        costo: () => {
+          const el = $('mov_costo_unitario');
+          if (!el || el.disabled) return null;
+          const raw = el.value.trim();
+          if (!raw) return null;
+          const n = Number(raw.replace(',', '.'));
+          return Number.isFinite(n) ? Number(n.toFixed(2)) : null;
+        }
+      };
+
+      // Este handler corre DESPUÉS del validador en captura
+      form.addEventListener('submit', async (e) => {
+        if (form.dataset.blockDemo === '1') { delete form.dataset.blockDemo; return; }
+        e.preventDefault();
+
+        if (!form.reportValidity()) return;
+        if (f.id() <= 0) return;
+
+        const fecha = f.fecha();
+        const item = {
+          producto_id:    f.id(),
+          subtipo_id:     f.sub(),
+          cantidad:       f.qty(),
+          fecha:          fecha ? `${fecha} 00:00:00` : null,
+          referencia:     f.ref() || null,
+          observacion:    f.obs() || null,
+          costo_unitario: f.costo()
+        };
+
+        btn.disabled = true;
+        try {
+          const res = await fetch(API_MOV_SP, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(typeof authHeaders === 'function' ? authHeaders() : {})
+            },
+            body: JSON.stringify(item)
+          });
+          const txt = await res.text();
+          if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
+
+          alert('✅ Movimiento registrado');
+          if (typeof loadMovimientos === 'function') loadMovimientos();
+
+
+          // Cerrar modal y limpiar
+          document.getElementById('movBackdrop').hidden = true;
+          document.body.classList.remove('tt-no-scroll');
+          form.reset();
+          updateCostoUnitarioState?.();
+          window.updateGuardarState?.();
+
+          // 🔁 Refrescar la tabla de movimientos (PUNTO 3)
+          await loadMovimientos?.();
+
+        } catch (err) {
+          alert('❌ ' + (err.message || err));
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+
+
+  <script>
+    /* ===== Listar movimientos en la tabla de movimiento inventario ===== */
+    const API_MOVS = '/api/movimientos'; // <-- ajusta a tu ruta real
+
+    function renderEmptyMovs(msg){
+      const tb = document.getElementById('tbMovimientos');
+      if (tb) tb.innerHTML = `<tr><td colspan="9" class="tt-muted-row">${msg}</td></tr>`;
+    }
+    function fmtUSD(n){
+      const x = Number(n ?? 0);
+      return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(x);
+    }
+    function fmtFecha(s){
+      if (!s) return '';
+      const d = new Date(s);
+      if (isNaN(d)) return s; // por si ya viene formateado
+      // fecha + hora corta
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+    function mapMov(raw){
+      return {
+        id:            raw.movimiento_id ?? raw.id ?? raw.movId,
+        fecha:         raw.fecha ?? raw.createdAt,
+        producto:      raw.producto?.nombre ?? raw.producto_nombre ?? raw.nombreProducto ?? raw.producto ?? '',
+        subtipo:       raw.subtipo?.nombre  ?? raw.subtipo_nombre  ?? raw.subtipo  ?? '',
+        cantidad:      raw.cantidad ?? raw.qty ?? 0,
+        costo_unit:    raw.costo_unitario ?? raw.costoUnitario ?? raw.costo ?? null,
+        costo_total:   raw.costo_total ?? raw.costoTotal ?? null,
+        referencia:    raw.referencia ?? raw.ref ?? '',
+        observacion:   raw.observacion ?? raw.obs ?? ''
+      };
+    }
+
+    async function loadMovimientos(){
+      const tb = document.getElementById('tbMovimientos');
+      if (!tb) return;
+      renderEmptyMovs('Cargando…');
+      try {
+        const res = await fetch(API_MOVS, { headers: { 'Content-Type':'application/json', ...(typeof authHeaders==='function'? authHeaders():{}) }});
+        const txt = await res.text();
+        const data = txt ? JSON.parse(txt) : [];
+        const list = (Array.isArray(data) ? data : (data.content || data.items || [])).map(mapMov);
+
+        if (!list.length){ renderEmptyMovs('Sin movimientos'); return; }
+
+        tb.innerHTML = list.map(m => `
+          <tr>
+            <td>${m.id ?? ''}</td>
+            <td>${fmtFecha(m.fecha)}</td>
+            <td>${m.producto}</td>
+            <td>${m.subtipo}</td>
+            <td>${m.cantidad}</td>
+            <td>${m.costo_unit != null ? fmtUSD(m.costo_unit) : ''}</td>
+            <td>${m.costo_total != null ? fmtUSD(m.costo_total) : ''}</td>
+            <td>${m.referencia}</td>
+            <td>${m.observacion}</td>
+          </tr>
+        `).join('');
+      } catch (e){
+        console.error('loadMovimientos:', e);
+        renderEmptyMovs('No se pudo cargar /api/movimientos');
+      }
+    }
+  </script>
+
+  <script>
+    // ÚNICA definición de showSection
+    function showSection(sectionId, el){
+      // cambiar de sección
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      // refrescar tabla al abrir "Movimiento de Inventario"
+      if (sectionId === 'inventory') { loadMovimientos?.(); }
+    }
+
+    // Si "inventory" ya está visible al cargar, pedir datos también
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById('inventory')?.classList.contains('active')) {
+        loadMovimientos?.();
+      }
+    });
+  </script>
+
+  <!-- <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById('inventory')?.classList.contains('active')) {
+        loadMovimientos?.();
+      }
+    });
+  </script> -->
+
+  <script>
+    function resetMovimientoModal() {
+      const form = document.getElementById('formNuevoMovimiento');
+      if (!form) return;
+
+      form.reset();                                // limpia cantidad, fecha, etc.
+      const idEl   = document.getElementById('mov_producto_id');
+      const nomEl  = document.getElementById('mov_producto_nombre');
+      const msgEl  = document.getElementById('mov_producto_msg');
+
+      if (idEl)  idEl.value  = '';
+      if (nomEl) {
+        nomEl.value = '';
+        nomEl.setCustomValidity('');               // quita error pendiente
+      }
+      if (msgEl) msgEl.hidden = true;
+
+      updateCostoUnitarioState?.();
+      window.updateGuardarState?.();
+    }
+
+    // Abrir modal
+    document.getElementById('btnAgregarMovimiento').addEventListener('click', () => {
+      resetMovimientoModal();                      // <-- limpiar SIEMPRE al abrir
+      document.getElementById('movBackdrop').hidden = false;
+      document.body.classList.add('tt-no-scroll');
+    });
+
+    // Cerrar con la X
+    document.getElementById('movCloseBtn').addEventListener('click', () => {
+      resetMovimientoModal();                      // <-- limpiar también al cancelar
+      document.getElementById('movBackdrop').hidden = true;
+      document.body.classList.remove('tt-no-scroll');
+    });
+  </script>
+  <script>
+    (() => {
+      // ===== Endpoints =====
+      const API_PROD_SEARCH = '/api/productos/buscar'; // POST JSON -> array
+      const API_CATS        = '/api/categorias';       // GET -> [{id_categoria,nombre}]
+
+      // ===== Refs (coinciden con TU HTML) =====
+      const PP = {
+        backdrop:  document.getElementById('movProdBackdrop'),
+        closeBtn:  document.getElementById('movProdClose'),
+        // filtros
+        cat:       document.getElementById('pp_cat'),
+        name:      document.getElementById('pp_name'),     // nombre o ID
+        stockMin:  document.getElementById('pp_stock_min'),
+        stockMax:  document.getElementById('pp_stock_max'),
+        fmin:      document.getElementById('pp_fini'),     // fecha inicio
+        fmax:      document.getElementById('pp_ffin'),     // fecha fin
+        search:    document.getElementById('pp_search'),
+        // tabla
+        tbody:     document.getElementById('pp_tbody'),
+        // pie (sin paginación)
+        prev:      document.getElementById('pp_prev'),
+        next:      document.getElementById('pp_next'),
+        info:      document.getElementById('pp_info')
+      };
+
+      // ===== Utils =====
+      const asInt = (v) => {
+        const t = String(v ?? '').trim();
+        if (t === '') return undefined;
+        const n = parseInt(t, 10);
+        return Number.isFinite(n) ? n : undefined;
+      };
+      const fmtUSDV2 = (n) =>
+        new Intl.NumberFormat('es-EC', { style:'currency', currency:'USD' })
+          .format(Number(n || 0));
+
+      const mapProduct = (raw) => ({
+        id:     raw.producto_id ?? raw.productoId ?? raw.id ?? raw.id_producto,
+        nombre: raw.nombre ?? raw.name ?? '',
+        precio: raw.preciounitario ?? raw.precioUnitario ?? raw.precio ?? 0,
+        stock:  raw.stock ?? raw.cantidad ?? 0,
+        costo:  Number(raw.costo ?? raw.cost ?? raw.costo_unitario ?? 0)
+      });
+
+      // ===== Cargar categorías cada vez que abres el modal =====
+      async function loadPickerCategorias() {
+        const sel = PP.cat;
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Todas las categorías</option>';
+        try {
+          const res  = await fetch(API_CATS);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          for (const c of (Array.isArray(data) ? data : [])) {
+            const opt = document.createElement('option');
+            opt.value = c.id_categoria ?? c.id ?? '';
+            opt.textContent = c.nombre ?? '';
+            sel.appendChild(opt);
+          }
+        } catch (err) {
+          console.warn('No se pudieron cargar categorías:', err);
+          const opt = document.createElement('option');
+          opt.disabled = true;
+          opt.textContent = '(No se pudo cargar categorías)';
+          sel.appendChild(opt);
+        }
+      }
+
+      function resetPickerFilters(){
+        if (PP.cat)      PP.cat.value = '';
+        if (PP.name)     PP.name.value = '';
+        if (PP.stockMin) PP.stockMin.value = '';
+        if (PP.stockMax) PP.stockMax.value = '';
+        if (PP.fmin)     PP.fmin.value = '';
+        if (PP.fmax)     PP.fmax.value = '';
+      }
+
+      // ===== HTTP =====
+      async function buscarProductos(filtros){
+        const res = await fetch(API_PROD_SEARCH, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(filtros)
+        });
+        const txt  = await res.text();
+        const data = txt ? JSON.parse(txt) : [];
+        return Array.isArray(data) ? data : (data.content || data.items || []);
+      }
+
+      // ===== Render tabla =====
+      function renderPickerTable(items){
+        if (!PP.tbody) return;
+        if (!items || !items.length){
+          PP.tbody.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Sin resultados</td></tr>`;
+        } else {
+          PP.tbody.innerHTML = items.map(p => `
+            <tr>
+              <td>${p.nombre ?? ''}</td>
+              <td>${fmtUSDV2(p.precio)}</td>
+              <td>${fmtUSDV2(p.costo)}</td>
+              <td>${p.stock ?? 0}</td>
+              <td>
+                <button class="btn btn-primary btn--sm"
+                        data-pick="${p.id}"
+                        data-name="${p.nombre}">Elegir</button>
+              </td>
+            </tr>
+          `).join('');
+        }
+
+        // sin paginación
+        if (PP.prev) PP.prev.disabled = true;
+        if (PP.next) PP.next.disabled = true;
+        if (PP.info) PP.info.textContent = `${items?.length ?? 0} ítems`;
+
+        // elegir
+        PP.tbody.querySelectorAll('button[data-pick]').forEach(btn=>{
+          btn.addEventListener('click', () => {
+            const id   = btn.getAttribute('data-pick');
+            const name = btn.getAttribute('data-name') || `#${id}`;
+            document.getElementById('mov_producto_id').value = id;
+            const nameEl = document.getElementById('mov_producto_nombre');
+            if (nameEl) {
+              nameEl.value = name;
+              nameEl.classList.remove('is-invalid');
+              nameEl.setCustomValidity('');
+            }
+            const msg = document.getElementById('mov_producto_msg');
+            if (msg) msg.hidden = true;
+            if (window.updateGuardarState) window.updateGuardarState();
+            closeProductPicker();
+          });
+        });
+      }
+
+      // ===== Ejecutar búsqueda =====
+      async function loadPicker(){
+        if (!PP.tbody) return;
+
+        // Sanitizar y validar
+        const sMin = asInt(PP.stockMin?.value);
+        const sMax = asInt(PP.stockMax?.value);
+        const fmin = (PP.fmin?.value || '').trim() || undefined;
+        const fmax = (PP.fmax?.value || '').trim() || undefined;
+        if (fmin && fmax && fmin > fmax){
+          alert('La fecha inicial no puede ser mayor que la final');
+          return;
+        }
+
+        const filtros = {};
+        const catId = asInt(PP.cat?.value);
+        if (catId !== undefined) filtros.categoria_id = catId;
+        const q = (PP.name?.value || '').trim();
+        if (q) filtros.q = q;
+        if (sMin !== undefined) filtros.stock_min = sMin;  // <-- permite 0
+        if (sMax !== undefined) filtros.stock_max = sMax;  // <-- permite 0
+        if (fmin) filtros.fecha_min = fmin;
+        if (fmax) filtros.fecha_max = fmax;
+
+        PP.tbody.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Cargando…</td></tr>`;
+        try{
+          const data  = await buscarProductos(filtros);
+          const items = (Array.isArray(data) ? data : []).map(mapProduct);
+          renderPickerTable(items);
+        }catch(err){
+          console.error('loadPicker:', err);
+          PP.tbody.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Error cargando resultados</td></tr>`;
+        }
+      }
+
+      // ===== Abrir / cerrar modal =====
+      async function openProductPicker(){
+        if (!PP.backdrop) return;
+        PP.backdrop.hidden = false;
+        document.body.classList.add('tt-no-scroll');
+        resetPickerFilters();
+        await loadPickerCategorias();
+        await loadPicker();              // lista inicial (sin filtros)
+        setTimeout(()=> PP.name?.focus(), 0);
+      }
+      function closeProductPicker(){
+        if (!PP.backdrop) return;
+        PP.backdrop.hidden = true;
+        document.body.classList.remove('tt-no-scroll');
+      }
+
+      // ===== Enlaces =====
+      document.getElementById('btnAddProducto')?.addEventListener('click', openProductPicker);
+      PP.closeBtn?.addEventListener('click', closeProductPicker);
+
+      // Buscar SOLO con botón o Enter (no al cambiar categoría)
+      PP.search?.addEventListener('click', () => loadPicker());
+      [PP.name, PP.stockMin, PP.stockMax, PP.fmin, PP.fmax].forEach(inp => {
+        if (!inp) return;
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter'){ e.preventDefault(); loadPicker(); }
+        });
+      });
+
+      // Inputs de stock: permitir 0, sin letras ni decimales
+      [PP.stockMin, PP.stockMax].forEach(inp => {
+        if (!inp) return;
+        // bloquear símbolos no numéricos
+        inp.addEventListener('keydown', e => {
+          if (['e','E','+','-','.',','].includes(e.key)) e.preventDefault();
+        });
+        // limpiar y conservar "0" válido
+        inp.addEventListener('input', () => {
+          let v = inp.value.replace(/[^\d]/g, '');
+          if (v.length > 1) {
+            v = v.replace(/^0+/, '');
+            if (v === '') v = '0'; // 000 -> 0
+          }
+          inp.value = v;
+        });
+      });
+
+      // Deshabilitar paginadores (no usados)
+      if (PP.prev) PP.prev.disabled = true;
+      if (PP.next) PP.next.disabled = true;
+
+      // Exponer si lo necesitas
+      window.openProductPicker = openProductPicker;
+    })();
+  </script>
+
 </body>
 </html>

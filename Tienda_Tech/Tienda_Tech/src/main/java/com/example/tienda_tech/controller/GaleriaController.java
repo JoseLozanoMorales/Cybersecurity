@@ -1,84 +1,69 @@
 // src/main/java/com/example/tienda_tech/controller/GaleriaController.java
 package com.example.tienda_tech.controller;
 
-import com.example.tienda_tech.dto.galeria.*;
-import com.example.tienda_tech.model.Galeria;
-import com.example.tienda_tech.service.GaleriaService;
+import com.example.tienda_tech.service.GaleriaQueryService;
+import com.example.tienda_tech.service.GaleriaSpService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/api/productos")   // <--- prefijo de la clase
 @RequiredArgsConstructor
 public class GaleriaController {
-  private final GaleriaService service;
 
-  // lista
-  @GetMapping("/api/productos/{productoId}/galeria/lista")
-  public List<GaleriaItemDto> listar(@PathVariable long productoId) {
-    return service.listar(productoId);
+  private final GaleriaSpService galeria;
+  private final GaleriaQueryService svc;
+
+  // POST multipart: /api/productos/{id}/galeria
+  @PostMapping(value="/{productoId}/galeria",
+               consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<?> subirGaleriaMultipart(
+      @PathVariable long productoId,
+      @RequestParam("files") List<MultipartFile> files,
+      @RequestParam(defaultValue="true")  boolean paraGaleria,
+      @RequestParam(defaultValue="false") boolean paraMenu,
+      @RequestParam(defaultValue="false") boolean esPortada,
+      @RequestParam(required=false) String descripcion
+  ){
+    int n = galeria.subirDesdeMultipart(productoId, files, paraGaleria, paraMenu, esPortada, descripcion);
+    return ResponseEntity.ok(Map.of("uploaded", n));
   }
 
-  // subir batch (JSON)
-  @PostMapping(value="/api/productos/{productoId}/galeria", consumes=MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, Object>> subir(
-      @PathVariable Long productoId,
-      @RequestBody List<GaleriaUploadItemDto> items) {
-    List<Integer> ids = service.subir(productoId, items);   // <-- era List<Long>
-    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("creados", ids));
+  // POST JSON: /api/productos/{id}/galeria
+  @PostMapping(value="/{productoId}/galeria",
+               consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> subirGaleriaJson(
+      @PathVariable long productoId,
+      @RequestBody List<Map<String,Object>> items
+  ){
+    int n = galeria.subirDesdeJson(productoId, items);
+    return ResponseEntity.ok(Map.of("uploaded", n));
   }
 
-  // flags/ALT
-  @PatchMapping("/api/galeria/flags")
-  public Map<String, Object> flags(@RequestBody List<GaleriaFlagDto> flags) {
-    service.guardarFlags(flags);
-    return Map.of("ok", true);
+  // GET lista: /api/productos/{id}/galeria/lista
+  @GetMapping("/{productoId}/galeria/lista")
+  public ResponseEntity<List<GaleriaQueryService.GaleriaItemDto>> listar(
+      @PathVariable long productoId,
+      @RequestParam(defaultValue="galeria") String vista
+  ){
+    return ResponseEntity.ok(svc.listar(productoId, vista));
   }
 
-  // reordenar en vista
-  @PostMapping("/api/productos/{productoId}/galeria/reordenar")
-  public Map<String, Object> reordenar(
-      @PathVariable Long productoId,
-      @RequestBody GaleriaReorderDto dto) {
-    service.reordenar(productoId, dto);
-    return Map.of("ok", true);
-  }
-
-  // portada
-  @PostMapping("/api/productos/{productoId}/galeria/{galeriaId}/portada")
-  public Map<String, Object> portada(
-      @PathVariable Long productoId,
-      @PathVariable Integer galeriaId) {                    // <-- era Long
-    service.marcarPortada(productoId, galeriaId);
-    return Map.of("ok", true);
-  }
-
-  // media binaria
-  @GetMapping("/api/galeria/{galeriaId}/media")
-  public ResponseEntity<byte[]> media(@PathVariable Integer galeriaId) { // <-- era Long
-  Optional<Galeria> opt = service.obtener(galeriaId);
-    if (opt.isEmpty() || opt.get().getContenido()==null)
-      return ResponseEntity.notFound().build();
-
-    Galeria g = opt.get();
-    MediaType mt;
-    try { mt = MediaType.parseMediaType(g.getMimeType()); }
-    catch (Exception e) { mt = MediaType.APPLICATION_OCTET_STREAM; }
-
-    return ResponseEntity.ok()
-      .contentType(mt)
-      .contentLength(g.getPesoBytes() != null ? g.getPesoBytes() : g.getContenido().length)
-      .body(g.getContenido());
-  }
-
-  // eliminar (soft por defecto; ?hard=true borra)
-  @DeleteMapping("/api/galeria/{galeriaId}")
-  public Map<String, Object> eliminar(
-      @PathVariable Integer galeriaId,                      // <-- era Long
-      @RequestParam(name="hard", defaultValue = "false") boolean hard) {
-    service.eliminar(galeriaId, hard);
-    return Map.of("ok", true);
+  // GET media: OJO con la ruta resultante
+  // Queda /api/productos/galeria/{galeriaId}/media
+  @GetMapping("/galeria/{galeriaId}/media")
+  public ResponseEntity<byte[]> media(@PathVariable int galeriaId){
+    var m = svc.obtenerMedia(galeriaId);
+    if (m == null) return ResponseEntity.notFound().build();
+    var mt = (m.mime()!=null) ? MediaType.parseMediaType(m.mime())
+                              : MediaType.APPLICATION_OCTET_STREAM;
+    return ResponseEntity.ok().contentType(mt).body(m.bytes());
   }
 }
+

@@ -1,31 +1,30 @@
 // src/main/java/com/example/tienda_tech/controller/UsuarioController.java
 package com.example.tienda_tech.controller;
+import com.example.tienda_tech.dto.UsuarioMinDTO;
+import com.example.tienda_tech.model.Usuario;
 import jakarta.servlet.http.HttpServletRequest;   // <-- NUEVO (no javax)
 import org.springframework.http.ResponseEntity;
-import com.example.tienda_tech.dto.AdminCreateRequest;
-import com.example.tienda_tech.dto.AdminCreateRequest;
 
 import com.example.tienda_tech.dto.UsuarioDTO;
-import com.example.tienda_tech.model.Usuario;
 import com.example.tienda_tech.service.UsuarioService;
 
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 // ...los que ya tengas
 import org.springframework.web.bind.annotation.*;
 import com.example.tienda_tech.dto.ClienteUpdateRequest;
 
+import java.util.List;
 import java.util.Map;
-import java.util.List;                             // <- IMPORTANTE
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
-    // @Autowired
-    // private UsuarioService usuarioService;
+
     @Autowired
     private com.example.tienda_tech.service.UsuarioService usuarioService;
 
@@ -57,55 +56,25 @@ public class UsuarioController {
         }
     }
 
-    /**
-     * Panel admin: crear cualquier tipo de usuario (admin / cliente / trabajador).
-     * Invoca SP: crear_usuario(...)
-     * Acepta tanto /crear-usuario como /crear_usuario para tolerar variantes.
-     */
-    // @PostMapping({"/crear-usuario", "/crear_usuario"})
-    // public ResponseEntity<?> crearUsuario(@RequestBody UsuarioDTO dto) {
-    //     try {
-    //         if (dto.getIdRol() == null) {
-    //             return ResponseEntity.badRequest().body(Map.of(
-    //                     "success", false,
-    //                     "message", "idRol es obligatorio para crear usuario"
-    //             ));
-    //         }
-    //         usuarioService.crearUsuarioConSP(dto);
-    //         return ResponseEntity.ok(Map.of(
-    //                 "success", true,
-    //                 "message", "Usuario creado"
-    //         ));
-    //     } catch (DataIntegrityViolationException ex) {
-    //         return ResponseEntity.status(409).body(Map.of(
-    //                 "success", false,
-    //                 "message", "Datos duplicados o inválidos",
-    //                 "error", ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage()
-    //         ));
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(500).body(Map.of(
-    //                 "success", false,
-    //                 "message", "Error al crear usuario",
-    //                 "error", e.getMessage()
-    //         ));
-    //     }
-    // }
     @PostMapping({"/crear-usuario", "/crear_usuario"})
-    public ResponseEntity<?> crearUsuarioAdminTrabajador(
-            @Valid @RequestBody AdminCreateRequest req) {
+    public ResponseEntity<?> crearUsuario(@RequestBody UsuarioDTO dto) {
         try {
-            usuarioService.crearAdminOTrabajador(req);
+            if (dto.getIdRol() == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "idRol es obligatorio para crear usuario"
+                ));
+            }
+            usuarioService.crearUsuarioConSP(dto);
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Usuario creado y correo enviado"
+                    "message", "Usuario creado"
             ));
         } catch (DataIntegrityViolationException ex) {
             return ResponseEntity.status(409).body(Map.of(
                     "success", false,
                     "message", "Datos duplicados o inválidos",
-                    "error", ex.getMostSpecificCause() != null
-                            ? ex.getMostSpecificCause().getMessage()
-                            : ex.getMessage()
+                    "error", ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of(
@@ -116,16 +85,7 @@ public class UsuarioController {
         }
     }
 
-    // (lo que ya tengas: crear, listar, etc.)
 
-    // NUEVO: actualizar perfil de cliente (self-service)
-    // @PutMapping("/{usuarioId}/cliente")
-    // public ResponseEntity<?> actualizarCliente(
-    //     @PathVariable Integer usuarioId,
-    //     @Valid @RequestBody ClienteUpdateRequest req) {
-    //     usuarioService.actualizarCliente(usuarioId, req);
-    //     return ResponseEntity.ok().build();
-    // }
     @PutMapping("/cliente/{id}")
     public ResponseEntity<?> actualizarCliente(
             @PathVariable Integer id,
@@ -134,7 +94,7 @@ public class UsuarioController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Cliente actualizado"));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/api/usuarios/me")
     public ResponseEntity<?> me(HttpServletRequest req) {
         Integer userId = resolveUserId(req);               // lee X-User-Id
         var u = usuarioService.getById(userId);            // usa el service
@@ -163,38 +123,11 @@ public class UsuarioController {
     }
 
     /* ===== ADMIN/TRABAJADOR – nuevo flujo JSON ===== */
-    // @PostMapping({"/admin-trabajador", "/admin_trabajador"})
-    // public ResponseEntity<Void> crearAdminOTrabajador(@Valid @RequestBody UsuarioDTO dto) {
-    //     usuarioService.crearAdminOTrabajador(dto);
-    //     return ResponseEntity.ok().build();
-    // }
-
-    // @PutMapping("/admin/{id}")
-    // public ResponseEntity<Void> actualizarAdmin(
-    //         @PathVariable Integer id,
-    //         @RequestParam Integer rolId,
-    //         @Valid @RequestBody ClienteUpdateRequest req) {
-    //     usuarioService.actualizarAdmin(id, rolId, req);
-    //     return ResponseEntity.ok().build();
-    // }
-
-    // @DeleteMapping("/admin/{id}")
-    // public ResponseEntity<Void> deshabilitarAdmin(
-    //         @PathVariable Integer id,
-    //         @RequestParam Integer rolId) {
-    //     usuarioService.deshabilitarAdmin(id, rolId);
-    //     return ResponseEntity.ok().build();
-    // }
-
-    // /* ===== Búsqueda (sin searchMin) ===== */
-    // @GetMapping("/buscar")
-    // public ResponseEntity<List<Usuario>> buscarPorUsuario(
-    //         @RequestParam("usuario") String usuario,
-    //         @RequestParam(value = "rolId", required = false) Integer rolId,
-    //         @RequestParam(value = "limit", defaultValue = "10") int limit) {
-    //     return ResponseEntity.ok(usuarioService.buscarPorUsuario(usuario, rolId, limit));
-    // }
-    /* ===== ADMIN/TRABAJADOR – nuevo flujo JSON ===== */
+    @PostMapping("/crear-usuarioAdmin")
+    public ResponseEntity<Void> crearAdminOTrabajador(@Valid @RequestBody UsuarioDTO dto) {
+        usuarioService.crearAdminOTrabajador(dto);
+        return ResponseEntity.ok().build();
+    }
 
     @PutMapping("/admin/{id}")
     public ResponseEntity<Void> actualizarAdmin(
@@ -221,4 +154,17 @@ public class UsuarioController {
             @RequestParam(value = "limit", defaultValue = "10") int limit) {
         return ResponseEntity.ok(usuarioService.buscarPorUsuario(usuario, rolId, limit));
     }
+
+    // NUEVO: búsqueda mínima para autocompletar/seleccionar
+    @GetMapping("/buscar-min")
+    public ResponseEntity<List<UsuarioMinDTO>> buscarMin(
+            @RequestParam(value="q", required=false, defaultValue="") String q,
+            @RequestParam(value="rolId", required=false) Integer rolId,
+            @RequestParam(value="limit", defaultValue="20") int limit) {
+        return ResponseEntity.ok(usuarioService.buscarMin(q, rolId, limit));
+    }
+
+
+
+
 }

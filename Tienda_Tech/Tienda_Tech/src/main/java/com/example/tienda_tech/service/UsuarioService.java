@@ -1,232 +1,230 @@
 // src/main/java/com/example/tienda_tech/service/UsuarioService.java
 package com.example.tienda_tech.service;
 
-import com.example.tienda_tech.dto.AdminCreateRequest;
-import com.example.tienda_tech.dto.ClienteUpdateRequest;
 import com.example.tienda_tech.dto.UsuarioAdminDTO;
 import com.example.tienda_tech.dto.UsuarioDTO;
-import com.example.tienda_tech.model.Usuario;
+import com.example.tienda_tech.dto.UsuarioMinDTO;
+import com.example.tienda_tech.repository.UsuarioQueryRepository;
 import com.example.tienda_tech.repository.UsuarioRepository;
+import com.example.tienda_tech.model.Usuario;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.tienda_tech.dto.ClienteUpdateRequest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.security.SecureRandom;
+import com.example.tienda_tech.repository.UsuarioQueryRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class UsuarioService {
 
-  private final UsuarioRepository usuarioRepo;
-  private final PasswordEncoder passwordEncoder;
-  private final ObjectMapper mapper = new ObjectMapper();
-  private final EmailService emailService; // define esta interfaz (ver abajo)
+    @Autowired
+    private com.example.tienda_tech.repository.UsuarioRepository usuarioRepository;  // <-- UNO solo
 
-  /* ===== BÁSICOS ===== */
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-  public Usuario getById(Integer id) {
-    return usuarioRepo.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-  }
+    // NUEVO: para enviar credenciales por correo antes de registrar
+    private final OtpService otpService;
+    // NUEVO
+    private final UsuarioQueryRepository usuarioQueryRepository;
 
-  public Usuario login(String usuario, String contraseniaPlain) {
-    var opt = usuarioRepo.findByUsuario(usuario);
+    public com.example.tienda_tech.model.Usuario getById(Integer id) {
+        return usuarioRepository.findById(id)
+            .orElseThrow(() -> new com.example.tienda_tech.exception.NotFoundException("Usuario no encontrado"));
+        // Si no tienes NotFoundException, usa:
+        // .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+    }
+
+
+
+    public Usuario login(String usuario, String contraseniaPlain) {
+    var opt = usuarioRepository.findByUsuario(usuario);
     if (opt.isEmpty()) throw new IllegalArgumentException("Credenciales inválidas");
 
     Usuario u = opt.get();
-    String hash = u.getContrasenia();
+    String hash = u.getContrasenia(); // la columna actualmente se llama así
     if (hash == null || !passwordEncoder.matches(contraseniaPlain, hash)) {
-      throw new IllegalArgumentException("Credenciales inválidas");
+        throw new IllegalArgumentException("Credenciales inválidas");
     }
     return u;
-  }
-
-  /* ===== CLIENTE (flujo público existente) ===== */
-
-  public void crearClienteConSP(UsuarioDTO dto) {
-    String raw = dto.getContrasena();
-    if (raw == null || raw.isBlank()) {
-      throw new IllegalArgumentException("La contraseña es obligatoria");
-    }
-    String hash = passwordEncoder.encode(raw);
-
-    usuarioRepo.registrarClienteSP(
-        dto.getNombre(),
-        dto.getCedula(),
-        dto.getCorreo(),
-        dto.getTelefono(),
-        dto.getUsuario(),
-        hash
-    );
-  }
-
-  public void actualizarCliente(Integer usuarioId, ClienteUpdateRequest req) {
-    String nombre     = emptyToNull(req.getNombre());
-    String cedula     = emptyToNull(req.getCedula());
-    String correo     = emptyToNull(req.getCorreo());
-    String telefono   = emptyToNull(req.getTelefono());
-    String usuario    = emptyToNull(req.getUsuario());
-    String contrasena = emptyToNull(req.getContrasena());
-
-    if (contrasena != null) {
-      contrasena = passwordEncoder.encode(contrasena);
     }
 
-    usuarioRepo.actualizarClienteSP(
-        usuarioId, nombre, cedula, correo, telefono, usuario, contrasena
-    );
-  }
 
-  /* ===== ADMIN/TRABAJADOR – CREAR (JSON SP) ===== */
+    // Ya existente: registro público (cliente)
+    public void crearClienteConSP(UsuarioDTO dto) {
+        String raw = dto.getContrasena();
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("La contraseña es obligatoria");
+        }
+        String hash = passwordEncoder.encode(raw);            // <<--- HASH AQUÍ
 
-        @Transactional
-    public void crearAdminOTrabajador(AdminCreateRequest req) {
-    if (req.getIdRol() == null || !(req.getIdRol() == 1 || req.getIdRol() == 3)) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol inválido (solo 1=admin, 3=trabajador)");
+        usuarioRepository.registrarClienteSP(
+            dto.getNombre(),
+            dto.getCedula(),
+            dto.getCorreo(),
+            dto.getTelefono(),
+            dto.getUsuario(),
+            hash                              // <<--- ENVIAR HASH
+        );
     }
 
-    // 1) Generar contraseña
-    String plain = generarPasswordFuerte(12);
-    String hash  = passwordEncoder.encode(plain);
 
-    // 2) Construir OBJETO con claves que espera el SP
-    ObjectNode obj = mapper.createObjectNode();
-    obj.put("accion", "AGREGAR");               // ← usa la palabra que tu SP espera
-    obj.putNull("usuario_id");
-    obj.put("nombre",   req.getNombre());
-    obj.put("cedula",   req.getCedula());
-    obj.put("correo",   req.getCorreo());
-    obj.put("telefono", req.getTelefono());
-    obj.put("usuario",  (req.getUsuario()==null || req.getUsuario().isBlank())
-                        ? sugerirUsuario(req.getNombre(), req.getCorreo())
-                        : req.getUsuario());
+    // NUEVO: panel admin — crea cualquier rol con SP crear_usuario
+    public void crearUsuarioConSP(UsuarioDTO dto) {
+        Integer idMetodoPago = dto.getIdMetodoPago() != null ? dto.getIdMetodoPago().intValue() : null;
+        Integer idRol        = dto.getIdRol() != null        ? dto.getIdRol().intValue()        : 2; // por defecto cliente
 
-    // >>> Elige UNO: si el SP hashea internamente usa 'plain'; si no, envía 'hash'
-    obj.put("contrasenia", hash);               // ó: obj.put("contrasenia", plain);
+        usuarioRepository.crearUsuarioSP(
+                dto.getNombre(),
+                dto.getCedula(),
+                dto.getCorreo(),
+                dto.getTelefono(),
+                dto.getContrasena(), // mapea a v_contrasenia
+                dto.getUsuario(),
+                idMetodoPago,
+                idRol
+        );
+    }
+    public void actualizarCliente(Integer usuarioId, ClienteUpdateRequest req) {
+        String nombre    = emptyToNull(req.getNombre());
+        String cedula    = emptyToNull(req.getCedula());
+        String correo    = emptyToNull(req.getCorreo());
+        String telefono  = emptyToNull(req.getTelefono());
+        String usuario   = emptyToNull(req.getUsuario());
+        String contrasenia = emptyToNull(req.getContrasena());
 
-    obj.put("rol_id",  req.getIdRol());
-
-    // 3) Envolver en ARREGLO (el SP usa jsonb_array_elements)
-    String arrJson = "[" + obj.toString() + "]";
-
-    try {
-        // 4) Llamar PROCEDURE con fallback a FUNCTION
-        try {
-        usuarioRepo.gestionarAdminsJsonCall(arrJson);
-        } catch (Exception ignored) {
-        usuarioRepo.gestionarAdminsJsonSelect(arrJson);
+        // Si el front manda nueva contraseña, hasheamos
+        if (contrasenia != null) {
+            contrasenia = passwordEncoder.encode(contrasenia);
         }
 
-        // 5) Enviar correo con credenciales
-        emailService.enviarCredenciales(req.getCorreo(), obj.get("usuario").asText(), plain);
-
-    } catch (DataIntegrityViolationException dup) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuario/correo/cédula ya existen", dup);
-    } catch (ResponseStatusException ex) {
-        throw ex;
-    } catch (Exception ex) {
-        log.error("Error creando usuario admin/trabajador", ex);
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al crear usuario", ex);
+        usuarioRepository.actualizarClienteSP(
+            usuarioId, nombre, cedula, correo, telefono, usuario, contrasenia
+        );
     }
-}
 
+    /* ======== NUEVO (admin/trabajador) por JSON con envío de credenciales ======== */
+    @Transactional
+    public void crearAdminOTrabajador(UsuarioDTO dto) {
+        if (dto.getIdRol() == null || (dto.getIdRol() != 1 && dto.getIdRol() != 3)) {
+            throw new IllegalArgumentException("idRol debe ser 1 (admin) o 3 (trabajador)");
+        }
+        if (dto.getCorreo() == null || dto.getCorreo().isBlank()) {
+            throw new IllegalArgumentException("El correo es obligatorio para enviar credenciales");
+        }
 
+        // 1) Generar y ENVIAR por correo (si falla -> excepción -> NO se registra)
+        String passwordPlano = otpService.generarYEnviarCredenciales(
+                dto.getCorreo(),
+                dto.getUsuario(),
+                12 // longitud sugerida
+        );
 
-  /* ===== ADMIN/TRABAJADOR – ACTUALIZAR/DESHABILITAR (JSON SP por lote) ===== */
+        // 2) Hashear para BD
+        String hash = passwordEncoder.encode(passwordPlano);
 
-  @Transactional
-  public void actualizarAdmin(Integer id, Integer rolId, ClienteUpdateRequest req) {
-    String contrasenia = emptyToNull(req.getContrasena());
-    if (contrasenia != null) contrasenia = passwordEncoder.encode(contrasenia);
+        // 3) Construir item JSON para SP
+        UsuarioAdminDTO a = UsuarioAdminDTO.builder()
+                .accion("AGREGAR")
+                .nombre(dto.getNombre())
+                .cedula(dto.getCedula())
+                .correo(dto.getCorreo())
+                .telefono(dto.getTelefono())
+                .usuario(dto.getUsuario())
+                .contrasenia(hash) // HASH al SP JSON
+                .rolId(dto.getIdRol().intValue())
+                .build();
 
-    UsuarioAdminDTO a = UsuarioAdminDTO.builder()
-        .accion("ACTUALIZAR")
-        .usuarioId(id)
-        .rolId(rolId)
-        .nombre(emptyToNull(req.getNombre()))
-        .cedula(emptyToNull(req.getCedula()))
-        .correo(emptyToNull(req.getCorreo()))
-        .telefono(emptyToNull(req.getTelefono()))
-        .usuario(emptyToNull(req.getUsuario()))
-        .contrasenia(contrasenia) // null => no cambia
-        .build();
-
-    gestionarAdmins(List.of(a));
-  }
-
-  @Transactional
-  public void deshabilitarAdmin(Integer id, Integer rolId) {
-    UsuarioAdminDTO a = UsuarioAdminDTO.builder()
-        .accion("DESHABILITAR")
-        .usuarioId(id)
-        .rolId(rolId)
-        .build();
-
-    gestionarAdmins(List.of(a));
-  }
-
-  @Transactional
-  public void gestionarAdmins(List<UsuarioAdminDTO> items) {
-    try {
-      ObjectMapper snake = new ObjectMapper()
-          .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-      String json = snake.writeValueAsString(items);
-      try {
-        usuarioRepo.gestionarAdminsJsonCall(json);   // PROCEDURE
-      } catch (Exception ignored) {
-        usuarioRepo.gestionarAdminsJsonSelect(json); // FUNCTION (si aplica)
-      }
-    } catch (JsonProcessingException e) {
-      throw new IllegalArgumentException("Payload JSON inválido", e);
+        // 4) Enviar al SP (procedure o function con fallback)
+        gestionarAdmins(List.of(a));
     }
-  }
 
-  /* ===== BÚSQUEDA ===== */
-
-  @Transactional(readOnly = true)
-  public List<Usuario> buscarPorUsuario(String usuario, Integer rolId, int limit) {
-    String q = (usuario == null) ? "" : usuario.trim();
-    int lim = Math.max(1, Math.min(limit <= 0 ? 10 : limit, 50)); // 1..50
-    List<Usuario> lista = (rolId == null)
-        ? usuarioRepo.findTop50ByUsuarioContainingIgnoreCase(q)
-        : usuarioRepo.findTop50ByUsuarioContainingIgnoreCaseAndIdRol(q, rolId);
-    return lista.size() > lim ? lista.subList(0, lim) : lista;
-  }
-
-  /* ===== Helpers ===== */
-
-  private static String emptyToNull(String s) {
-    return (s == null || s.isBlank()) ? null : s.trim();
-  }
-
-  private static String generarPasswordFuerte(int len) {
-    final String A = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    final String a = "abcdefghijkmnpqrstuvwxyz";
-    final String d = "23456789";
-    final String s = "@#$%*+-_";
-    final String all = A + a + d + s;
-    SecureRandom r = new SecureRandom();
-    StringBuilder sb = new StringBuilder(len);
-    for (int i = 0; i < len; i++) sb.append(all.charAt(r.nextInt(all.length())));
-    return sb.toString();
-  }
-
-  private static String sugerirUsuario(String nombre, String correo) {
-    if (correo != null && correo.contains("@")) {
-      return correo.substring(0, correo.indexOf('@'));
+    // NUEVO: buscar con la función ligera
+    @Transactional(readOnly = true)
+    public List<UsuarioMinDTO> buscarMin(String q, Integer rolId, int limit) {
+        return usuarioQueryRepository.buscarMin(q, rolId, limit);
     }
-    String base = (nombre == null ? "user" : nombre.trim().replaceAll("\\s+", "")).toLowerCase();
-    return base.length() > 12 ? base.substring(0, 12) : base;
-  }
+
+
+
+    @Transactional
+    public void actualizarAdmin(Integer id, Integer rolId, ClienteUpdateRequest req) {
+        String contrasenia = emptyToNull(req.getContrasena());
+        if (contrasenia != null) contrasenia = passwordEncoder.encode(contrasenia);
+
+        UsuarioAdminDTO a = UsuarioAdminDTO.builder()
+                .accion("ACTUALIZAR")
+                .usuarioId(id)
+                .rolId(rolId)
+                .nombre(emptyToNull(req.getNombre()))
+                .cedula(emptyToNull(req.getCedula()))
+                .correo(emptyToNull(req.getCorreo()))
+                .telefono(emptyToNull(req.getTelefono()))
+                .usuario(emptyToNull(req.getUsuario()))
+                .contrasenia(contrasenia) // null => no cambia
+                .build();
+
+        gestionarAdmins(List.of(a));
+    }
+
+    @Transactional
+    public void deshabilitarAdmin(Integer id, Integer rolId) {
+        UsuarioAdminDTO a = UsuarioAdminDTO.builder()
+                .accion("DESHABILITAR")
+                .usuarioId(id)
+                .rolId(rolId)
+                .build();
+
+        gestionarAdmins(List.of(a));
+    }
+
+    /*
+     Envía el lote al SP/función JSON con fallback:
+     Primero intenta CALL (procedure)
+     Si falla, intenta SELECT (function)
+     */
+    @Transactional
+    public void gestionarAdmins(List<UsuarioAdminDTO> items) {
+        try {
+            ObjectMapper mapper = new ObjectMapper()
+                    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+            String json = mapper.writeValueAsString(items);
+
+            try {
+                usuarioRepository.gestionarAdminsJsonCall(json);   // PROCEDURE
+            } catch (Exception ignored) {
+                usuarioRepository.gestionarAdminsJsonSelect(json); // FUNCTION
+            }
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Payload JSON inválido", e);
+        }
+    }
+
+    /* ======== BÚSQUEDA (sin searchMin) ======== */
+    @Transactional(readOnly = true)
+    public List<Usuario> buscarPorUsuario(String usuario, Integer rolId, int limit) {
+        String q = usuario == null ? "" : usuario.trim();
+        int lim = Math.max(1, Math.min(limit <= 0 ? 10 : limit, 50)); // 1..50
+
+        List<Usuario> lista = (rolId == null)
+                ? usuarioRepository.findTop50ByUsuarioContainingIgnoreCase(q)
+                : usuarioRepository.findTop50ByUsuarioContainingIgnoreCaseAndIdRol(q, rolId);
+
+        return lista.size() > lim ? lista.subList(0, lim) : lista;
+    }
+
+    private String emptyToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
 }

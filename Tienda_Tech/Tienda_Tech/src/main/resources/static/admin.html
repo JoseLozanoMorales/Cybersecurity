@@ -64,7 +64,7 @@
     </div>
 
     <!-- Usuarios -->
-    <div id="users" class="admin-section">
+    <!-- <div id="users" class="admin-section">
       <div class="section-title">👥 Gestión de Usuarios</div>
 
       <div class="action-grid">
@@ -77,7 +77,8 @@
           </div>
           <button class="btn btn-primary">Buscar Usuario</button>
           <button class="btn btn-warning">Actualizar</button>
-        </div>
+        </div> -->
+        
 <!-- 
         <div class="action-card">
           <h3>➕ Crear Usuario</h3>
@@ -112,6 +113,82 @@
       </div>
     </div> -->
           <!-- Crear -->
+      <!-- <div class="action-card">
+        <h3>➕ Crear Usuario (admin/trabajador)</h3>
+        <p class="tt-muted-row" style="margin-top:-.25rem">
+          Al crear, <strong>se generará una contraseña</strong> y se enviará un correo con el usuario y la contraseña. Si el envío falla, <strong>no</strong> se registra.
+        </p>
+        <div class="form-group"><label>Nombre</label>    <input type="text" maxlength="255" class="form-control" placeholder="Nombre completo" id="v_nombre"></div>
+        <div class="form-group"><label>Cédula</label>    <input type="text" maxlength="10"  class="form-control" placeholder="Número de cédula" id="v_cedula"></div>
+        <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
+        <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
+        <div class="form-group"><label>Usuario (opcional)</label>   <input type="text" class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
+        <!-- Se eliminó el campo de contraseña: el backend la genera y la envía por correo --><!--
+        <div class="form-group"><label>Rol</label>
+          <select class="form-control" id="v_id_rol">
+            <option value="1">admin</option>
+            <option value="3">trabajador</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btnCrearUsuario" onclick="crearUsuario()">Crear Usuario</button>
+      </div>
+    </div>
+
+    <div class="data-table">
+      <table>
+        <thead><tr><th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="ua_list_preview">
+        <tr><td colspan="5" class="tt-muted-row">Usa el buscador para listar usuarios…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div> -->
+
+  <!-- Usuarios -->
+  <div id="users" class="admin-section">
+    <div class="section-title">👥 Gestión de Usuarios</div>
+
+    <div class="action-grid">
+      <!-- ====== EDITAR USUARIO (REEMPLAZO) ====== -->
+      <div class="action-card">
+        <h3>✏️ Editar Usuario (admin/trabajador)</h3>
+
+        <div class="form-group">
+          <label>Buscar por nombre</label>
+          <input type="text" id="ua_query" class="form-control" placeholder="Escribe para filtrar…">
+        </div>
+
+        <div class="form-group">
+          <label>Usuarios</label>
+          <select id="ua_select_list" class="form-control" size="8" style="height:auto">
+            <option value="">— Selecciona —</option>
+          </select>
+          <small class="tt-muted-row">Selecciona un usuario para cargar sus datos.</small>
+        </div>
+
+        <div class="form-group"><label>Nombre</label>
+          <input type="text" id="ua_nombre" class="form-control" placeholder="Nombre completo">
+        </div>
+        <div class="form-group"><label>Cédula</label>
+          <input type="text" id="ua_cedula" class="form-control" maxlength="10" placeholder="Número de cédula">
+        </div>
+        <div class="form-group"><label>Correo</label>
+          <input type="email" id="ua_correo" class="form-control" placeholder="usuario@email.com">
+        </div>
+        <div class="form-group"><label>Teléfono</label>
+          <input type="text" id="ua_telefono" class="form-control" maxlength="10" placeholder="Número de teléfono">
+        </div>
+        <div class="form-group"><label>Usuario</label>
+          <input type="text" id="ua_usuario" class="form-control" placeholder="Nombre de usuario">
+        </div>
+
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+          <button class="btn btn-warning" onclick="uaActualizar()">Actualizar</button>
+          <button class="btn btn-danger"  onclick="uaEliminar()">Eliminar</button>
+        </div>
+      </div>
+
+      <!-- Crear -->
       <div class="action-card">
         <h3>➕ Crear Usuario (admin/trabajador)</h3>
         <p class="tt-muted-row" style="margin-top:-.25rem">
@@ -122,7 +199,6 @@
         <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
         <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
         <div class="form-group"><label>Usuario (opcional)</label>   <input type="text" class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
-        <!-- Se eliminó el campo de contraseña: el backend la genera y la envía por correo -->
         <div class="form-group"><label>Rol</label>
           <select class="form-control" id="v_id_rol">
             <option value="1">admin</option>
@@ -142,6 +218,39 @@
       </table>
     </div>
   </div>
+
+      <!-- Crear
+      <div class="action-card">
+        <h3>➕ Crear Usuario (admin/trabajador)</h3>
+        <p class="tt-muted-row" style="margin-top:-.25rem">
+          Al crear, <strong>se generará una contraseña</strong> y se enviará un correo con el usuario y la contraseña. Si el envío falla, <strong>no</strong> se registra.
+        </p>
+        <div class="form-group"><label>Nombre</label>    <input type="text" maxlength="255" class="form-control" placeholder="Nombre completo" id="v_nombre"></div>
+        <div class="form-group"><label>Cédula</label>    <input type="text" maxlength="10"  class="form-control" placeholder="Número de cédula" id="v_cedula"></div>
+        <div class="form-group"><label>Correo</label>    <input type="email"              class="form-control" placeholder="usuario@email.com" id="v_correo"></div>
+        <div class="form-group"><label>Teléfono</label>  <input type="text" maxlength="10"  class="form-control" placeholder="Número de teléfono" id="v_telefono"></div>
+        <div class="form-group"><label>Usuario (opcional)</label>   <input type="text" class="form-control" placeholder="Nombre de usuario" id="v_usuario"></div>
+        <!-- Se eliminó el campo de contraseña: el backend la genera y la envía por correo --><!--
+        <div class="form-group"><label>Rol</label>
+          <select class="form-control" id="v_id_rol">
+            <option value="1">admin</option>
+            <option value="3">trabajador</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btnCrearUsuario" onclick="crearUsuario()">Crear Usuario</button>
+      </div>
+    </div>
+
+    <div class="data-table">
+      <table>
+        <thead><tr><th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="ua_list_preview">
+        <tr><td colspan="5" class="tt-muted-row">Usa el buscador para listar usuarios…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div> -->
+
     <!-- Movimiento de Inventario -->
     <div id="inventory" class="admin-section">
       <div class="section-title">📦 Movimiento de Inventario</div>
@@ -408,23 +517,6 @@
               <select class="control" id="np_marca" required></select>
             </div>
           </div>
-          <div class="grid-2">
-            <div class="group">
-              <label>Precio <span class="tt-req">*</span></label>
-              <input type="number" step="0.01" min="0" class="control" id="np_precio" placeholder="0.00" required />
-            </div>
-            <div class="group">
-              <label>Stock <span class="tt-req">*</span></label>
-              <input type="number" min="0" class="control" id="np_stock" placeholder="0" required />
-            </div>
-          </div>
-
-          <!-- NUEVO: Costo -->
-          <div class="group">
-            <label>Costo <span class="tt-req">*</span></label>
-            <input type="number" step="0.01" min="0" class="control" id="np_costo" placeholder="0.00" required />
-          </div>
-
           <div class="group">
             <label>Galería <span class="tt-req">*</span></label>
             <div class="dashed">
@@ -505,6 +597,18 @@
       </div>
     </div>
   </div>
+  <script>
+function currentUsername(){
+  try {
+    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+    if (!raw) return null;
+    const u = JSON.parse(raw);
+    // Ajusta estas claves a tu objeto real
+    return u?.usuario || u?.username || u?.user || null;
+  } catch { return null; }
+}
+</script>
+
   <script>
   /* ========= GALERÍA (frontend) ========= */
 
@@ -843,8 +947,10 @@
     payload.push({
       descripcion: it.descripcion || null,
       mime_type: it.file.type || 'application/octet-stream',
-      contenido_base64: clean,             // <-- enviar limpio
+      // contenido_base64: clean,             // <-- enviar limpio
+      bytes_b64: clean,
       para_galeria: true,
+      // para_menu: !!it.para_menu,
       para_menu: !!it.para_menu,
       habilitado: true
     });
@@ -1197,13 +1303,13 @@
       const categoria = $('#np_categoria').value;
       const nombre    = $('#np_nombre').value.trim();
       const enlace    = $('#np_enlace').value.trim() || null;
-      const precio    = Number($('#np_precio').value);
-      const costo     = Number($('#np_costo').value);
-      const stock     = parseInt($('#np_stock').value, 10) || 0;
+      const precio    = Number(document.querySelector('#np_precio')?.value ?? 0);
+      const costo     = Number(document.querySelector('#np_costo')?.value ?? 0);
+      const stock     = parseInt(document.querySelector('#np_stock')?.value ?? '0', 10) || 0;
       const marcaTxt  = $('#np_marca').value;
       const marca_id  = BRAND_ID[marcaTxt] ?? 1;
 
-      if (!nombre || !categoria || !marcaTxt || isNaN(precio) || isNaN(costo)) {
+      if (!nombre || !categoria || !marcaTxt) {
         alert('Completa los campos obligatorios');
         return;
       }
@@ -1717,7 +1823,7 @@
       </div>
     </div>
   </div>
-  <script>
+  <!-- <script>
   (() => {
     'use strict';
 
@@ -1894,6 +2000,182 @@
     window.onUsuarioSeleccionado = onUsuarioSeleccionado;
     window.actualizarSeleccionado = actualizarSeleccionado;
     window.deshabilitarSeleccionado = deshabilitarSeleccionado;
+  })();
+</script> -->
+<!-- ===== Script: Usuarios (admin/trabajador) — REEMPLAZO ===== -->
+<script>
+  (() => {
+    'use strict';
+
+    // Helpers
+    const $ = (id) => document.getElementById(id);
+    const digits = (s) => (s || '').replace(/\D+/g, '');
+    const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+    // Endpoints del backend
+    const API = {
+      buscarMin: (q, rolId, limit = 50) => {
+        const p = new URLSearchParams();
+        p.set('q', q ?? '');                  // <-- siempre manda q
+        if (rolId) p.set('rolId', rolId);
+        p.set('limit', String(limit));
+        return '/api/usuarios/buscar-min?' + p.toString();
+      },
+      crearAdmin: '/api/usuarios/crear-usuarioAdmin', // como en Arreglado
+    };
+
+
+    async function httpJson(url, opts = {}) {
+      const res = await fetch(url, { headers:{'Content-Type':'application/json'}, ...opts });
+      const txt = await res.text();
+      let data = null; try { data = txt ? JSON.parse(txt) : null; } catch {}
+      if (!res.ok) throw new Error((data && (data.message||data.error)) || txt || `HTTP ${res.status}`);
+      return data ?? {};
+    }
+
+    const mapUser = (dto) => ({
+      id: dto.usuarioId ?? dto.id ?? dto.user_id ?? dto.userId,
+      usuario: dto.usuario ?? dto.username ?? dto.user ?? '',
+      correo: dto.correo ?? dto.email ?? '',
+      rolId: dto.rolId ?? dto.idRol ?? dto.id_rol ?? null,
+      nombre: dto.nombre ?? '',
+      cedula: dto.cedula ?? '',
+      telefono: dto.telefono ?? '',
+      estado: (dto.habilitado ?? dto.activo ?? dto.estado ?? true) ? 'Activo' : 'Inactivo'
+    });
+
+    // Estado
+    let BASE = [];      // último lote recibido
+    let SELECTED = null;
+    let debounceId = null;
+
+    function setForm(u){
+      SELECTED = u || null;
+      $('ua_nombre').value   = u?.nombre   ?? '';
+      $('ua_cedula').value   = u?.cedula   ?? '';
+      $('ua_correo').value   = u?.correo   ?? '';
+      $('ua_telefono').value = u?.telefono ?? '';
+      $('ua_usuario').value  = u?.usuario  ?? '';
+    }
+
+    function renderSelect(list){
+      const sel = $('ua_select_list');
+      const ordered = [...list].sort((a,b) =>
+              (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity:'base' })
+      );
+      sel.innerHTML = '<option value="">— Selecciona —</option>' + ordered.map(u => {
+        const label = (u.nombre && u.nombre.trim()) || u.usuario || '(sin nombre)';
+        return `<option value="${u.id}">${label}</option>`;
+      }).join('');
+    }
+
+    async function load(q){
+      const raw = await httpJson(API.buscarMin(q || '', null, 50), { method:'GET' });
+      BASE = (Array.isArray(raw) ? raw : (raw.items || raw.content || []))
+              .map(mapUser).filter(x => x.id != null);
+      renderSelect(BASE);
+    }
+
+    function scheduleLoad(){
+      clearTimeout(debounceId);
+      debounceId = setTimeout(() => load($('ua_query').value).catch(()=>{}), 220);
+    }
+
+    // Eventos UI
+    $('ua_select_list')?.addEventListener('change', () => {
+      const id = $('ua_select_list').value;
+      const u = BASE.find(x => String(x.id) === String(id));
+      setForm(u || null);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      $('ua_query')?.addEventListener('input', scheduleLoad);
+      load('').catch(()=>{}); // carga inicial
+    });
+
+    // Acciones
+    async function uaActualizar(){
+      if (!SELECTED) { alert('Selecciona un usuario.'); return; }
+      const nombre   = ($('ua_nombre')?.value || '').trim();
+      const cedula   = digits($('ua_cedula')?.value || '');
+      const correo   = ($('ua_correo')?.value || '').trim();
+      const telefono = digits($('ua_telefono')?.value || '');
+      const usuario  = ($('ua_usuario')?.value || '').trim();
+
+      if (correo && !isEmail(correo))      { alert('Correo no válido'); return; }
+      if (cedula && cedula.length   !==10) { alert('La cédula debe tener 10 dígitos'); return; }
+      if (telefono && telefono.length!==10){ alert('El teléfono debe tener 10 dígitos'); return; }
+
+      const body = {};
+      if (nombre   && nombre   !== (SELECTED.nombre   || '')) body.nombre   = nombre;
+      if (cedula   && cedula   !== (SELECTED.cedula   || '')) body.cedula   = cedula;
+      if (correo   && correo   !== (SELECTED.correo   || '')) body.correo   = correo;
+      if (telefono && telefono !== (SELECTED.telefono || '')) body.telefono = telefono;
+      if (usuario  && usuario  !== (SELECTED.usuario  || '')) body.usuario  = usuario;
+
+      if (!Object.keys(body).length) { alert('No hay cambios.'); return; }
+
+      try{
+        await httpJson(API.actualizar(SELECTED.id, SELECTED.rolId), { method:'PUT', body: JSON.stringify(body) });
+        alert('✅ Usuario actualizado');
+        Object.assign(SELECTED, body);
+        scheduleLoad();
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    async function uaEliminar(){
+      if (!SELECTED) { alert('Selecciona un usuario.'); return; }
+      if (!confirm('¿Deshabilitar este usuario?')) return;
+      try{
+        await httpJson(API.deshabilitar(SELECTED.id, SELECTED.rolId), { method:'DELETE' });
+        alert('🗑️ Usuario deshabilitado');
+        setForm(null);
+        $('ua_select_list').value = '';
+        scheduleLoad();
+      }catch(e){ alert('❌ ' + e.message); }
+    }
+
+    // ✅ FIX principal: función para crear admin/trabajador
+    async function crearUsuario(){
+      const nombre   = (document.getElementById('v_nombre')?.value || '').trim();
+      const cedula   = digits(document.getElementById('v_cedula')?.value || '');
+      const correo   = (document.getElementById('v_correo')?.value || '').trim();
+      const telefono = digits(document.getElementById('v_telefono')?.value || '');
+      const usuario  = (document.getElementById('v_usuario')?.value || '').trim();
+      const idRol    = parseInt(document.getElementById('v_id_rol')?.value, 10);
+
+      if (!nombre){ alert('Ingresa el nombre'); return; }
+      if (!cedula || cedula.length!==10){ alert('La cédula debe tener 10 dígitos'); return; }
+      if (!correo || !isEmail(correo)){ alert('Correo no válido'); return; }
+      if (!telefono || telefono.length!==10){ alert('El teléfono debe tener 10 dígitos'); return; }
+      if (!idRol){ alert('Selecciona un rol'); return; }
+
+      const payload = {
+        nombre, cedula, correo, telefono,
+        usuario: usuario || undefined, // opcional
+        idRol   // requerido por tu flujo admin/trabajador
+      };
+
+      try{
+        await httpJson(API.crearAdmin, { method:'POST', body: JSON.stringify(payload) });
+        alert('✅ Usuario (admin/trabajador) creado. Se enviará la contraseña por correo.');
+        // Limpia el formulario
+        ['v_nombre','v_cedula','v_correo','v_telefono','v_usuario'].forEach(id=>{
+          const el = document.getElementById(id); if(el) el.value='';
+        });
+        const selRol = document.getElementById('v_id_rol'); if (selRol) selRol.value='3';
+        // refresca la lista mínima para que aparezca el nuevo
+        scheduleLoad();
+      }catch(e){
+        alert('❌ ' + e.message);
+      }
+    }
+
+    // Exponer a la página
+    window.uaActualizar = uaActualizar;
+    window.uaEliminar   = uaEliminar;
+    window.crearUsuario = crearUsuario; // <-- importante para el botón
+
   })();
 </script>
   <script>
@@ -2198,39 +2480,41 @@
     })();
   </script>
   <script>
-    /* ===== Enviar Movimiento -> SP ===== */
-    (function wireGuardarMovimiento() {
-      const API_MOV_SP = '/api/sp/movimiento-inventario'; // ajusta si tu ruta es otra
-      const form = document.getElementById('formNuevoMovimiento');
-      const btn  = document.getElementById('btnGuardarMov');
-      if (!form || !btn) return;
+  /* ===== Enviar Movimiento -> SP ===== */
+  (function wireGuardarMovimiento() {
+    const API_MOV_SP = '/api/sp/movimiento-inventario'; // ajusta si tu ruta es otra
+    const form = document.getElementById('formNuevoMovimiento');
+    const btn  = document.getElementById('btnGuardarMov');
+    if (!form || !btn) return;
 
-      const $ = id => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
-      const f = {
-        id:    () => parseInt($('mov_producto_id')?.value || '0', 10),
-        sub:   () => parseInt($('mov_subtipo_id')?.value || '0', 10),
-        qty:   () => parseInt($('mov_cantidad')?.value || '0', 10),
-        fecha: () => ($('mov_fecha')?.value || '').trim(),
-        ref:   () => ($('mov_referencia')?.value || '').trim(),
-        obs:   () => ($('mov_observacion')?.value || '').trim(),
-        costo: () => {
-          const el = $('mov_costo_unitario');
-          if (!el || el.disabled) return null;
-          const raw = el.value.trim();
-          if (!raw) return null;
-          const n = Number(raw.replace(',', '.'));
-          return Number.isFinite(n) ? Number(n.toFixed(2)) : null;
-        }
-      };
+    const f = {
+      id:    () => parseInt($('mov_producto_id')?.value || '0', 10),
+      sub:   () => parseInt($('mov_subtipo_id')?.value || '0', 10),
+      qty:   () => parseInt($('mov_cantidad')?.value || '0', 10),
+      fecha: () => ($('mov_fecha')?.value || '').trim(),
+      ref:   () => ($('mov_referencia')?.value || '').trim(),
+      obs:   () => ($('mov_observacion')?.value || '').trim(),
+      costo: () => {
+        const el = $('mov_costo_unitario');
+        if (!el || el.disabled) return null;
+        const raw = el.value.trim();
+        if (!raw) return null;
+        const n = Number(raw.replace(',', '.'));
+        return Number.isFinite(n) ? Number(n.toFixed(2)) : null;
+      }
+    };
 
-      // Este handler corre DESPUÉS del validador en captura
-      form.addEventListener('submit', async (e) => {
-        if (form.dataset.blockDemo === '1') { delete form.dataset.blockDemo; return; }
-        e.preventDefault();
+    form.addEventListener('submit', async (e) => {
+      if (form.dataset.blockDemo === '1') { delete form.dataset.blockDemo; return; }
+      e.preventDefault();
 
-        if (!form.reportValidity()) return;
-        if (f.id() <= 0) return;
+      if (!form.reportValidity()) return;
+      if (f.id() <= 0) return;
+
+      try {
+        btn.disabled = true;
 
         const fecha = f.fecha();
         const item = {
@@ -2243,41 +2527,48 @@
           costo_unitario: f.costo()
         };
 
-        btn.disabled = true;
-        try {
-          const res = await fetch(API_MOV_SP, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(typeof authHeaders === 'function' ? authHeaders() : {})
-            },
-            body: JSON.stringify(item)
-          });
-          const txt = await res.text();
-          if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
+        // Opción A: usuario por query param (recomendado)
+        const userName = currentUsername();
+        const url = userName
+          ? `${API_MOV_SP}?usuario=${encodeURIComponent(userName)}`
+          : API_MOV_SP;
 
-          alert('✅ Movimiento registrado');
-          if (typeof loadMovimientos === 'function') loadMovimientos();
+        // (Opcional) Blindaje adicional: también mete el usuario en el item
+        if (userName) item.usuario = userName;
 
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+            // ...(typeof authHeaders === 'function' ? authHeaders() : {})
+          },
+          body: JSON.stringify(item)
+        });
 
-          // Cerrar modal y limpiar
-          document.getElementById('movBackdrop').hidden = true;
-          document.body.classList.remove('tt-no-scroll');
-          form.reset();
-          updateCostoUnitarioState?.();
-          window.updateGuardarState?.();
+        const txt = await res.text();
+        if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
 
-          // 🔁 Refrescar la tabla de movimientos (PUNTO 3)
-          await loadMovimientos?.();
+        alert('✅ Movimiento registrado');
 
-        } catch (err) {
-          alert('❌ ' + (err.message || err));
-        } finally {
-          btn.disabled = false;
-        }
-      });
-    })();
+        // Cerrar modal y limpiar
+        document.getElementById('movBackdrop').hidden = true;
+        document.body.classList.remove('tt-no-scroll');
+        form.reset();
+        if (typeof updateCostoUnitarioState === 'function') updateCostoUnitarioState();
+        if (typeof window.updateGuardarState === 'function') window.updateGuardarState();
+
+        // Refrescar tabla (si existe)
+        if (typeof loadMovimientos === 'function') await loadMovimientos();
+
+      } catch (err) {
+        alert('❌ ' + (err?.message || err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
   </script>
+
 
 
   <script>

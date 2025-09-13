@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -99,14 +98,81 @@ public class OtpService {
         if (hash == null) return false; // expirado / inexistente
         boolean ok = BCrypt.checkpw(code, hash);
         if (ok) {
-            otpCache.invalidate(cacheKey); // one-time use
-            // Aquí puedes activar al usuario en BD si quieres:
-            // usuarioRepository.activateByEmail(email);
+            otpCache.invalidate(cacheKey);
         }
         return ok;
     }
 
     public static class OtpTooManyRequestsException extends RuntimeException {
         public OtpTooManyRequestsException(String msg) { super(msg); }
+    }
+
+
+    /* ==================== NUEVO: envío de credenciales ==================== */
+
+    // Conjunto "normal": mayúsculas, minúsculas, dígitos. Sin caracteres raros.
+    private static final char[] UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ".toCharArray(); // sin I/O
+    private static final char[] LOWER = "abcdefghijkmnopqrstuvwxyz".toCharArray(); // sin l
+    private static final char[] DIGIT = "23456789".toCharArray(); // sin 0/1
+    private static final char[] ALL;
+
+    static {
+        String all = new String(UPPER) + new String(LOWER) + new String(DIGIT);
+        ALL = all.toCharArray();
+    }
+
+    /** Genera una contraseña legible (por defecto 12). Incluye al menos 1 mayúscula, 1 minúscula y 1 dígito. */
+    public String generarPasswordLegible(int len) {
+        int L = Math.max(8, Math.min(len <= 0 ? 12 : len, 32)); // 8..32
+        List<Character> buf = new ArrayList<>(L);
+
+        // Garantizar clases
+        buf.add(UPPER[RAND.nextInt(UPPER.length)]);
+        buf.add(LOWER[RAND.nextInt(LOWER.length)]);
+        buf.add(DIGIT[RAND.nextInt(DIGIT.length)]);
+
+        while (buf.size() < L) {
+            buf.add(ALL[RAND.nextInt(ALL.length)]);
+        }
+
+        // Mezclar
+        Collections.shuffle(buf, RAND);
+
+        StringBuilder sb = new StringBuilder(L);
+        for (char c : buf) sb.append(c);
+        return sb.toString();
+    }
+
+    /** Envía un correo con las credenciales (usuario + password en claro). Lanza excepción si falla. */
+    public void enviarCredenciales(String correo, String usuario, String passwordPlano) {
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(correo);
+        msg.setSubject("Tus credenciales de acceso - TiendaTech");
+        msg.setText("""
+                ¡Hola!
+
+                Se ha creado tu cuenta en TiendaTech.
+
+                Usuario: %s
+                Contraseña temporal: %s
+
+                Por seguridad, cambia tu contraseña al iniciar sesión.
+
+                Saludos,
+                TiendaTech
+                """.formatted(
+                (usuario == null || usuario.isBlank()) ? "(asignado por sistema)" : usuario,
+                passwordPlano
+        ));
+
+        mailSender.send(msg); // si falla, lanzará una excepción
+    }
+
+    /*Genera una contraseña legible y la envía por correo. */
+    public String generarYEnviarCredenciales(String correo, String usuario, Integer length) {
+        int L = (length == null ? 12 : length.intValue());
+        String pwd = generarPasswordLegible(L);
+        enviarCredenciales(correo, usuario, pwd); // si esto falla, que reviente
+        return pwd;
     }
 }

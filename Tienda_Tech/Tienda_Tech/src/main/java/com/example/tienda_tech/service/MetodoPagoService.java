@@ -1,77 +1,111 @@
 package com.example.tienda_tech.service;
 
-import com.example.tienda_tech.dto.MetodoPagoCreateRequest;
-import com.example.tienda_tech.dto.MetodoPagoResponse;
-import com.example.tienda_tech.dto.MetodoPagoUpdateRequest;
-import com.example.tienda_tech.exception.BadRequestException;
-import com.example.tienda_tech.exception.ConflictException;
-import com.example.tienda_tech.exception.NotFoundException;
-import com.example.tienda_tech.repository.MetodoPagoSpRepository;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.UncategorizedSQLException;
+import com.example.tienda_tech.dto.MetodoPagoDTO;
+import com.example.tienda_tech.repository.MetodoPagoRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MetodoPagoService {
 
-    private final MetodoPagoSpRepository repo;
+    private final MetodoPagoRepository repo;
+    private final ObjectMapper objectMapper;
 
-    public MetodoPagoService(MetodoPagoSpRepository repo) {
-        this.repo = repo;
+    // ===== Lecturas =====
+    public List<MetodoPagoDTO> listar(Integer userId) {
+        return repo.fnListarPorUsuario(userId).stream().map(this::mapRowMetodo).toList();
     }
 
-    public List<MetodoPagoResponse> listar(Integer userId) {
-        return repo.listarPorUsuario(userId);
+    public List<MetodoPagoDTO> listarTipos() {
+        return repo.fnListarTipos().stream().map(this::mapRowTipo).toList();
+    }
+
+    // ===== Escrituras (SP) =====
+
+    // ===== Escrituras =====
+    @Transactional
+    public void crear(Integer userId, MetodoPagoDTO req) {
+        if (req.getTipoId() == null) throw new IllegalArgumentException("tipoId es obligatorio");
+        ensureLuhn(req.getNumeroTarjeta());
+        ensureMesFuturo(req.getMesExpiracion());
+
+        // "YYYY-MM" -> fin de mes como DATE (ej. 2028-12-31)
+        LocalDate fecha = YearMonth.parse(req.getMesExpiracion()).atEndOfMonth();
+
+        repo.agregar(req.getNumeroTarjeta(), fecha, req.getTipoId(), userId);
     }
 
     @Transactional
-    public void agregar(Integer userId, MetodoPagoCreateRequest req) {
-        try {
-            repo.callAgregar(req.getNumeroTarjeta(), req.getFechaExpiracion(), req.getTipoId(), userId);
-            if (Boolean.TRUE.equals(req.getPreferido())) {
-                // marca preferido al último insertado del usuario:
-                // opción simple: volver a consultar y tomar el más reciente
-                var lista = repo.listarPorUsuario(userId);
-                if (!lista.isEmpty()) repo.actualizarPreferido(userId, lista.get(0).getId());
-            }
-        } catch (UncategorizedSQLException e) {
-            handlePgException(e.getSQLException());
-        } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("Conflicto de datos (tarjeta duplicada o FK).");
-        }
+    public void eliminar(Integer userId, Integer metodoId) {
+        // Si tu SP valida propiedad por UsuarioId, podrías agregar otra variante que lo incluya.
+        repo.eliminar(metodoId);
     }
 
-    @Transactional
-    public void actualizar(Integer userId, Integer metodoId, MetodoPagoUpdateRequest req) {
-        try {
-            repo.callActualizar(metodoId, userId, req.getNumeroTarjeta(), req.getFechaExpiracion(),
-                                req.getTipoId(), req.getHabilitado());
-            // Nota: si no afectó por no ser dueño, el SP no lanza, pero lógicamente no cambia nada.
-            // Si quieres confirmar filas afectadas, mueve este control al SP o añade verificación extra con SELECT.
-        } catch (UncategorizedSQLException e) {
-            handlePgException(e.getSQLException());
-        } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("Conflicto de datos (tarjeta duplicada o FK).");
-        }
+
+    // ===== Mappers =====
+    private MetodoPagoDTO mapRowMetodo(Object[] r){
+        // 0:id 1:mascara 2:fecha 3:habilitado 4:tipoId 5:tipoNombre
+        return MetodoPagoDTO.builder()
+                .metodoId(asInt(r[0]))
+                .mascara(asString(r[1]))
+                .fechaExpiracion(asLocalDate(r[2]))
+                .habilitado(asBool(r[3]))
+                .tipoId(asInt(r[4]))
+                .nombre(asString(r[5]))
+                .build();
+    }
+    private MetodoPagoDTO mapRowTipo(Object[] r){
+        // 0:tipo_id 1:nombre
+        return MetodoPagoDTO.builder()
+                .tipoId(asInt(r[0]))
+                .nombre(asString(r[1]))
+                .build();
     }
 
-    @Transactional
-    public void marcarPreferido(Integer userId, Integer metodoId) {
-        int n = repo.actualizarPreferido(userId, metodoId);
-        if (n == 0) throw new NotFoundException("Método no encontrado o no pertenece al usuario.");
+    private Integer asInt(Object o){ return o==null ? null : ((Number)o).intValue(); }
+    private String asString(Object o){ return o==null ? null : o.toString(); }
+    private Boolean asBool(Object o){
+        if (o==null) return null;
+        if (o instanceof Boolean b) return b;
+        if (o instanceof Number n) return n.intValue()!=0;
+        return Boolean.parseBoolean(o.toString());
+    }
+    private LocalDate asLocalDate(Object o){
+        if (o==null) return null;
+        if (o instanceof LocalDate d) return d;
+        if (o instanceof Date d2) return d2.toLocalDate();
+        return LocalDate.parse(o.toString());
     }
 
-    private void handlePgException(Throwable sqlEx) {
-        // Inspecciona mensajes emitidos por tus SP
-        String msg = sqlEx.getMessage() != null ? sqlEx.getMessage() : "";
-        if (msg.contains("no existe ese tipo de metodo de pago") || msg.contains("No existe ese tipo de pago")) {
-            throw new BadRequestException("Tipo de método de pago inválido.");
-        }
-        if (msg.contains("ya existe ese numero de tarjeta")) {
-            throw new ConflictException("Esa tarjeta ya está registrada.");
-        }
+    // ===== Validaciones =====
+    private void ensureLuhn(String num) {
+        if (num == null || !num.matches("\\d{12,19}") || !luhnOk(num))
+            throw new IllegalArgumentException("Número de tarjeta inválido (Luhn)");
+    }
+    private boolean luhnOk(String s) {
+        int sum=0; boolean dbl=false;
+        for (int i=s.length()-1;i>=0;i--) { int k=s.charAt(i)-'0'; if(dbl){ k*=2; if(k>9)k-=9; } sum+=k; dbl=!dbl; }
+        return sum%10==0;
+    }
+    private void ensureMesFuturo(String yyyyMm) {
+        if (yyyyMm == null || !yyyyMm.matches("^\\d{4}-\\d{2}$"))
+            throw new IllegalArgumentException("mesExpiracion debe ser YYYY-MM");
+        if (YearMonth.parse(yyyyMm).isBefore(YearMonth.now()))
+            throw new IllegalArgumentException("La tarjeta está expirada");
+    }
+
+    private String writeJsonArray(Map<String, Object> item) {
+        try { return objectMapper.writeValueAsString(List.of(item)); }
+        catch (Exception e) { throw new RuntimeException("Error serializando JSON para el SP", e); }
     }
 }

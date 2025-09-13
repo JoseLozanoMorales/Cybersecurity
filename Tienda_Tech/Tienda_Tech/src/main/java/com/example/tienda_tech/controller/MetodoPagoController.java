@@ -1,58 +1,55 @@
 package com.example.tienda_tech.controller;
 
-import com.example.tienda_tech.dto.MetodoPagoCreateRequest;
-import com.example.tienda_tech.dto.MetodoPagoResponse;
-import com.example.tienda_tech.dto.MetodoPagoUpdateRequest;
+import com.example.tienda_tech.dto.MetodoPagoDTO;
 import com.example.tienda_tech.service.MetodoPagoService;
-import com.example.tienda_tech.util.UserResolver;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/mis-metodos-pago")
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class MetodoPagoController {
 
     private final MetodoPagoService service;
 
-    public MetodoPagoController(MetodoPagoService service) {
-        this.service = service;
+    private Integer resolveUserId(HttpServletRequest req){
+        String raw = req.getHeader("X-User-Id"); // TODO: obtener de Authentication/JWT en producción
+        if (raw == null || raw.isBlank()) throw new IllegalArgumentException("Falta X-User-Id");
+        return Integer.valueOf(raw);
     }
 
-    @GetMapping
-    public ResponseEntity<?> listar(HttpServletRequest req) {
-        Integer userId = UserResolver.resolveUserId(req);
-        List<MetodoPagoResponse> data = service.listar(userId);
-        return ResponseEntity.ok(Map.of("success", true, "data", data));
+    // Catálogo para el <select>
+    @GetMapping("/tipo_metodopago")
+    public List<MetodoPagoDTO> tipos() {
+        return service.listarTipos();
     }
 
-    @PostMapping
-    public ResponseEntity<?> crear(@RequestBody MetodoPagoCreateRequest body, HttpServletRequest req) {
-        Integer userId = UserResolver.resolveUserId(req);
-        service.agregar(userId, body);
-        // puedes retornar el último insertado o solo OK
-        List<MetodoPagoResponse> data = service.listar(userId);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Método agregado", "data", data));
+    // Lista "mis métodos"
+    @GetMapping("/mis-metodos-pago")
+    public List<MetodoPagoDTO> listar(HttpServletRequest req) {
+        return service.listar(resolveUserId(req));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Integer id,
-                                        @RequestBody MetodoPagoUpdateRequest body,
-                                        HttpServletRequest req) {
-        Integer userId = UserResolver.resolveUserId(req);
-        service.actualizar(userId, id, body);
-        List<MetodoPagoResponse> data = service.listar(userId);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Método actualizado", "data", data));
+    // Crear
+    @PostMapping("/mis-metodos-pago")
+    public ResponseEntity<List<MetodoPagoDTO>> crear(@RequestBody @Valid MetodoPagoDTO body,
+                                                     HttpServletRequest req) {
+        Integer userId = resolveUserId(req);
+        service.crear(userId, body);
+        var lista = service.listar(userId);
+        return ResponseEntity.created(URI.create("/api/mis-metodos-pago")).body(lista);
     }
 
-    @PutMapping("/{id}/preferido")
-    public ResponseEntity<?> preferido(@PathVariable Integer id, HttpServletRequest req) {
-        Integer userId = UserResolver.resolveUserId(req);
-        service.marcarPreferido(userId, id);
-        List<MetodoPagoResponse> data = service.listar(userId);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Preferido actualizado", "data", data));
+    // Eliminar
+    @DeleteMapping("/mis-metodos-pago/{metodoId}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer metodoId, HttpServletRequest req) {
+        service.eliminar(resolveUserId(req), metodoId);
+        return ResponseEntity.noContent().build();
     }
 }

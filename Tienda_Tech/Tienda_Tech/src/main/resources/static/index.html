@@ -260,6 +260,25 @@
       .observe(document.body, { subtree: true, childList: true });
   })();
   </script>
+<script>
+(async function loadTopVendidosSoloImagen(){
+  const wrap = document.querySelector('.carousel-products');
+  if (!wrap) return;
+
+  const res = await fetch('/api/productos/mas-vendidos?limite=3', {credentials:'include'});
+  const items = await res.json();
+
+  wrap.innerHTML = items.map(it => `
+    <a class="product-card" href="Producto.html?id=${it.productoId}" title="${it.nombre}">
+      <img class="product-img"
+           src="${it.urlImagen || '/img/placeholder.png'}"
+           alt="${it.nombre}" loading="lazy"
+           onerror="this.onerror=null; this.src='/img/placeholder.png';">
+    </a>
+  `).join('');
+})();
+</script>
+
   <script>
   // Carga categorías desde /api/categorias y las pinta en la rejilla.
   // Al hacer click, navega a Busqueda.html pasando ?cat=ID&nombre=Nombre

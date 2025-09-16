@@ -1,4 +1,4 @@
-//TOMAR USUARIO PERO NO POR TOKEN
+//TOMAR USUARIO PERO NO POR TOKEN :d
 function currentUsername(){
   try {
     const raw = sessionStorage.getItem('user') || localStorage.getItem('user');

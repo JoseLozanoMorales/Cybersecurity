@@ -1,32 +1,30 @@
+// src/main/java/com/example/tienda_tech/controller/GaleriaImageController.java
 package com.example.tienda_tech.controller;
 
+import com.example.tienda_tech.service.GaleriaV2Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/galeria")
 @RequiredArgsConstructor
 public class GaleriaImageController {
-  private final JdbcTemplate jdbc;
+
+  private final GaleriaV2Service v2;
 
   @GetMapping("/img/{galeriaId}")
-  public ResponseEntity<byte[]> getImg(@PathVariable int galeriaId) {
-    String sql = "SELECT mime, data FROM public.galeria_img(?)";
-    return jdbc.query(sql, ps -> ps.setInt(1, galeriaId), rs -> {
-      if (!rs.next()) return ResponseEntity.notFound().build();
-      byte[] bytes = rs.getBytes("data");
-      if (bytes == null || bytes.length == 0) return ResponseEntity.notFound().build();
-      String mime = Optional.ofNullable(rs.getString("mime")).orElse("image/jpeg");
-      return ResponseEntity.ok()
-          .header(HttpHeaders.CONTENT_TYPE, mime)
-          .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400")
-          .body(bytes);
-    });
+  public ResponseEntity<ByteArrayResource> img(@PathVariable int galeriaId){
+    var m = v2.obtenerMedia(galeriaId);
+    if (m == null || m.bytes() == null) return ResponseEntity.notFound().build();
+    MediaType mt;
+    try { mt = MediaType.parseMediaType(m.mimeType()==null ? "application/octet-stream" : m.mimeType()); }
+    catch (Exception e) { mt = MediaType.APPLICATION_OCTET_STREAM; }
+    return ResponseEntity.ok()
+        .contentType(mt)
+        .contentLength(m.length()==null? m.bytes().length : m.length())
+        .cacheControl(CacheControl.noCache())
+        .body(new ByteArrayResource(m.bytes()));
   }
 }
-
-

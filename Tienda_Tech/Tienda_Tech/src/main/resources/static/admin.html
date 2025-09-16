@@ -7,8 +7,18 @@
 
   <!-- Carga utilidades comunes (guards / helpers). Actualiza v= según tu proyecto -->
   <script src="/js/auth-menu.js?v=9" defer></script>
-  <script src="/js/admin.js?v=1" defer></script>
+  <script src="/js/admin.js?v=2" defer></script>
 
+  <!-- <script src="/js/admin/Aqui-Usuarios.js" defer></script>
+  <!-- después vienen los demás -->
+  <!--<script src="/js/admin/Aqui-Core.js" defer></script>
+  <script src="/js/admin/Aqui-Productos.js" defer></script>
+  <script src="/js/admin/Aqui-Galeria.js" defer></script>
+  <script src="/js/admin/Aqui-Inventario.js" defer></script>
+  <script src="/js/admin/Aqui-Geografia-Provincias.js" defer></script>
+  <script src="/js/admin/Aqui-Geografia-Ciudades.js" defer></script>
+  <script src="/js/admin/Aqui-Init.js" defer></script> -->
+  
   
 
   <link rel="stylesheet" href="style2.css"/></head>
@@ -38,6 +48,7 @@
       <div class="toolbar">
         <button class="btn btn-primary" id="btnAgregarProducto">Agregar producto</button>
       </div>
+
 
       <div class="data-table">
         <table>
@@ -377,67 +388,70 @@
 
 
   <!-- ===== Modal Nuevo Producto ===== -->
-  <div id="modalNuevoProducto" class="modal-backdrop" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdlTitle">
-      <div class="modal-header">
-        <div class="modal-title" id="mdlTitle">Agregar producto</div>
-        <button class="modal-close" type="button" id="btnCerrarModal" aria-label="Cerrar">✕</button>
-      </div>
+<div id="modalNuevoProducto" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdlTitle">
+    <div class="modal-header">
+      <div class="modal-title" id="mdlTitle">Agregar producto</div>
+      <button class="modal-close" type="button" id="btnCerrarModal" aria-label="Cerrar">✕</button>
+    </div>
 
-      <div class="modal-grid">
-        <!-- Columna izquierda: formulario base -->
-        <form id="formNuevoProducto">
+    <div class="modal-grid">
+      <!-- Columna izquierda: formulario base -->
+      <form id="formNuevoProducto">
+        <div class="group">
+          <label>Nombre <span class="tt-req">*</span></label>
+          <input class="control" id="np_nombre" placeholder="Ingrese el nombre del producto" required />
+        </div>
+        <div class="group">
+          <label>Enlace</label>
+          <input class="control" id="np_enlace" placeholder="https://ejemplo.com/producto" />
+        </div>
+        <div class="grid-2">
           <div class="group">
-            <label>Nombre <span class="tt-req">*</span></label>
-            <input class="control" id="np_nombre" placeholder="Ingrese el nombre del producto" required />
-          </div>
-          <div class="group">
-            <label>Enlace</label>
-            <input class="control" id="np_enlace" placeholder="https://ejemplo.com/producto" />
-          </div>
-          <div class="grid-2">
-            <div class="group">
-              <label>Categoría <span class="tt-req">*</span></label>
-              <select class="control" id="np_categoria" required></select>
-            </div>
-            <div class="group">
-              <label>Marca <span class="tt-req">*</span></label>
-              <select class="control" id="np_marca" required></select>
-            </div>
+            <label>Categoría <span class="tt-req">*</span></label>
+            <select class="control" id="np_categoria" required></select>
           </div>
           <div class="group">
-            <label>Galería <span class="tt-req">*</span></label>
-            <div class="dashed">
-              <div class="tt-mb-2"><span class="icon plus"></span> Agregar imágenes (máx. 15)</div>
-              <input id="np_imgs" type="file" accept="image/*" multiple hidden />
-              <div>
-                <button class="btn btn-outline" type="button" id="btnSelImgs">Seleccionar imágenes</button>
-                <span id="np_imgs_info" class="muted tt-ml-2">Ningún archivo seleccionado</span>
-              </div>
-            </div>
+            <label>Marca <span class="tt-req">*</span></label>
+            <select class="control" id="np_marca" required></select>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline" id="btnCancelarModal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Agregar Producto</button>
-          </div>
-        </form>
+        </div>
 
-        <!-- Columna derecha: campos dinámicos por categoría -->
-        <div class="right-card">
-          <div id="np_fields_title"></div>
-          <div id="np_fields"></div>
-          <div id="np_fields_empty" class="right-empty">
-            <div class="tt-text-center">
-              <div class="tt-icon-xl tt-mb-1">⚙️</div>
-              <div>Selecciona una categoría para ver campos específicos</div>
+
+        <div class="group">
+          <label>Galería <span class="tt-req">*</span></label>
+          <div class="dashed">
+            <div class="tt-mb-2"><span class="icon plus"></span> Agregar imágenes (máx. 15)</div>
+            <input id="np_imgs" type="file" accept="image/*" multiple hidden />
+            <div>
+              <button class="btn btn-outline" type="button" id="btnSelImgs">Seleccionar imágenes</button>
+              <span id="np_imgs_info" class="muted tt-ml-2">Ningún archivo seleccionado</span>
             </div>
           </div>
         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelarModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Agregar Producto</button>
+        </div>
+      </form>
+
+      <!-- Columna derecha: campos dinámicos por categoría -->
+      <div class="right-card">
+        <div id="np_fields_title"></div>
+        <div id="np_fields"></div>
+        <div id="np_fields_empty" class="right-empty">
+          <div class="tt-text-center">
+            <div class="tt-icon-xl tt-mb-1">⚙️</div>
+            <div>Selecciona una categoría para ver campos específicos</div>
+          </div>
+        </div>
       </div>
-
-
     </div>
+
+
   </div>
+</div>
+
     <!-- ===== Modal Galería ===== -->
   <div id="modalGaleria" class="modal-backdrop" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="galTitle">
@@ -483,6 +497,55 @@
         </div>
         <div class="muted" style="margin-top:.5rem;">Tip: arrastra para reordenar en la vista seleccionada. ⭐ define PORTADA.</div>
       </div>
+    </div>
+  </div>
+  <!-- ===== Modal Editar Producto ===== -->
+  <div id="ep_backdrop" class="tt-backdrop" hidden>
+    <div class="ventana-centrada ventana-horizontal" role="dialog" aria-modal="true" aria-labelledby="ep_title">
+      <div class="ventana-header">
+        <h2 id="ep_title">✏️ Editar producto</h2>
+        <button class="cerrar" type="button" id="ep_btn_close" aria-label="Cerrar">×</button>
+      </div>
+
+      <form id="ep_form" class="mov-grid">
+        <input type="hidden" id="ep_id">
+
+        <div class="form-group form-span-2">
+          <label>Nombre <span class="tt-req">*</span></label>
+          <input id="ep_nombre" class="form-control" placeholder="Nombre del producto" required>
+        </div>
+
+        <div class="form-group form-span-2">
+          <label>Enlace</label>
+          <input id="ep_enlace" class="form-control" placeholder="https://ejemplo.com/...">
+        </div>
+
+        <div class="form-group">
+          <label>IVA <span class="tt-req">*</span></label>
+          <select id="ep_iva" class="form-control" required>
+            <option value="">Cargando IVAs…</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Habilitado</label>
+          <select id="ep_hab" class="form-control">
+            <option value="true">Sí</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Precio unitario (USD) <span class="tt-req">*</span></label>
+          <input id="ep_precio" type="number" step="0.01" min="0" class="form-control" placeholder="0.00" required>
+        </div>
+
+
+
+        <div class="form-actions form-span-2">
+          <button type="submit" class="btn btn-primary" id="ep_btn_save">Guardar cambios</button>
+        </div>
+      </form>
     </div>
   </div>
 

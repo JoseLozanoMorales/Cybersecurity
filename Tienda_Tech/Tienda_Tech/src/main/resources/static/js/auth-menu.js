@@ -1,5 +1,48 @@
 // auth-menu.js  — común para todas las páginas
 (function () {
+  const origFetch = window.fetch;
+
+  function readUserRaw(){
+    return sessionStorage.getItem('user') || localStorage.getItem('user') || null;
+  }
+  function getLoggedUser(){
+    try { return JSON.parse(readUserRaw() || 'null'); } catch { return null; }
+  }
+  function getLoggedUsername(){
+    const u = getLoggedUser();
+    const s = (u?.usuario || u?.username || u?.user || u?.correo || '').trim();
+    return s || null;
+  }
+  function getLoggedUserId(){
+    const u = getLoggedUser();
+    return u?.usuarioId ?? u?.id ?? u?.userId ?? u?.id_usuario ?? u?.usuario_id ?? null;
+  }
+
+  // expón helpers por si los quieres usar en otros scripts
+  window.getLoggedUsername = getLoggedUsername;
+  window.getLoggedUserId   = getLoggedUserId;
+
+  // parche de fetch
+  window.fetch = function(input, init = {}) {
+    // Normaliza a un Request para conservar método, body, etc.
+    const req1 = (input instanceof Request) ? input : new Request(input, init);
+
+    // Clona headers y agrega nuestros custom si no existen
+    const h = new Headers(req1.headers || {});
+    const uname = getLoggedUsername();
+    const uid   = getLoggedUserId();
+
+    if (uname && !h.has('X-Usuario'))  h.set('X-Usuario', uname);
+    if (uid   != null && !h.has('X-User-Id')) h.set('X-User-Id', uid); // opcional, ya lo usas en pagos
+
+    // Crea un nuevo Request con los headers finales (preserva body, método, credenciales, etc.)
+    const req2 = new Request(req1, { headers: h });
+    return origFetch(req2);
+  };
+})();
+
+
+(function () {
   // === Ajusta si tu pantalla de login tiene otro nombre/ruta
   const REDIRECT_TO = 'login.html';
 

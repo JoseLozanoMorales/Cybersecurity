@@ -50,6 +50,7 @@ const GAL_API = {
     $gi('gal_btnUpload').onclick = subirSeleccionadas;
     $gi('gal_btnFlags').onclick = guardarFlags;
     $gi('gal_btnOrden').onclick = guardarOrdenVista;
+    preventWindowDrop(true); // activar mientras esté abierto
     loadGaleria();
   }
   // Drag & drop en el área punteada del modal de galería
@@ -197,9 +198,10 @@ const GAL_API = {
     // drag & drop en la vista (solo cards con draggable=true)
     wireDragDrop();
     // star / del / flags
-    document.querySelectorAll('[data-star]').forEach(el => el.onclick = () => marcarPortada(Number(el.dataset.star)));
-    document.querySelectorAll('[data-del]').forEach(el => el.onclick = () => eliminarImagen(Number(el.dataset.del)));
-    document.querySelectorAll('input[data-flag]').forEach(el => el.onchange = () => onFlagChange(el));
+    const modal = document.getElementById('modalGaleria');
+    modal.querySelectorAll('[data-star]').forEach(el => el.onclick = () => marcarPortada(Number(el.dataset.star)));
+    modal.querySelectorAll('[data-del]').forEach(el => el.onclick = () => eliminarImagen(Number(el.dataset.del)));
+    modal.querySelectorAll('input[data-flag]').forEach(el => el.onchange = () => onFlagChange(el));
   }
 
   function wireDragDrop(){
@@ -369,463 +371,535 @@ const GAL_API = {
     await loadGaleria();
     alert('✅ Imágenes subidas');
   }
-  //cerrar sesion
-    async function logout() {
-      try {
-        sessionStorage.removeItem('user');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        localStorage.removeItem('token');
+//cerrar sesion
+  async function logout() {
+    try {
+      sessionStorage.removeItem('user');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      localStorage.removeItem('token');
 
-        await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-      } finally {
-        location.replace('Login.html');
-      }
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    } finally {
+      location.replace('Login.html');
     }
-
-    // ===== Guard de ADMIN + nombre en el header =====
-    document.addEventListener('DOMContentLoaded', () => {
-      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-      if (!raw) { location.replace('Login.html?next=' + encodeURIComponent('cuenta%20-%20admin.html')); return; }
-      let u; try { u = JSON.parse(raw); } catch { u = null; }
-      const id = parseInt(u?.id_rol ?? u?.idRol ?? u?.rol_id ?? 0, 10);
-      const nm = String(u?.rol ?? u?.role ?? u?.roleName ?? '').toLowerCase();
-      const isAdmin = id === 1 || nm === 'admin';
-      if (!isAdmin) { location.replace('cuenta.html'); return; }
-      const tag = document.querySelector('.user-info');
-      if (tag) tag.textContent = '👤 Administrador: ' + (u?.nombre || u?.usuario || 'Admin');
-    });
-
-    // ===== Navegación lateral =====
-    // function showSection(sectionId, el){
-    //   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-    //   const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
-    //   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    //   if (el) el.classList.add('active');
-    // }
-
-    // ===== UX botones demo =====
-    document.addEventListener('DOMContentLoaded', function(){
-      document.querySelectorAll('.btn').forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const action = this.textContent.trim();
-          if(action.match(/Agregar|Actualizar|Guardar/)){
-            this.style.backgroundColor = '#4caf50'; this.textContent = '✓ Completado';
-            setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
-          } else if(action.match(/Eliminar|Bloquear/)){
-            if(confirm('¿Estás seguro de realizar esta acción?')){
-              this.style.backgroundColor = '#ff5722'; this.textContent = '✓ Realizado';
-              setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
-            }
-          }
-        });
-      });
-    });
-
-    // ===== Crear usuario (Cliente usa SP crear_cliente; otros roles requieren endpoint propio) =====
-    async function crearUsuario(){
-      const payload = {
-        nombre:     document.getElementById('v_nombre').value.trim(),
-        cedula:     document.getElementById('v_cedula').value.trim(),
-        correo:     document.getElementById('v_correo').value.trim(),
-        telefono:   document.getElementById('v_telefono').value.trim(),
-        usuario:    document.getElementById('v_usuario').value.trim()
-      };
-      const idRol = parseInt(document.getElementById('v_id_rol').value, 10);
-
-      try {
-        let url, body;
-        if (idRol === 2){
-          // Cliente: usa el endpoint existente que invoca SP crear_cliente
-          url  = '/api/usuarios/crear';
-          body = { ...payload, idMetodoPago: null };
-        } else {
-          // Admin/Trabajador: requiere un endpoint del backend para roles ≠ cliente
-          url  = '/api/usuarios/crear-usuario';
-          body = { ...payload, idRol };
-        }
-
-        const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-        const text = await res.text();
-        if (!res.ok) throw new Error(text || ('HTTP ' + res.status));
-        alert('✅ ' + (text || 'Operación realizada'));
-      } catch (err) {
-        alert('❌ Error: ' + (err.message || err));
-      }
-    }
-
-    // ===== Productos: listar desde API y pintar tabla =====
-    const API_PRODUCTS = '/api/productos';
-    const $p = (s) => document.querySelector(s);
-    function coalesce(...vals){ for(const v of vals){ if(v!==undefined && v!==null) return v; } return undefined; }
-    function fmtUSD(n){ const x = Number(n||0); return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(x); }
-    function fmtDate(d){ if(!d) return ''; const dt = new Date(d); return isNaN(dt) ? String(d) : dt.toLocaleDateString(); }
-    function renderEmpty(msg){ $p('#tbProductos').innerHTML = `<tr><td colspan="12" class="tt-muted-row">${msg}</td></tr>`; }
-    function mapProduct(raw){
-      return {
-        id:          coalesce(raw.producto_id, raw.productoId, raw.id, raw.id_producto),
-        nombre:      coalesce(raw.nombre, raw.name, ''),
-        precio:      coalesce(raw.preciounitario, raw.precioUnitario, raw.precio, raw.price, 0),
-        enlace:      coalesce(raw.enlace, raw.url, ''),
-        fecha:       coalesce(raw.fecha, raw.createdAt, raw.fecha_creacion),
-        stock:       coalesce(raw.stock, raw.cantidad, 0),
-        marca_id:    coalesce(raw.marca_id, raw.marcaId),
-        gama_id:     coalesce(raw.gama_id, raw.gamaId),
-        iva_id:      coalesce(raw.iva_id, raw.ivaId),
-        costo:       coalesce(raw.costo, 0),
-        habilitado:  coalesce(raw.habilitado, raw.activo, true)
-      };
-    }
-    function renderProductos(items){
-      if(!Array.isArray(items) || !items.length){ renderEmpty('Sin productos'); return; }
-      const rows = items.map(p => {
-        const enlaceHtml = p.enlace ? `<a href="${p.enlace}" target="_blank" rel="noopener" class="link--external">link</a>` : '';
-        return `<tr>
-          <td>${p.id ?? ''}</td>
-          <td>${p.nombre ?? ''}</td>
-          <td>${fmtUSD(p.precio)}</td>
-          <td>${enlaceHtml}</td>
-          <td>${fmtDate(p.fecha)}</td>
-          <td>${p.stock ?? 0}</td>
-          <td>${p.marca_id ?? ''}</td>
-          <td>${p.gama_id ?? ''}</td>
-          <td>${p.iva_id ?? ''}</td>
-          <td>${fmtUSD(p.costo)}</td>
-          <td>${p.habilitado ? '<span class="status active">Sí</span>' : '<span class="status blocked">No</span>'}</td>
-          <td>
-            <button class="btn btn-outline btn--sm" data-gal="${p.id}" data-nombre="${p.nombre ?? ''}">🖼 Galería</button>
-            <button class="btn btn-warning btn--sm">Editar</button>
-            <button class="btn btn-danger btn--sm">Eliminar</button>
-          </td>
-        </tr>`;
-      }).join('');
-      $p('#tbProductos').innerHTML = rows;
-
-      // wire: abrir modal galería
-      document.querySelectorAll('[data-gal]').forEach(btn=>{
-        btn.addEventListener('click', ()=> openGaleriaModal(
-          Number(btn.dataset.gal),
-          btn.dataset.nombre || ''
-        ));
-      });
-    }
-
-    async function loadProductos(){
-      try{
-        const res = await fetch(API_PRODUCTS);
-        if(!res.ok){ renderEmpty('Error cargando productos'); return; }
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.content || data.items || []);
-        renderProductos(list.map(mapProduct));
-      }catch(err){ renderEmpty('No se pudo conectar con /api/productos'); }
-    }
-
-    document.addEventListener('DOMContentLoaded', ()=>{ try{ loadProductos(); } catch(_){} });
-
-    // ===== MODAL: lógica mínima =====
-      // ===== MODAL: lógica mínima =====
-  const CATEGORIES = [
-    'Fuente de poder','GPU','Motherboard','CPU','RAM','CPU COOLER',
-    'Almacenamiento','Cubierta','Periféricos','Accesorios'
-  ];
-
-  const BRANDS = [
-    'Intel','AMD','HP','Samsung','Apple','Sony','Corsair','EVGA',
-    'ASUS','MSI','Kingston','Seagate','Western Digital','Thermalright'
-  ];
-
-  // Campos específicos por categoría (nombres alineados al SP v2)
-  const CATEGORY_FIELDS = {
-    'Fuente de poder': [
-      { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
-    ],
-    'GPU': [
-      { name:'tamanio', label:'Tamaño (mm)', type:'number' },
-      { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
-    ],
-    'Motherboard': [
-      { name:'socket', label:'Socket', type:'text' },
-      { name:'velocidad_ram', label:'Velocidad RAM (MHz)', type:'number' },
-      { name:'chipset', label:'Chipset', type:'text' }
-    ],
-    'CPU': [
-      { name:'sockets', label:'Sockets', type:'text' },
-      { name:'generacion', label:'Generación', type:'number' }
-    ],
-    'RAM': [
-      { name:'velocidades', label:'Velocidades (MHz)', type:'number' }
-    ],
-    'CPU COOLER': [
-      { name:'tamanio', label:'Tamaño (mm)', type:'number' },
-      { name:'socket',  label:'Socket', type:'text' }
-    ],
-    'Almacenamiento': [
-      // Se renderiza aparte (capacidad + unidad + tipo)
-    ],
-    'Cubierta': [
-      { name:'tamanio_gpu', label:'Tamaño de GPU (mm)', type:'number' },
-      { name:'tamanio_refrigeracion', label:'Tamaño de refrigeración (mm)', type:'number' }
-    ],
-    'Periféricos': [
-      { name:'tipo', label:'Tipo', type:'text' }
-    ],
-    'Accesorios': [
-      // sin campos extra
-    ]
-  };
-
-  /* Endpoints sugeridos (ajústalos a los que tengas en backend).
-     Ya tienes: /api/sp/almacenamientos, /api/sp/cpu
-     Agregamos el resto siguiendo el mismo patrón. */
-  const CATEGORY_ENDPOINT = {
-    'Almacenamiento':  '/api/sp/almacenamientos',
-    'CPU':             '/api/sp/cpu',
-    'CPU COOLER':      '/api/sp/cpu-cooler',
-    'Fuente de poder': '/api/sp/fuentes',
-    'GPU':             '/api/sp/gpu',
-    'Motherboard':     '/api/sp/motherboards',
-    'RAM':             '/api/sp/ram',
-    'Cubierta':        '/api/sp/cubiertas',
-    'Periféricos':     '/api/sp/perifericos',
-    'Accesorios':      '/api/sp/accesorios'
-  };
-
-  // IDs de ejemplo para demo (idealmente, poblar desde API)
-  const BRAND_ID = {
-    'Intel': 1, 'AMD': 2, 'HP': 3, 'Samsung': 4, 'Apple': 5, 'Sony': 6,
-    'Corsair': 7, 'EVGA': 8, 'ASUS': 9, 'MSI': 10, 'Kingston': 11,
-    'Seagate': 12, 'Western Digital': 13, 'Thermalright': 14
-  };
-  const DEFAULT_GAMA_ID = 1;
-  const DEFAULT_IVA_ID  = 1;
-
-  // Helpers
-  const $ = (s) => document.querySelector(s);
-  function fillSelectOptions(sel, arr){
-    sel.innerHTML = '<option value="">Seleccionar</option>' +
-      arr.map(v=>`<option value="${v}">${v}</option>`).join('');
-  }
-  function getExtra(name){
-    return document.querySelector(`#np_fields [data-extra="${name}"]`)?.value?.trim() ?? '';
-  }
-  function collectExtras(cat){
-    const defs = CATEGORY_FIELDS[cat] || [];
-    const out = {};
-    defs.forEach(d=>{
-      const el = document.querySelector(`#np_fields [data-extra="${d.name}"]`);
-      if(!el) return;
-      let val = el.value.trim();
-      if (val === '') return;
-      out[d.name] = d.type === 'number' ? Number(val) : val;
-    });
-    return out;
-  }
-  function renderDynamicFields(cat){
-    const box = $('#np_fields');
-    const title = $('#np_fields_title');
-    const empty = $('#np_fields_empty');
-    box.innerHTML = ''; title.innerHTML = ''; empty.style.display = 'flex';
-
-    if(!cat){ return; }
-    title.innerHTML = `<h4>${cat}</h4>`;
-    empty.style.display = 'none';
-
-    // Caso especial: Almacenamiento (capacidad + unidad + tipo)
-    if (cat === 'Almacenamiento') {
-      const g1 = document.createElement('div');
-      g1.className = 'group';
-      g1.innerHTML = `
-        <label>Capacidad</label>
-        <div class="input-unit">
-          <input class="control" type="number" min="0" step="1"
-                 data-extra="capacidad" placeholder="Ingrese capacidad" />
-          <select class="control control--unit" id="np_unidad_capacidad"
-                  data-extra="capacidad_unidad" aria-label="Unidad">
-            <option value="GB" selected>GB</option>
-            <option value="TB">TB</option>
-          </select>
-        </div>`;
-      box.appendChild(g1);
-
-      const g2 = document.createElement('div');
-      g2.className = 'group';
-      g2.innerHTML = `<label>Tipo</label>
-                      <input class="control" data-extra="tipo" placeholder="Ingrese tipo (p.ej. NVMe, SATA, HDD)"/>`;
-      box.appendChild(g2);
-      return;
-    }
-
-    // Render genérico
-    const defs = CATEGORY_FIELDS[cat] || [];
-    defs.forEach(f=>{
-      const wrap = document.createElement('div');
-      wrap.className = 'group';
-      const inputType = f.type === 'number' ? 'number' : 'text';
-      const stepAttr  = f.type === 'number' ? ' step="1" ' : '';
-      wrap.innerHTML = `<label>${f.label}</label>
-                        <input class="control" ${stepAttr} type="${inputType}"
-                               data-extra="${f.name}" placeholder="Ingrese ${f.label.toLowerCase()}"/>`;
-      box.appendChild(wrap);
-    });
-  }
-  function clearDynamicFields(){ $('#np_fields').innerHTML=''; $('#np_fields_title').innerHTML=''; $('#np_fields_empty').style.display='flex'; }
-  function updateImagesInfo(){
-    const files = $('#np_imgs').files;
-    $('#np_imgs_info').textContent = (files && files.length)? `${files.length} archivo(s) seleccionado(s)` : 'Ningún archivo seleccionado';
   }
 
-  // Poblado inicial del modal y eventos
+  // ===== Guard de ADMIN + nombre en el header =====
   document.addEventListener('DOMContentLoaded', () => {
-    fillSelectOptions($('#np_categoria'), CATEGORIES);
-    fillSelectOptions($('#np_marca'), BRANDS);
-    $('#btnAgregarProducto').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = false; $('#np_nombre').focus(); });
-    $('#btnCerrarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
-    $('#btnCancelarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
-    const backdrop = document.getElementById('modalNuevoProducto');
-    backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !backdrop.hidden){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
-    $('#np_categoria').addEventListener('change', (e)=> renderDynamicFields(e.target.value));
-    $('#btnSelImgs').addEventListener('click', ()=> $('#np_imgs').click());
-    $('#np_imgs').addEventListener('change', updateImagesInfo);
+    const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+    if (!raw) { location.replace('Login.html?next=' + encodeURIComponent('cuenta%20-%20admin.html')); return; }
+    let u; try { u = JSON.parse(raw); } catch { u = null; }
+    const id = parseInt(u?.id_rol ?? u?.idRol ?? u?.rol_id ?? 0, 10);
+    const nm = String(u?.rol ?? u?.role ?? u?.roleName ?? '').toLowerCase();
+    const isAdmin = id === 1 || nm === 'admin';
+    if (!isAdmin) { location.replace('cuenta.html'); return; }
+    const tag = document.querySelector('.user-info');
+    if (tag) tag.textContent = '👤 Administrador: ' + (u?.nombre || u?.usuario || 'Admin');
+  });
 
-    // Submit: ahora soporta TODAS las categorías
-    $('#formNuevoProducto').addEventListener('submit', async (e)=>{
-      e.preventDefault();
+  // ===== Navegación lateral =====
+  // function showSection(sectionId, el){
+  //   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  //   const sec = document.getElementById(sectionId); if (sec) sec.classList.add('active');
+  //   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  //   if (el) el.classList.add('active');
+  // }
 
-      const categoria = $('#np_categoria').value;
-      const nombre    = $('#np_nombre').value.trim();
-      const enlace    = $('#np_enlace').value.trim() || null;
-      const precio    = Number(document.querySelector('#np_precio')?.value ?? 0);
-      const costo     = Number(document.querySelector('#np_costo')?.value ?? 0);
-      const stock     = parseInt(document.querySelector('#np_stock')?.value ?? '0', 10) || 0;
-      const marcaTxt  = $('#np_marca').value;
-      const marca_id  = BRAND_ID[marcaTxt] ?? 1;
+  // ===== UX botones demo =====
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.btn').forEach(btn=>{
+      btn.addEventListener('click', function(){
+        const action = this.textContent.trim();
+        if(action.match(/Agregar|Actualizar|Guardar/)){
+          this.style.backgroundColor = '#4caf50'; this.textContent = '✓ Completado';
+          setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+        } else if(action.match(/Eliminar|Bloquear/)){
+          if(confirm('¿Estás seguro de realizar esta acción?')){
+            this.style.backgroundColor = '#ff5722'; this.textContent = '✓ Realizado';
+            setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+          }
+        }
+      });
+    });
+  });
 
-      if (!nombre || !categoria || !marcaTxt) {
-        alert('Completa los campos obligatorios');
-        return;
-      }
-
-      const base = {
-        nombre,
-        preciounitario: precio,
-        enlace,
-        stock,
-        marca_id,
-        gama_id: DEFAULT_GAMA_ID,
-        iva_id:  DEFAULT_IVA_ID,
-        costo
-      };
-
-      // Construir payload específico
-      let payload = { ...base };
-      if (categoria === 'Almacenamiento') {
-        const valor = Number(getExtra('capacidad')) || 0;
-        const unidad = document.getElementById('np_unidad_capacidad')?.value || 'GB';
-        // El backend normaliza 1000GB -> 1TB; aquí solo enviamos en GB para mantener tu flujo actual
-        const capacidadGB = unidad === 'TB' ? (valor * 1000) : valor;
-        payload = { ...payload, capacidad: capacidadGB, tipo: (getExtra('tipo') || 'SSD') };
-      } else {
-        payload = { ...payload, ...collectExtras(categoria) };
-      }
-
-      const url = CATEGORY_ENDPOINT[categoria];
-      if (!url) {
-        alert('No hay endpoint configurado para esta categoría.');
-        return;
-      }
+  // ===== Crear usuario (Cliente usa SP crear_cliente; otros roles requieren endpoint propio) =====
+  async function crearUsuario(){
+    const payload = {
+      nombre:     document.getElementById('v_nombre').value.trim(),
+      cedula:     document.getElementById('v_cedula').value.trim(),
+      correo:     document.getElementById('v_correo').value.trim(),
+      telefono:   document.getElementById('v_telefono').value.trim(),
+      usuario:    document.getElementById('v_usuario').value.trim()
+    };
+    const idRol = parseInt(document.getElementById('v_id_rol').value, 10);
 
     try {
-      // 1) Crear producto
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const raw = await res.text();
-      if (!res.ok) throw new Error(raw || ('HTTP ' + res.status));
-
-      // 1.1) obtener productoId de la respuesta (más robusto)
-      let productoId = null;
-
-      // intenta por content-type JSON
-      const ct = (res.headers.get('content-type') || '').toLowerCase();
-      if (ct.includes('application/json')) {
-        try {
-          const j = JSON.parse(raw);
-          productoId =
-            j.productoId ?? j.producto_id ?? j.id ?? j.id_producto ?? j.productID ?? null;
-        } catch (_) {}
+      let url, body;
+      if (idRol === 2){
+        // Cliente: usa el endpoint existente que invoca SP crear_cliente
+        url  = '/api/usuarios/crear';
+        body = { ...payload, idMetodoPago: null };
+      } else {
+        // Admin/Trabajador: requiere un endpoint del backend para roles ≠ cliente
+        url  = '/api/usuarios/crear-usuario';
+        body = { ...payload, idRol };
       }
 
-      // intenta por Location header (REST 201 Created)
-      if (!productoId) {
-        const loc = res.headers.get('Location') || res.headers.get('location');
-        if (loc) {
-          const m = String(loc).match(/\/(\d+)(?:\?.*)?$/);
-          if (m) productoId = Number(m[1]);
-        }
-      }
-
-      // intenta por texto plano con dígitos
-      if (!productoId) {
-        const m = String(raw).match(/(\d{1,})/);
-        if (m) productoId = Number(m[1]);
-      }
-
-      if (!productoId) {
-        console.debug('Respuesta creación producto:', { status: res.status, headers: Object.fromEntries(res.headers.entries()), raw });
-        alert('✅ Producto creado, pero no pude leer el ID (no vino en JSON/Location). Revisa Network → Response/Headers.');
-        return;
-      }
-
-      // 2) Subir imágenes seleccionadas en el campo #np_imgs (opcional)
-      const files = Array.from($('#np_imgs').files || []);
-      if (files.length) {
-        if (files.length > 15) { alert('Máximo 15 imágenes'); return; }
-        const big = files.find(f => f.size > 10 * 1024 * 1024);
-        if (big) { alert(`"${big.name}" supera 10MB`); return; }
-
-        const toDataUrl = f => new Promise((ok, ko) => {
-          const r = new FileReader();
-          r.onload = () => ok(String(r.result)); // data:mime;base64,XXXXX
-          r.onerror = ko;
-          r.readAsDataURL(f);
-        });
-        const cleanB64 = s => s.includes(',') ? s.split(',')[1] : s; // quita prefijo data:
-
-        const items = [];
-        for (const f of files) {
-          const dataUrl = await toDataUrl(f);
-          items.push({
-            descripcion: f.name,
-            mime_type: f.type || 'application/octet-stream',
-            contenido_base64: cleanB64(dataUrl),
-            para_galeria: true,
-            para_menu: false,
-            habilitado: true
-          });
-        }
-
-        const up = await fetch(`/api/productos/${productoId}/galeria`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(items)
-        });
-        const upTxt = await up.text();
-        if (!up.ok) throw new Error(upTxt || ('HTTP ' + up.status));
-      }
-
-      alert('✅ Producto y galería guardados');
-      $('#modalNuevoProducto').hidden = true;
-      clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo();
-      loadProductos();
+      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || ('HTTP ' + res.status));
+      alert('✅ ' + (text || 'Operación realizada'));
     } catch (err) {
       alert('❌ Error: ' + (err.message || err));
     }
+  }
 
+  // ===== Productos: listar desde API y pintar tabla =====
+  const API_PRODUCTS = '/api/productos';
+  const API_PROD_DELETE = (id) => `/api/sp/productos/${id}`;
+  const $p = (s) => document.querySelector(s);
+  function coalesce(...vals){ for(const v of vals){ if(v!==undefined && v!==null) return v; } return undefined; }
+  function fmtUSD(n){ const x = Number(n||0); return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(x); }
+  function fmtDate(d){ if(!d) return ''; const dt = new Date(d); return isNaN(dt) ? String(d) : dt.toLocaleDateString(); }
+  function renderEmpty(msg){ $p('#tbProductos').innerHTML = `<tr><td colspan="12" class="tt-muted-row">${msg}</td></tr>`; }
+  function mapProduct(raw){
+    return {
+      id:          coalesce(raw.producto_id, raw.productoId, raw.id, raw.id_producto),
+      nombre:      coalesce(raw.nombre, raw.name, ''),
+      precio:      coalesce(raw.preciounitario, raw.precioUnitario, raw.precio, raw.price, 0),
+      enlace:      coalesce(raw.enlace, raw.url, ''),
+      fecha:       coalesce(raw.fecha, raw.createdAt, raw.fecha_creacion),
+      stock:       coalesce(raw.stock, raw.cantidad, 0),
+      marca_id:    coalesce(raw.marca_id, raw.marcaId),
+      gama_id:     coalesce(raw.gama_id, raw.gamaId),
+      iva_id:      coalesce(raw.iva_id, raw.ivaId),
+      costo:       coalesce(raw.costo, 0),
+      habilitado:  coalesce(raw.habilitado, raw.activo, true)
+    };
+  }
+  function renderProductos(items){
+    if(!Array.isArray(items) || !items.length){ renderEmpty('Sin productos'); return; }
+    const rows = items.map(p => {
+      const enlaceHtml = p.enlace ? `<a href="${p.enlace}" target="_blank" rel="noopener" class="link--external">link</a>` : '';
+      return `<tr>
+        <td>${p.id ?? ''}</td>
+        <td>${p.nombre ?? ''}</td>
+        <td>${fmtUSD(p.precio)}</td>
+        <td>${enlaceHtml}</td>
+        <td>${fmtDate(p.fecha)}</td>
+        <td>${p.stock ?? 0}</td>
+        <td>${p.marca_id ?? ''}</td>
+        <td>${p.gama_id ?? ''}</td>
+        <td>${p.iva_id ?? ''}</td>
+        <td>${fmtUSD(p.costo)}</td>
+        <td>${p.habilitado ? '<span class="status active">Sí</span>' : '<span class="status blocked">No</span>'}</td>
+          <td>
+            <button class="btn btn-outline btn--sm" data-gal="${p.id}" data-nombre="${p.nombre ?? ''}">🖼 Galería</button>
+            <button class="btn btn-warning btn--sm" data-edit="${p.id}">Editar</button>
+            <button class="btn btn-danger btn--sm" data-del="${p.id}" data-nombre="${p.nombre ?? ''}">Eliminar</button>
+          </td>
+      </tr>`;
+    }).join('');
+    $p('#tbProductos').innerHTML = rows;
+
+    // wire: abrir modal galería
+    document.querySelectorAll('[data-gal]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openGaleriaModal(
+        Number(btn.dataset.gal),
+        btn.dataset.nombre || ''
+      ));
     });
+  }
+
+  async function loadProductos(){
+    try{
+      const res = await fetch(API_PRODUCTS);
+      if(!res.ok){ renderEmpty('Error cargando productos'); return; }
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.content || data.items || []);
+      renderProductos(list.map(mapProduct));
+    }catch(err){ renderEmpty('No se pudo conectar con /api/productos'); }
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{ try{ loadProductos(); } catch(_){} });
+
+
+ /* ===== Eliminar PRODUCTO ===== */
+    document.addEventListener('click', async (ev) => {
+      // Solo clicks en el botón dentro de la tabla de productos
+      const btn = ev.target.closest('#tbProductos button[data-del]');
+      if (!btn) return;
+
+      ev.preventDefault(); ev.stopPropagation();
+
+      const id = Number(btn.dataset.del);
+      const nombre = btn.dataset.nombre || `#${id}`;
+      if (!id) return;
+
+      if (!confirm(`¿Eliminar el producto “${nombre}” (ID ${id})?`)) return;
+
+      const usuario = (typeof getLoggedUsername === 'function') ? getLoggedUsername() : null;
+
+      try {
+        const res = await fetch(API_PROD_DELETE(id), {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Usuario': usuario || '',
+            ...(typeof authHeaders === 'function' ? authHeaders() : {})
+          }
+        });
+        const txt = await res.text();
+        if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
+
+        await loadProductos?.();
+        alert('✅ Producto eliminado o deshabilitado (según restricciones del SP).');
+      } catch (e) {
+        alert('❌ No se pudo eliminar: ' + (e.message || e));
+      }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ loadProductos(); } catch(_){} });
+      // wire: eliminar producto
+          document.querySelectorAll('[data-del]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = Number(btn.dataset.del);
+              const nombre = btn.dataset.nombre || `#${id}`;
+              if (!id) return;
+              if (!confirm(`¿Eliminar el producto “${nombre}” (ID ${id})?`)) return;
+
+              const usuario = (typeof getLoggedUsername === 'function') ? getLoggedUsername() : null;
+
+              try {
+                const res = await fetch(API_PROD_DELETE(id), {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Usuario': usuario || '',
+                    ...(typeof authHeaders === 'function' ? authHeaders() : {}) // Authorization si usas JWT
+                  }
+                });
+                const txt = await res.text();
+                if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
+
+                await loadProductos(); // refresca la tabla
+                alert('✅ Producto eliminado o deshabilitado (según restricciones).');
+              } catch (e) {
+                alert('❌ No se pudo eliminar: ' + (e.message || e));
+              }
+            });
+          });
+
+// ===== MODAL: lógica mínima =====
+const CATEGORIES = [
+  'Fuente de poder','GPU','Motherboard','CPU','RAM','CPU COOLER',
+  'Almacenamiento','Cubierta','Periféricos','Accesorios'
+];
+
+const BRANDS = [
+  'Intel','AMD','HP','Samsung','Apple','Sony','Corsair','EVGA',
+  'ASUS','MSI','Kingston','Seagate','Western Digital','Thermalright'
+];
+
+// Campos específicos por categoría (nombres alineados al SP v2)
+const CATEGORY_FIELDS = {
+  'Fuente de poder': [
+    { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
+  ],
+  'GPU': [
+    { name:'tamanio', label:'Tamaño (mm)', type:'number' },
+    { name:'consumo_energia', label:'Consumo de energía (W)', type:'number' }
+  ],
+  'Motherboard': [
+    { name:'socket', label:'Socket', type:'text' },
+    { name:'velocidad_ram', label:'Velocidad RAM (MHz)', type:'number' },
+    { name:'chipset', label:'Chipset', type:'text' }
+  ],
+  'CPU': [
+    { name:'sockets', label:'Sockets', type:'text' },
+    { name:'generacion', label:'Generación', type:'number' }
+  ],
+  'RAM': [
+    { name:'velocidades', label:'Velocidades (MHz)', type:'number' }
+  ],
+  'CPU COOLER': [
+    { name:'tamanio', label:'Tamaño (mm)', type:'number' },
+    { name:'socket',  label:'Socket', type:'text' }
+  ],
+  'Almacenamiento': [
+    // Se renderiza aparte (capacidad + unidad + tipo)
+  ],
+  'Cubierta': [
+    { name:'tamanio_gpu', label:'Tamaño de GPU (mm)', type:'number' },
+    { name:'tamanio_refrigeracion', label:'Tamaño de refrigeración (mm)', type:'number' }
+  ],
+  'Periféricos': [
+    { name:'tipo', label:'Tipo', type:'text' }
+  ],
+  'Accesorios': [
+    // sin campos extra
+  ]
+};
+
+/* Endpoints sugeridos (ajústalos a los que tengas en backend).
+   Ya tienes: /api/sp/almacenamientos, /api/sp/cpu
+   Agregamos el resto siguiendo el mismo patrón. */
+const CATEGORY_ENDPOINT = {
+  'Almacenamiento':  '/api/sp/almacenamientos',
+  'CPU':             '/api/sp/cpu',
+  'CPU COOLER':      '/api/sp/cpu-cooler',
+  'Fuente de poder': '/api/sp/fuentes',
+  'GPU':             '/api/sp/gpu',
+  'Motherboard':     '/api/sp/motherboards',
+  'RAM':             '/api/sp/ram',
+  'Cubierta':        '/api/sp/cubiertas',
+  'Periféricos':     '/api/sp/perifericos',
+  'Accesorios':      '/api/sp/accesorios'
+};
+
+// IDs de ejemplo para demo (idealmente, poblar desde API)
+const BRAND_ID = {
+  'Intel': 1, 'AMD': 2, 'HP': 3, 'Samsung': 4, 'Apple': 5, 'Sony': 6,
+  'Corsair': 7, 'EVGA': 8, 'ASUS': 9, 'MSI': 10, 'Kingston': 11,
+  'Seagate': 12, 'Western Digital': 13, 'Thermalright': 14
+};
+const DEFAULT_GAMA_ID = 1;
+const DEFAULT_IVA_ID  = 1;
+
+// Helpers
+const $ = (s) => document.querySelector(s);
+function fillSelectOptions(sel, arr){
+  sel.innerHTML = '<option value="">Seleccionar</option>' +
+    arr.map(v=>`<option value="${v}">${v}</option>`).join('');
+}
+function getExtra(name){
+  return document.querySelector(`#np_fields [data-extra="${name}"]`)?.value?.trim() ?? '';
+}
+function collectExtras(cat){
+  const defs = CATEGORY_FIELDS[cat] || [];
+  const out = {};
+  defs.forEach(d=>{
+    const el = document.querySelector(`#np_fields [data-extra="${d.name}"]`);
+    if(!el) return;
+    let val = el.value.trim();
+    if (val === '') return;
+    out[d.name] = d.type === 'number' ? Number(val) : val;
   });
+  return out;
+}
+function renderDynamicFields(cat){
+  const box = $('#np_fields');
+  const title = $('#np_fields_title');
+  const empty = $('#np_fields_empty');
+  box.innerHTML = ''; title.innerHTML = ''; empty.style.display = 'flex';
+
+  if(!cat){ return; }
+  title.innerHTML = `<h4>${cat}</h4>`;
+  empty.style.display = 'none';
+
+  // Caso especial: Almacenamiento (capacidad + unidad + tipo)
+  if (cat === 'Almacenamiento') {
+    const g1 = document.createElement('div');
+    g1.className = 'group';
+    g1.innerHTML = `
+      <label>Capacidad</label>
+      <div class="input-unit">
+        <input class="control" type="number" min="0" step="1"
+               data-extra="capacidad" placeholder="Ingrese capacidad" />
+        <select class="control control--unit" id="np_unidad_capacidad"
+                data-extra="capacidad_unidad" aria-label="Unidad">
+          <option value="GB" selected>GB</option>
+          <option value="TB">TB</option>
+        </select>
+      </div>`;
+    box.appendChild(g1);
+
+    const g2 = document.createElement('div');
+    g2.className = 'group';
+    g2.innerHTML = `<label>Tipo</label>
+                    <input class="control" data-extra="tipo" placeholder="Ingrese tipo (p.ej. NVMe, SATA, HDD)"/>`;
+    box.appendChild(g2);
+    return;
+  }
+
+  // Render genérico
+  const defs = CATEGORY_FIELDS[cat] || [];
+  defs.forEach(f=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'group';
+    const inputType = f.type === 'number' ? 'number' : 'text';
+    const stepAttr  = f.type === 'number' ? ' step="1" ' : '';
+    wrap.innerHTML = `<label>${f.label}</label>
+                      <input class="control" ${stepAttr} type="${inputType}"
+                             data-extra="${f.name}" placeholder="Ingrese ${f.label.toLowerCase()}"/>`;
+    box.appendChild(wrap);
+  });
+}
+function clearDynamicFields(){ $('#np_fields').innerHTML=''; $('#np_fields_title').innerHTML=''; $('#np_fields_empty').style.display='flex'; }
+function updateImagesInfo(){
+  const files = $('#np_imgs').files;
+  $('#np_imgs_info').textContent = (files && files.length)? `${files.length} archivo(s) seleccionado(s)` : 'Ningún archivo seleccionado';
+}
+
+// Poblado inicial del modal y eventos
+document.addEventListener('DOMContentLoaded', () => {
+  fillSelectOptions($('#np_categoria'), CATEGORIES);
+  fillSelectOptions($('#np_marca'), BRANDS);
+  $('#btnAgregarProducto').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = false; $('#np_nombre').focus(); });
+  $('#btnCerrarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
+  $('#btnCancelarModal').addEventListener('click', ()=>{ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); });
+  const backdrop = document.getElementById('modalNuevoProducto');
+  backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !backdrop.hidden){ $('#modalNuevoProducto').hidden = true; clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo(); } });
+  $('#np_categoria').addEventListener('change', (e)=> renderDynamicFields(e.target.value));
+  $('#btnSelImgs').addEventListener('click', ()=> $('#np_imgs').click());
+  $('#np_imgs').addEventListener('change', updateImagesInfo);
+
+  // Submit: ahora soporta TODAS las categorías
+  $('#formNuevoProducto').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+
+    const categoria = $('#np_categoria').value;
+    const nombre    = $('#np_nombre').value.trim();
+    const enlace    = $('#np_enlace').value.trim() || null;
+    const precio    = Number(document.querySelector('#np_precio')?.value ?? 0);
+    const costo     = Number(document.querySelector('#np_costo')?.value ?? 0);
+    const stock     = parseInt(document.querySelector('#np_stock')?.value ?? '0', 10) || 0;
+    const marcaTxt  = $('#np_marca').value;
+    const marca_id  = BRAND_ID[marcaTxt] ?? 1;
+
+    if (!nombre || !categoria || !marcaTxt) {
+      alert('Completa los campos obligatorios');
+      return;
+    }
+
+    const base = {
+      nombre,
+      preciounitario: precio,
+      enlace,
+      stock,
+      marca_id,
+      gama_id: DEFAULT_GAMA_ID,
+      iva_id:  DEFAULT_IVA_ID,
+      costo
+    };
+
+    // Construir payload específico
+    let payload = { ...base };
+    if (categoria === 'Almacenamiento') {
+      const valor = Number(getExtra('capacidad')) || 0;
+      const unidad = document.getElementById('np_unidad_capacidad')?.value || 'GB';
+      // El backend normaliza 1000GB -> 1TB; aquí solo enviamos en GB para mantener tu flujo actual
+      const capacidadGB = unidad === 'TB' ? (valor * 1000) : valor;
+      payload = { ...payload, capacidad: capacidadGB, tipo: (getExtra('tipo') || 'SSD') };
+    } else {
+      payload = { ...payload, ...collectExtras(categoria) };
+    }
+
+    const url = CATEGORY_ENDPOINT[categoria];
+    if (!url) {
+      alert('No hay endpoint configurado para esta categoría.');
+      return;
+    }
+     console.log('[NP] POST', url, 'payload →', payload);
+
+  try {
+    // 1) Crear producto
+    const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    'X-Usuario': getLoggedUsername() || ''   // <<<<<< AÑADIDO
+     },
+      body: JSON.stringify(payload)
+    });
+    const raw = await res.text();
+    if (!res.ok) throw new Error(raw || ('HTTP ' + res.status));
+
+    // 1.1) obtener productoId de la respuesta (más robusto)
+    let productoId = null;
+
+    // intenta por content-type JSON
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (ct.includes('application/json')) {
+      try {
+        const j = JSON.parse(raw);
+        productoId =
+          j.productoId ?? j.producto_id ?? j.id ?? j.id_producto ?? j.productID ?? null;
+      } catch (_) {}
+    }
+
+    // intenta por Location header (REST 201 Created)
+    if (!productoId) {
+      const loc = res.headers.get('Location') || res.headers.get('location');
+      if (loc) {
+        const m = String(loc).match(/\/(\d+)(?:\?.*)?$/);
+        if (m) productoId = Number(m[1]);
+      }
+    }
+
+    // intenta por texto plano con dígitos
+    if (!productoId) {
+      const m = String(raw).match(/(\d{1,})/);
+      if (m) productoId = Number(m[1]);
+    }
+
+    if (!productoId) {
+      console.debug('Respuesta creación producto:', { status: res.status, headers: Object.fromEntries(res.headers.entries()), raw });
+      alert('✅ Producto creado, pero no pude leer el ID (no vino en JSON/Location). Revisa Network → Response/Headers.');
+      return;
+    }
+
+    // 2) Subir imágenes seleccionadas en el campo #np_imgs (opcional)
+    const files = Array.from($('#np_imgs').files || []);
+    if (files.length) {
+      if (files.length > 15) { alert('Máximo 15 imágenes'); return; }
+      const big = files.find(f => f.size > 10 * 1024 * 1024);
+      if (big) { alert(`"${big.name}" supera 10MB`); return; }
+
+      const toDataUrl = f => new Promise((ok, ko) => {
+        const r = new FileReader();
+        r.onload = () => ok(String(r.result)); // data:mime;base64,XXXXX
+        r.onerror = ko;
+        r.readAsDataURL(f);
+      });
+      const cleanB64 = s => s.includes(',') ? s.split(',')[1] : s; // quita prefijo data:
+
+      const items = [];
+      for (const f of files) {
+        const dataUrl = await toDataUrl(f);
+        items.push({
+          descripcion: f.name,
+          mime_type: f.type || 'application/octet-stream',
+          bytes_b64: cleanB64(dataUrl),
+          para_galeria: true,
+          para_menu: false,
+          habilitado: true
+        });
+      }
+
+      const up = await fetch(`/api/productos/${productoId}/galeria`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      });
+      const upTxt = await up.text();
+      if (!up.ok) throw new Error(upTxt || ('HTTP ' + up.status));
+    }
+
+    alert('✅ Producto y galería guardados');
+    $('#modalNuevoProducto').hidden = true;
+    clearDynamicFields(); $('#formNuevoProducto').reset(); updateImagesInfo();
+    loadProductos();
+  } catch (err) {
+    alert('❌ Error: ' + (err.message || err));
+  }
+
+  });
+});
+
 // ===== Ciudades (usa /api/ciudades y necesita provincias para selects) =====
     const API_CIUDADES = '/api/ciudades';
     const $C = (id) => document.getElementById(id);
@@ -1411,29 +1485,62 @@ const API_SUBTIPOS = '/api/subtipos-movimiento';
     sel.addEventListener('change', () => {
       toggleSubtipoPlaceholderClass(sel);
       updateCostoUnitarioState();
+      updateCantidadMode();
     });
     sel.dataset.bound = '1';
   }
+  
 }
-  // Cargar al abrir el modal de Movimiento
-  (function initSubtiposOnModalOpen(){
-    const btn = document.getElementById('btnAgregarMovimiento');
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-      const sel = document.getElementById('mov_subtipo_id');
-      const keep = sel?.value || null;
-      const data = await loadSubtiposOnce();
-      renderSubtipoSelect(data, keep);
-    });
-  })();
+    // Cargar al abrir el modal de Movimiento
+    (function initSubtiposOnModalOpen(){
+      const btn = document.getElementById('btnAgregarMovimiento');
+      if (!btn) return;
+      btn.addEventListener('click', async () => {
+        const sel = document.getElementById('mov_subtipo_id');
+        const keep = sel?.value || null;
+        const data = await loadSubtiposOnce();
+        renderSubtipoSelect(data, keep);
+        updateCantidadMode();
+      });
+    })();
 
 
+
+    // ¿El subtipo seleccionado es COMPRA?
     // ¿El subtipo seleccionado es COMPRA?
     function isCompraSelected() {
       const sel = document.getElementById('mov_subtipo_id');
       const txt = sel?.options?.[sel.selectedIndex]?.text || '';
       return txt.trim().toUpperCase() === 'COMPRA';
     }
+    
+    function isAjusteSelected() {
+      const sel = document.getElementById('mov_subtipo_id');
+      const txt = sel?.options?.[sel.selectedIndex]?.text || '';
+      return txt.trim().toUpperCase() === 'AJUSTE';
+    }
+    // Cambia el modo del input Cantidad según el subtipo
+    function updateCantidadMode() {
+      const qty = document.getElementById('mov_cantidad');
+      if (!qty) return;
+
+      if (isAjusteSelected()) {
+        // permitir negativos y positivos, sin 0 (se valida en initCantidad)
+        // usar text o number con min negativo:
+        qty.type = 'text';            // <- más compatible con el '-'
+        qty.removeAttribute('min');
+        qty.placeholder = '±1';
+      } else {
+        qty.type = 'number';
+        qty.setAttribute('min', '1'); // solo positivos
+        qty.step = '1';
+        qty.placeholder = '1';
+        // normaliza si quedó un valor inválido
+        const n = parseInt(qty.value, 10);
+        if (!Number.isInteger(n) || n < 1) qty.value = '1';
+      }
+    }
+
 
     // Habilita/inhabilita el campo de costo según el subtipo
     function updateCostoUnitarioState() {
@@ -1452,47 +1559,100 @@ const API_SUBTIPOS = '/api/subtipos-movimiento';
 
 
 // CANTIDAD: solo enteros y > 0
-    (function initCantidad(){
-      const qty = document.getElementById('mov_cantidad');
-      if (!qty) return;
+(function initCantidad(){
+  const qty  = document.getElementById('mov_cantidad');
+  const form = document.getElementById('formNuevoMovimiento');
+  if (!qty) return;
 
-      const sanitize = () => {
-        // quitar todo lo que no sea dígito
-        let v = qty.value.replace(/[^\d]/g, '');
-        // quitar ceros a la izquierda
-        v = v.replace(/^0+/, '');
-        qty.value = v;
-      };
+  // Limpia según el modo actual
+  function sanitize() {
+    if (isAjusteSelected()) {
+      // permitir un '-' al inicio y dígitos; quitar repetidos o internos
+      let v = qty.value.replace(/[^\d-]/g, '');
+      // si hay más de un '-', deja solo el primero y al inicio
+      v = v.replace(/-/g, (m, i) => (i === 0 ? '-' : ''));
+      if (v.length > 1 && v[0] !== '-') v = v.replace(/-/g, ''); // '-' solo al inicio
+      // quitar ceros a la izquierda (pero deja "-0" temporalmente para corregir en blur)
+      v = v.replace(/^(-?)0+(\d)/, '$1$2');
+      qty.value = v;
+    } else {
+      // solo enteros positivos
+      let v = qty.value.replace(/[^\d]/g, '');
+      v = v.replace(/^0+/, '');
+      qty.value = v;
+    }
+  }
 
-      // Bloquear teclas que algunos navegadores permiten en type=number
-      qty.addEventListener('keydown', (e) => {
-        const blocked = ['e','E','+','-','.',','];
-        if (blocked.includes(e.key)) e.preventDefault();
-      });
+  // Teclas permitidas según el modo
+  qty.addEventListener('keydown', (e) => {
+    const nav = ['Backspace','Delete','ArrowLeft','ArrowRight','Home','End','Tab'];
+    if (e.ctrlKey || e.metaKey || nav.includes(e.key)) return;
 
-      // Limpiar mientras escribe/pega
-      qty.addEventListener('input', sanitize);
-
-      // Al salir del campo, asegurar mínimo 1
-      qty.addEventListener('blur', () => {
-        sanitize();
-        if (qty.value === '' || Number(qty.value) < 1) qty.value = '1';
-      });
-
-      // Validación final al enviar el formulario
-      const form = document.getElementById('formNuevoMovimiento');
-      if (form && !form.dataset.qtyBound){
-        form.addEventListener('submit', (e) => {
-          const n = parseInt(qty.value, 10);
-          if (!Number.isInteger(n) || n < 1){
-            e.preventDefault();
-            alert('La cantidad debe ser un entero mayor a 0');
-            qty.focus();
-          }
-        });
-        form.dataset.qtyBound = '1';
+    if (isAjusteSelected()) {
+      // permitir un '-' al inicio
+      if (e.key === '-') {
+        const { selectionStart, selectionEnd, value } = qty;
+        const alreadyHasMinus = value.startsWith('-');
+        const caretAtStart = selectionStart === 0 && selectionEnd === 0;
+        if (alreadyHasMinus || !caretAtStart) { e.preventDefault(); }
+        return;
       }
-    })();
+      if (!/^\d$/.test(e.key)) e.preventDefault();
+      return;
+    }
+
+    // modo normal (no AJUSTE): bloquear -, +, e/E y no dígitos
+    if (['-','+','e','E'].includes(e.key)) { e.preventDefault(); return; }
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+
+  // Limpieza en vivo
+  qty.addEventListener('input', sanitize);
+
+  // Normaliza al salir
+  qty.addEventListener('blur', () => {
+    sanitize();
+    const raw = qty.value.trim();
+    if (isAjusteSelected()) {
+      // entero ≠ 0
+      const n = parseInt(raw, 10);
+      if (!Number.isInteger(n) || n === 0) qty.value = '1'; // valor por defecto válido
+    } else {
+      // entero ≥ 1
+      let n = parseInt(raw, 10);
+      if (!Number.isInteger(n) || n < 1) n = 1;
+      qty.value = String(n);
+    }
+  });
+
+  // Validación final al enviar el formulario
+  if (form && !form.dataset.qtyBound){
+    form.addEventListener('submit', (e) => {
+      const n = parseInt(qty.value, 10);
+      const ok = isAjusteSelected() ? (Number.isInteger(n) && n !== 0)
+                                    : (Number.isInteger(n) && n >= 1);
+      if (!ok) {
+        e.preventDefault();
+        alert(isAjusteSelected()
+          ? 'La cantidad debe ser un entero distinto de 0 (se permiten negativos) para AJUSTE.'
+          : 'La cantidad debe ser un entero mayor a 0.');
+        qty.focus();
+      }
+    });
+    form.dataset.qtyBound = '1';
+  }
+
+  // Revalidar al cambiar el subtipo (ya tienes un listener; aprovechamos)
+  const sel = document.getElementById('mov_subtipo_id');
+  if (sel && !sel.dataset.rebindQty){
+    sel.addEventListener('change', () => {
+      // al cambiar a/desde AJUSTE, re-sanitiza y aplica reglas
+      qty.dispatchEvent(new Event('blur'));
+    });
+    sel.dataset.rebindQty = '1';
+  }
+})();
+
 
     //Costo Unitario
 (function initCostoUnitarioMask(){
@@ -1777,7 +1937,7 @@ const API_MOVS = '/api/movimientos'; // <-- ajusta a tu ruta real
 
 
 
-//ShwowSection
+//ShwowSection 
 function showSection(sectionId, el){
       // cambiar de sección
       document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
@@ -2060,4 +2220,194 @@ function resetMovimientoModal() {
       window.openProductPicker = openProductPicker;
     })();
 
+    (() => {
+      // === Endpoints ===
+      // === Endpoints ===
+      const API_DETALLE = (id) => `/api/sp/productos/${encodeURIComponent(id)}/editar`;
+      const API_IVAS    = '/api/sp/ivas';
+      const API_UPDATE  = (id) => `/api/sp/productos/${encodeURIComponent(id)}/basico`;
 
+
+      // Refs del modal Editar
+      const $ = (id) => document.getElementById(id);
+      const EP = {
+        backdrop: $('ep_backdrop'),
+        close:    $('ep_btn_close'),
+        form:     $('ep_form'),
+        id:       $('ep_id'),
+        nombre:   $('ep_nombre'),
+        enlace:   $('ep_enlace'),
+        iva:      $('ep_iva'),
+        hab:      $('ep_hab'),
+        precio:   $('ep_precio'),
+      };
+
+      // === Cache IVAs ===
+      let IVAS_CACHE = null;
+      async function loadIvas() {
+        if (IVAS_CACHE) return IVAS_CACHE;
+        const res = await fetch(API_IVAS, { headers: { ...(typeof authHeaders==='function'? authHeaders():{}) } });
+        const data = await res.json();
+        IVAS_CACHE = Array.isArray(data) ? data : [];
+        return IVAS_CACHE;
+      }
+      async function fillIvaSelect(selectedId) {
+        const list = await loadIvas();
+        EP.iva.innerHTML = list
+          .filter(x => x.habilitado !== false)
+          .map(x => {
+            const id  = x.ivaId ?? x.iva_id ?? x.id;
+            const tag = x.etiqueta ?? (x.porcentaje != null ? (x.porcentaje + '%') : id);
+            // ⬇⬇⬇ aquí estaba el error: faltaban las comillas invertidas
+            return `<option value="${id}">${tag}</option>`;
+          })
+          .join('');
+        if (selectedId != null) EP.iva.value = String(selectedId);
+      }
+
+
+      // === Cargar detalle ===
+      async function fetchDetalle(id) {
+        const res = await fetch(API_DETALLE(id), { headers: { ...(typeof authHeaders==='function'? authHeaders():{}) }});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const d = await res.json();
+        return {
+          productoId: d.productoId ?? d.producto_id ?? id,
+          nombre:     d.nombre ?? '',
+          enlace:     d.enlace ?? '',
+          ivaId:      d.ivaId ?? d.iva_id ?? null,
+          habilitado: (d.habilitado ?? true),
+          precio:     d.precioUnitario ?? d.preciounitario ?? d.precio_unitario ?? null
+          // costoActual: (eliminado)
+        };
+        
+      }
+
+      // === Abrir/cerrar modal ===
+      async function openEditModal(id){
+        if (!EP.backdrop) return;
+        EP.form?.reset();
+        EP.backdrop.hidden = false;
+        document.body.classList.add('tt-no-scroll');
+
+        try {
+          // Carga en paralelo
+          const [detalle] = await Promise.all([fetchDetalle(id), fillIvaSelect(null)]);
+          EP.id.value     = detalle.productoId;
+          EP.nombre.value = detalle.nombre;
+          EP.enlace.value = detalle.enlace || '';
+          EP.hab.value    = String(!!detalle.habilitado);
+          EP.precio.value = (detalle.precio != null ? Number(detalle.precio).toFixed(2) : '');
+          
+          await fillIvaSelect(detalle.ivaId);
+        } catch(e){
+          alert('❌ No se pudo cargar el detalle: ' + (e.message || e));
+          closeEditModal();
+        }
+      }
+      function closeEditModal(){
+        if (!EP.backdrop) return;
+        EP.backdrop.hidden = true;
+        document.body.classList.remove('tt-no-scroll');
+      }
+
+      // Cerrar con la ❌
+      EP.close?.addEventListener('click', closeEditModal);
+      // No cerrar por Escape/backdrop (coincide con tu UX)
+
+      // Delegación: click en "Editar" dentro de la tabla
+      document.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('#tbProductos button[data-edit]');
+        if (!btn) return;
+        ev.preventDefault();
+        openEditModal(Number(btn.dataset.edit));
+      });
+          // Bloquear negativos / notación científica y limitar a 2 decimales en "Precio unitario"
+        (function initPrecioUnitarioMask(){
+          const el = document.getElementById('ep_precio');
+          const form = document.getElementById('ep_form');
+          if (!el || el.dataset.maskBound) return;
+
+          // No permitir -, +, e/E y sólo un separador decimal
+          el.addEventListener('keydown', (e) => {
+            const nav = ['Backspace','Delete','ArrowLeft','ArrowRight','Home','End','Tab'];
+            if (e.ctrlKey || e.metaKey || nav.includes(e.key)) return;
+            if (['-','+','e','E'].includes(e.key)) { e.preventDefault(); return; }
+            if (e.key === '.' || e.key === ',') {
+              const v = el.value;
+              const hasSep = v.includes('.') || v.includes(',');
+              const selection = el.selectionStart !== el.selectionEnd;
+              if (hasSep && !selection) e.preventDefault();
+              return;
+            }
+            if (!/^\d$/.test(e.key)) e.preventDefault();
+          });
+
+          // Mantener formato 0–2 decimales mientras escribe
+          let last='', pos=0;
+          el.addEventListener('input', () => {
+            const v = el.value;
+            const ok = /^\d{0,9}([.,]\d{0,2})?$/.test(v);
+            if (ok || v === '') { last = v; pos = el.selectionStart || 0; }
+            else { el.value = last; el.setSelectionRange(pos, pos); }
+          });
+
+          // Normaliza al salir (≥ 0 y 2 decimales)
+          el.addEventListener('blur', () => {
+            const raw = el.value.trim();
+            if (raw === '') return;
+            const n = Number(raw.replace(',', '.'));
+            if (!isFinite(n) || n < 0) { el.value = ''; el.reportValidity?.(); return; }
+            el.value = n.toFixed(2); // deja punto para el backend
+          });
+
+          // Validación final al guardar
+          form?.addEventListener('submit', (e) => {
+            const raw = el.value.trim();
+            const n = Number(raw.replace(',', '.'));
+            if (!isFinite(n) || n < 0) {
+              e.preventDefault();
+              alert('El precio unitario debe ser un número ≥ 0');
+              el.focus();
+            }
+          });
+
+          el.dataset.maskBound = '1';
+        })();
+      // === Guardar cambios ===
+      EP.form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = parseInt(EP.id.value, 10);
+        if (!id) { alert('ID inválido'); return; }
+
+        const rawPrecio = (EP.precio.value || '').trim();
+        const precio = rawPrecio !== '' ? Number(rawPrecio.replace(',', '.')) : undefined;
+        const payload = {
+        nombre: (EP.nombre.value || '').trim() || undefined,
+        enlace: (EP.enlace.value || '').trim() || null,
+        iva_id: EP.iva.value ? parseInt(EP.iva.value, 10) : undefined,   // <-- snake_case
+        habilitado: EP.hab.value === 'true',
+        preciounitario: (precio != null && isFinite(precio)) ? precio : undefined
+         };
+
+        try {
+          const res = await fetch(API_UPDATE(id), {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Usuario': (typeof getLoggedUsername==='function' ? (getLoggedUsername() || '') : ''),
+              ...(typeof authHeaders==='function' ? authHeaders() : {})
+            },
+            body: JSON.stringify(payload)
+          });
+          const txt = await res.text();
+          if (!res.ok) throw new Error(txt || ('HTTP ' + res.status));
+
+          closeEditModal();
+          await (typeof loadProductos==='function' ? loadProductos() : Promise.resolve());
+          alert('✅ Cambios guardados');
+        } catch (e) {
+          alert('❌ No se pudo guardar: ' + (e.message || e));
+        }
+      });
+    })();

@@ -1,25 +1,30 @@
 // src/main/java/com/example/tienda_tech/controller/GaleriaMediaController.java
 package com.example.tienda_tech.controller;
 
-import com.example.tienda_tech.service.GaleriaQueryService;
+import com.example.tienda_tech.service.GaleriaV2Service;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")   // <-- sin /productos
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class GaleriaMediaController {
 
-  private final GaleriaQueryService svc;
+  private final GaleriaV2Service v2;
 
   @GetMapping("/galeria/{galeriaId}/media")
-  public ResponseEntity<byte[]> media(@PathVariable int galeriaId){
-    var m = svc.obtenerMedia(galeriaId);
-    if (m == null) return ResponseEntity.notFound().build();
-    var mt = (m.mime()!=null) ? MediaType.parseMediaType(m.mime())
-                              : MediaType.APPLICATION_OCTET_STREAM;
-    return ResponseEntity.ok().contentType(mt).body(m.bytes());
+  public ResponseEntity<ByteArrayResource> media(@PathVariable int galeriaId){
+    var m = v2.obtenerMedia(galeriaId);
+    if (m == null || m.bytes() == null) return ResponseEntity.notFound().build();
+    MediaType mt;
+    try { mt = MediaType.parseMediaType(m.mimeType()==null ? "application/octet-stream" : m.mimeType()); }
+    catch (Exception e) { mt = MediaType.APPLICATION_OCTET_STREAM; }
+    return ResponseEntity.ok()
+        .contentType(mt)
+        .contentLength(m.length()==null? m.bytes().length : m.length())
+        .cacheControl(CacheControl.noCache())
+        .body(new ByteArrayResource(m.bytes()));
   }
 }

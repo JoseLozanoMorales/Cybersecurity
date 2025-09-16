@@ -1814,3 +1814,29 @@ a.product-card{
   object-fit: cover;             /* llena la tarjeta. Usa 'contain' si no quieres recorte */
   display: block;
 }
+/* ──---------- Tabla con scroll vertical PARA LA TABLA GESTIÓN DE PRODUCTOS ───────────────────────────── */
+/* antes sugerí 460px; prueba restarle una fila (~56px) */
+#products .data-table{
+  max-height: 360px;        /* 460 - 56 ≈ 404 */
+  overflow: auto;
+  scrollbar-gutter: stable both-edges; /* evita saltos y mejora el borde izquierdo */
+  border: 1px solid #2e3a25;  /* opcional, combina con tu tema */
+  border-radius: 8px;
+
+}
+
+/* que la tabla ocupe todo el ancho y no “salte” */
+#products .data-table table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;           /* opcional: fuerza scroll horizontal si hay muchas columnas */
+}
+
+/* encabezado fijo mientras haces scroll */
+#products .data-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #3a5f0b;        /* color del header (igual al que ya usas) */
+  color: #fff;
+}

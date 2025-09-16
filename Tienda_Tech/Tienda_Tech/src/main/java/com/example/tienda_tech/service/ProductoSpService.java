@@ -11,6 +11,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.jdbc.core.RowMapper;
+
+
+//YO AÑADÍ
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Optional;
+
+
 @Service
 public class ProductoSpService {
 
@@ -55,10 +65,34 @@ public class ProductoSpService {
             r.getGeneracion()
         );
     }
+    @Value("${app.sp.twoArgs:false}")   // si tu SP acepta (jsonb, text) pon true en application.properties
+    private boolean spTwoArgs;
+
+    /** Lee el usuario autenticado (username del token/sesión). */
+    private String currentUsername() {
+        Authentication a = SecurityContextHolder.getContext().getAuthentication();
+        if (a == null || !a.isAuthenticated()) return null;
+        return a.getName();
+    }
+
+    /** Llama al SP de crear (v2) con compatibilidad 2 parámetros. */
+    private void callSpAgregar(ObjectNode prod , String usuario) {
+        if (usuario != null && !usuario.isBlank()) {
+            prod.put("usuario", usuario);
+        }
+       jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);
+    }
+
+    // Llama al SP de actualizar (tu SP es de 2 parámetros)
+    private void callSpActualizar(ObjectNode prod, String usuario) {
+        if (usuario != null && !usuario.isBlank()) prod.put("usuario", usuario);
+        jdbc.update("CALL public.sp_actualizar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);
+    }
+
 
 
     @Transactional
-    public void crearAlmacenamientoJsonV2(AlmacenamientoCreateRequest r) {
+    public void crearAlmacenamientoJsonV2(AlmacenamientoCreateRequest r, String usuario) {
     var cap = CapacidadNormalizer.normalizeFromGb(
         r.getCapacidad() == null ? 0L : r.getCapacidad());
 
@@ -74,12 +108,11 @@ public class ProductoSpService {
     prod.put("capacidad_unidad", cap.unidad); // "GB" o "TB"
     prod.put("tipo", r.getTipo());
 
-    String payload = prod.toString();
-    jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
     }
 
     @Transactional
-    public void crearCpuJsonV2(com.example.tienda_tech.dto.CpuCreateRequest r) throws RuntimeException {
+    public void crearCpuJsonV2(com.example.tienda_tech.dto.CpuCreateRequest r, String usuario) throws RuntimeException {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -92,12 +125,12 @@ public class ProductoSpService {
         if (r.getSockets() != null && !r.getSockets().isBlank()) prod.put("sockets", r.getSockets());
         if (r.getGeneracion() != null) prod.put("generacion", r.getGeneracion());
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod,  usuario);
+
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public void crearCpuCoolerJsonV2(com.example.tienda_tech.dto.CpuCoolerCreateRequest r) {
+    public void crearCpuCoolerJsonV2(com.example.tienda_tech.dto.CpuCoolerCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -113,12 +146,12 @@ public class ProductoSpService {
         if (r.getTamanio() != null) prod.put("tamanio", r.getTamanio()); // BIGINT
         if (r.getSocket() != null && !r.getSocket().isBlank()) prod.put("socket", r.getSocket());
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
+
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public void crearCubiertaJsonV2(com.example.tienda_tech.dto.CubiertaCreateRequest r) {
+    public void crearCubiertaJsonV2(com.example.tienda_tech.dto.CubiertaCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -134,12 +167,12 @@ public class ProductoSpService {
         if (r.getTamanio_gpu() != null) prod.put("tamanio_gpu", r.getTamanio_gpu());
         if (r.getTamanio_refrigeracion() != null) prod.put("tamanio_refrigeracion", r.getTamanio_refrigeracion());
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
+
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public void crearFuenteJsonV2(com.example.tienda_tech.dto.FuenteCreateRequest r) {
+    public void crearFuenteJsonV2(com.example.tienda_tech.dto.FuenteCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -156,11 +189,11 @@ public class ProductoSpService {
             prod.put("consumo_energía", r.getConsumo_energia());
         }
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
+
     }
     @org.springframework.transaction.annotation.Transactional
-    public void crearGpuJsonV2(com.example.tienda_tech.dto.GpuCreateRequest r) {
+    public void crearGpuJsonV2(com.example.tienda_tech.dto.GpuCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -176,11 +209,11 @@ public class ProductoSpService {
         if (r.getTamanio() != null) prod.put("tamanio", r.getTamanio());
         if (r.getConsumo_energia() != null) prod.put("consumo_energia", r.getConsumo_energia());
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
+
     }
     @org.springframework.transaction.annotation.Transactional
-    public void crearRamJsonV2(com.example.tienda_tech.dto.RamCreateRequest r) {
+    public void crearRamJsonV2(com.example.tienda_tech.dto.RamCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -195,11 +228,10 @@ public class ProductoSpService {
         // Específico
         if (r.getVelocidades() != null) prod.put("velocidades", r.getVelocidades());
 
-        String payload = prod.toString();
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", payload);
+        callSpAgregar(prod, usuario);
     }
     @org.springframework.transaction.annotation.Transactional
-    public void crearMotherboardJsonV2(com.example.tienda_tech.dto.MotherboardCreateRequest r) {
+    public void crearMotherboardJsonV2(com.example.tienda_tech.dto.MotherboardCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -216,10 +248,11 @@ public class ProductoSpService {
         if (r.getVelocidad_ram()!=null) prod.put("velocidad_ram", r.getVelocidad_ram());
         if (r.getChipset()!=null && !r.getChipset().isBlank()) prod.put("chipset", r.getChipset());
 
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", prod.toString());
+        callSpAgregar(prod, usuario);
+
     }
     @org.springframework.transaction.annotation.Transactional
-    public void crearPerifericoJsonV2(com.example.tienda_tech.dto.PerifericoCreateRequest r) {
+    public void crearPerifericoJsonV2(com.example.tienda_tech.dto.PerifericoCreateRequest r, String usuario) {
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var prod = mapper.createObjectNode();
 
@@ -234,9 +267,9 @@ public class ProductoSpService {
         // específico
         if (r.getTipo()!=null && !r.getTipo().isBlank()) prod.put("tipo", r.getTipo());
 
-        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb)", prod.toString());
+        callSpAgregar(prod,  usuario);
     }
-
+    /*
     @Transactional
     public void actualizarProductoJsonV2(Integer productoId, com.example.tienda_tech.dto.ProductoUpdateRequest r) {
         ObjectMapper mapper = new ObjectMapper();
@@ -286,14 +319,60 @@ public class ProductoSpService {
         if (r.getChipset() != null && !r.getChipset().isBlank()) obj.put("chipset", r.getChipset());
 
         String payload = obj.toString();
-        jdbc.update("CALL public.sp_actualizar_producto_v2_json(?::jsonb)", payload);
+        callSpActualizar(obj, usuario);
+    }
+*/
+    @Transactional
+    public void eliminarProductoJsonV2(Integer productoId, String usuario) {
+        jdbc.update("CALL public.sp_eliminar_producto_v2(?, ?)", productoId, usuario);
     }
 
+    // ===== Detalle para precargar el modal =====
+        public Optional<com.example.tienda_tech.dto.ProductoEditarDetalleDTO> detalleParaEditarOpt(Integer id) {
+            final String sql = "select * from public.fn_producto_detalle_actualizar(?)";
+            var list = jdbc.query(sql, new Object[]{ id }, (rs, i) -> {
+                var d = new com.example.tienda_tech.dto.ProductoEditarDetalleDTO();
+                d.setProductoId(rs.getInt("producto_id"));
+                d.setNombre(rs.getString("nombre"));
+                d.setEnlace(rs.getString("enlace"));
+                d.setIvaId((Integer) rs.getObject("iva_id"));
+                d.setHabilitado((Boolean) rs.getObject("habilitado"));
+                d.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
+                d.setCostoActual(rs.getBigDecimal("costo_actual"));
+                d.setCategoriaId((Integer) rs.getObject("categoria_id"));
+                return d;
+            });
+            return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+        }
+    // ===== Listar IVAs =====
+    public java.util.List<com.example.tienda_tech.dto.IvaDTO> listarIvas(){
+        return jdbc.query("select * from public.fn_listar_ivas()", (rs,i) -> {
+            var x = new com.example.tienda_tech.dto.IvaDTO();
+            x.setIvaId(rs.getInt("iva_id"));
+            x.setPorcentaje(rs.getBigDecimal("porcentaje"));
+            x.setHabilitado(rs.getBoolean("habilitado"));
+            x.setEtiqueta(rs.getString("etiqueta"));
+            return x;
+        });
+    }
 
+    // ===== Actualizar básico (nombre, enlace, iva, habilitado, precio) =====
+    @Transactional
+    public void actualizarProductoBasico(
+            Integer productoId,
+            com.example.tienda_tech.dto.ProductoUpdateBasicoRequest r,
+            String usuario) {
 
-
-
-
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var obj = mapper.createObjectNode();
+        obj.put("producto_id", productoId);
+        if (r.getNombre()!=null && !r.getNombre().isBlank()) obj.put("nombre", r.getNombre());
+        if (r.getEnlace()!=null)                                obj.put("enlace", r.getEnlace());
+        if (r.getIvaId()!=null)                                 obj.put("iva_id", r.getIvaId());
+        if (r.getHabilitado()!=null)                            obj.put("habilitado", r.getHabilitado());
+        if (r.getPrecioUnitario()!=null)                        obj.put("preciounitario", r.getPrecioUnitario());
+        callSpActualizar(obj, usuario!=null? usuario : currentUsername());
+    }
 
 
 

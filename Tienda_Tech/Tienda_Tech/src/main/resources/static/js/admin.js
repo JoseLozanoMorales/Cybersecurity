@@ -17,6 +17,7 @@ const GAL_API = {
     del:    (gid)=> `/api/galeria/${gid}`                     // DELETE ?hard=
   };
 
+//HOLA MUNDO XD
   const GAL_STATE = {
     productoId: null,
     nombre: '',

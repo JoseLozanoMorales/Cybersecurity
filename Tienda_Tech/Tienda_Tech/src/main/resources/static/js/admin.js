@@ -1,6 +1,6 @@
 //TOMAR USUARIO PERO NO POR TOKEN :d
 //HOLA gente
-//COMO ANDÁS?XD
+//COMO ANDÁS?
 //ay dio mio
 function currentUsername(){
   try {

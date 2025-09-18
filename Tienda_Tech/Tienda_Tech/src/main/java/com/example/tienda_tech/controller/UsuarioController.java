@@ -158,13 +158,11 @@ public class UsuarioController {
     // NUEVO: búsqueda mínima para autocompletar/seleccionar
     @GetMapping("/buscar-min")
     public ResponseEntity<List<UsuarioMinDTO>> buscarMin(
-            @RequestParam(value="q", required=false, defaultValue="") String q,
-            @RequestParam(value="rolId", required=false) Integer rolId,
-            @RequestParam(value="limit", defaultValue="20") int limit) {
+            @RequestParam("q") String q,
+            @RequestParam(value = "rolId", required = false) Integer rolId,
+            @RequestParam(value = "limit", defaultValue = "20") int limit
+    ) {
         return ResponseEntity.ok(usuarioService.buscarMin(q, rolId, limit));
     }
-
-
-
 
 }

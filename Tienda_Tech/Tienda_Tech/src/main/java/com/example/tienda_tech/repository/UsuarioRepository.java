@@ -9,14 +9,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;      // <- IMPORTANTE
+
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
-    // Búsqueda simple para el panel (derivada; sin searchMin)
-    List<Usuario> findTop50ByUsuarioContainingIgnoreCase(String usuario);
-    List<Usuario> findTop50ByUsuarioContainingIgnoreCaseAndIdRol(String usuario, Integer idRol);
+    Optional<Usuario> findByCorreoIgnoreCase(String correo);
     Optional<Usuario> findByUsuario(String usuario);
 
     // Ya existente (registro público)
@@ -36,8 +35,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     );
 
 
-
-    // NUEVO: SP para crear cualquier rol desde el panel admin
     @Modifying @Transactional
     @Query(value = "CALL crear_usuario(:v_nombre, :v_cedula, :v_correo, :v_telefono, :v_contrasenia, :v_usuario, :v_id_metodopago, :v_id_rol)", nativeQuery = true)
     void crearUsuarioSP(
@@ -65,19 +62,31 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
         @Param("p_usuario") String usuario,
         @Param("p_contrasenia") String contrasenia
     );
-        // ====== NUEVO (solo admins/trabajadores) ======
-    // ===== NUEVO (admins/trabajadores) – SIN @Procedure =====
+
+    // ====== NUEVO (solo admins/trabajadores) ======
 
     // Si en tu BD es PROCEDURE:
-    // PROCEDURE
-    @Modifying @Transactional
-    @Query(value="CALL public.gestionar_admins_json(CAST(?1 AS jsonb))", nativeQuery=true)
+    @Modifying
+    @jakarta.transaction.Transactional
+    @Query(value = "CALL public.gestionar_admins_json(CAST(?1 AS jsonb))", nativeQuery = true)
     void gestionarAdminsJsonCall(String payloadJson);
 
-    // FUNCTION (si aplica en tu BD)
-    @Modifying(clearAutomatically = true) @Transactional
-    @Query(value="SELECT public.gestionar_admins_json(CAST(?1 AS jsonb))", nativeQuery=true)
+    // Si en tu BD es FUNCTION:
+    @Modifying(clearAutomatically = true)
+    @jakarta.transaction.Transactional
+    @Query(value = "SELECT public.gestionar_admins_json(CAST(?1 AS jsonb))", nativeQuery = true)
     void gestionarAdminsJsonSelect(String payloadJson);
 
-
+    @Modifying
+    @Transactional
+    @Query(value =
+            "CALL public.sp_actualizar_contrasenias(" +
+                    "  jsonb_build_array(" +
+                    "    jsonb_build_object('Correo', lower(:correo), 'Contrasenia', :hash)" +
+                    "  )" +
+                    ")", nativeQuery = true)
+    void actualizarContraseniaPorCorreoCall(@Param("correo") String correo,
+                                            @Param("hash") String hash);
+    List<Usuario> findTop50ByUsuarioContainingIgnoreCase(String usuario);
+    List<Usuario> findTop50ByUsuarioContainingIgnoreCaseAndIdRol(String usuario, Integer idRol);
 }

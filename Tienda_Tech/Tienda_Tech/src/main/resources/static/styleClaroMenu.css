@@ -1,0 +1,636 @@
+/* ==========================================================================
+   TiendaTech – MODO CLARO
+   NOTA: Mismas medidas/estructura que el estilo original. Solo cambia la paleta.
+   ========================================================================== */
+
+/* ===================== */
+/* = TOKENS (Light) ==== */
+/* ===================== */
+:root{
+    /* Base */
+    --bg-page:          #f5f5f5;
+    --text:             #333;
+
+    /* Header / Nav */
+    --hdr-bg:           #6c6c6c;
+    --hdr-text:         #000;
+    --hdr-shadow:       rgba(0,0,0,.10);
+
+    /* Search */
+    --search-bg:        #ffffff;
+    --search-text:      #1f2937;
+
+    /* Drawer (hamburguesa) */
+    --drawer-bg:        #ffffff;
+    --drawer-text:      #333;
+    --drawer-divider:   #eee;
+
+    /* Overlay */
+    --overlay:          rgba(0,0,0,.5);
+
+    /* Cards y contenedores */
+    --card-bg:          #ffffff;
+    --card-muted:       #f8f9fa;
+    --card-brd:         #dee2e6;
+    --shadow:           0 4px 15px rgba(0,0,0,.1);
+
+    /* Paletas secciones home */
+    --slider-grad-a:    #90EE90;
+    --slider-grad-b:    #7FDD7F;
+
+    --carousel-bg:      #20B2AA;    /* wrapper verde-azulado */
+    --product-card-bg:  #f0f0f0;    /* tarjetas placeholder del carrusel */
+    --product-card-brd: #ddd;
+
+    --pcb-grad-a:       #8A2BE2;    /* púrpura */
+    --pcb-grad-b:       #9932CC;
+    --pcb-text:         #fff;
+
+    --cat-grad-a:       #9ACD32;
+    --cat-grad-b:       #8FBC8F;
+
+    /* Footer */
+    --footer-bg:        #6c757d;
+    --footer-text:      #fff;
+
+    /* Cuenta / formularios */
+    --label:            #495057;
+    --input-bg:         #f8f9fa;
+    --input-brd:        #ced4da;
+    --input-text:       #495057;
+
+    /* Botones */
+    --btn-primary:      #007bff;
+    --btn-primary-hov:  #0056b3;
+    --btn-success:      #28a745;
+    --btn-success-hov:  #218838;
+    --btn-secondary:    #6c757d;
+    --btn-secondary-hov:#5a6268;
+
+    /* Secciones auxiliares */
+    --panel-strong:     #666;       /* cajas info fuertes */
+    --panel-strong-brd: #888;
+
+    /* Resultados de búsqueda */
+    --results-bg:       #e0e0e0;
+    --res-card-grad-a:  #8bc34a;
+    --res-card-grad-b:  #689f38;
+    --res-card-brd:     #4caf50;
+    --res-name:         #1b5e20;
+    --res-price:        #2e7d32;
+    --res-brand:        #388e3c;
+
+    /* Carrito */
+    --qty-bg:           #f8f9fa;
+    --qty-brd:          #ddd;
+    --qty-bg-hov:       #e9ecef;
+    --qty-brd-hov:      #adb5bd;
+
+    /* Theme toggle */
+    --theme-btn-bg:     #ffffff;
+    --theme-btn-text:   #111;
+    --theme-btn-brd:    #dcdcdc;
+}
+
+/* ===========================
+   RESET + BASE
+   (Index, Carrito, Crear/Editar usuario)
+   =========================== */
+html, body { height:100%; margin:0; padding:0; }
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-page);
+    color: var(--text);
+}
+/* --- CONTENEDOR (claro) ---*/
+.container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+
+/* Sticky footer layout (Carrito.html usa .page-container / .content-wrap) */
+.page-container { min-height:100%; display:flex; flex-direction:column; }
+.content-wrap   { flex:1; }
+
+/* ======================
+   HEADER (Todos los HTML)
+   ====================== */
+.header{
+    background: var(--hdr-bg);
+    padding: 1rem 2rem;
+    display:flex; justify-content:space-between; align-items:center;
+    box-shadow: var(--hdr-shadow);
+}
+.logo{ color: var(--hdr-text); font-size:1.5rem; font-weight:bold; }
+.search-container{ flex-grow:1; max-width:500px; margin:0 2rem; }
+.search-bar{
+    width:100%; padding:.75rem 1rem; border:none; border-radius:25px;
+    font-size:1rem; background: var(--search-bg); color: var(--search-text);
+}
+.menu-toggle{
+    background:none; border:none; color: var(--hdr-text);
+    font-size:1.5rem; cursor:pointer; padding:.5rem;
+}
+
+/* Botón de tema (todos los HTML con toggle) */
+.theme-toggle{
+    margin-left:.5rem; border:1px solid var(--theme-btn-brd);
+    background: var(--theme-btn-bg); color: var(--theme-btn-text);
+    padding:.5rem .75rem; border-radius:999px; cursor:pointer; font-size:.95rem;
+    display:flex; align-items:center; gap:.35rem;
+}
+
+/* =========================
+   MENÚ HAMBURGUESA + OVERLAY
+   (Todos los HTML)
+   ========================= */
+.hamburger-menu{
+    position:fixed; top:0; right:-300px; width:300px; height:100vh;
+    background: var(--drawer-bg); color: var(--drawer-text);
+    box-shadow:-2px 0 10px rgba(0,0,0,.1);
+    transition:right .3s ease; z-index:1000; padding:2rem 1rem;
+    display:flex; flex-direction:column;
+}
+.hamburger-menu.active{ right:0; }
+.menu-close{ background:none; border:none; font-size:1.5rem; cursor:pointer; margin-bottom:2rem; }
+.menu-item{
+    display:block; padding:1rem; text-decoration:none; color: var(--drawer-text);
+    border-bottom:1px solid var(--drawer-divider); transition:background-color .3s;
+}
+.menu-item:hover{ background:#f8f8f8; }
+/* Estado "Cerrar sesión" deshabilitado cuando no hay sesión */
+.menu-item.logout-disabled, .menu-item[aria-disabled="true"]{
+    color:#fff !important; border-bottom-color:#fff !important;
+    pointer-events:none; cursor:default; user-select:none;
+}
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,.45);
+    z-index:900;
+    pointer-events: none;          /* <— clave */
+    display:none;
+}
+
+.overlay.active{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* =======================
+   FOOTER (Todos los HTML)
+   ======================= */
+.footer{ background: var(--footer-bg); color: var(--footer-text); padding:20px; text-align:center; margin-top:auto; }
+.footer-nav{
+    display:flex; justify-content:center; gap:30px; margin-bottom:15px; flex-wrap:wrap;
+}
+.footer-nav a{
+    color: var(--footer-text); text-decoration:none; padding:5px 0;
+    border-bottom:5px solid transparent; transition:border-color .3s;
+}
+.footer-nav a:hover, .footer-nav a.active{ border-bottom-color:#fff; }
+
+/* ============================================================
+   HOME / index.html
+   Bloque: Slider, Carrusel, PC Builder, Categorías
+   ============================================================ */
+.main-content{ padding:2rem; max-width:1200px; margin:0 auto; }
+.content-container{
+    margin-bottom:3rem;border-radius:15px; overflow:hidden;
+    box-shadow: var(--shadow);
+}
+
+/* -- Slider (index.html) -- */
+.slider-container{
+    background: linear-gradient(135deg, var(--slider-grad-a), var(--slider-grad-b));
+    height:300px; display:flex; align-items:center; justify-content:center; position:relative; color:#333;
+}
+.slider-content{text-align:center;}
+.slider-title{ font-size:2.5rem; font-weight:bold; margin-bottom:.5rem; }
+.slider-subtitle{ font-size:1.5rem; }
+.slider-nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    background: rgba(255,255,255,.7); border:none; padding:1rem; border-radius:50%;
+    cursor:pointer; font-size:1.5rem;
+}
+.slider-nav.left{ left:2rem; } .slider-nav.right{ right:2rem; }
+
+/* -- Carrusel (index.html) -- */
+.carousel-container{ padding:2rem; }
+.carousel-title{ text-align:center; font-size:1.8rem; margin-bottom:2rem; color:#333; }
+.carousel-wrapper{ position:relative; background: var(--carousel-bg); border-radius:15px; padding:2rem; }
+.carousel-products{ display:flex; gap:1rem; overflow-x:auto; padding:1rem 0; }
+.carousel-products .product-card{
+    min-width:200px; height:150px; background: var(--product-card-bg);
+    border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    color:#666; border:2px solid var(--product-card-brd);
+}
+.carousel-nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    background: rgba(255,255,255,.9); border:none; padding:.75rem; border-radius:50%;
+    cursor:pointer; font-size:1.2rem;
+}
+.carousel-nav.left{ left:1rem; } .carousel-nav.right{ right:1rem; }
+
+/* -- PC Builder (index.html) -- */
+.pc-builder-container{
+    background: linear-gradient(135deg, var(--pcb-grad-a), var(--pcb-grad-b));
+    color: var(--pcb-text); padding:3rem 2rem; text-align:left;
+}
+.pc-builder-title{ font-size:2rem; margin-bottom:1rem; }
+.pc-builder-description{ font-size:1.1rem; margin-bottom:2rem; line-height:1.5; }
+.pc-builder-btn{
+    background: rgba(255,255,255,.2); color:#fff; border:2px solid rgba(255,255,255,.3);
+    padding:.75rem 1.5rem; border-radius:25px; cursor:pointer; font-size:1rem;
+}
+
+/* -- Categorías (index.html) -- */
+.categories-container{ padding:2rem; }
+.categories-title{ text-align:center; font-size:1.8rem; margin-bottom:2rem; color:#333; }
+.categories-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1rem;
+}
+.category-card{
+    background: linear-gradient(135deg, var(--cat-grad-a), var(--cat-grad-b));
+    padding:2rem 1rem; border-radius:10px; text-align:center; color:#333; font-weight:bold;
+    cursor:pointer; transition:transform .3s, box-shadow .3s;
+}
+.category-card:hover{ transform:translateY(-5px); box-shadow:0 6px 20px rgba(0,0,0,.15); }
+
+/* ============================================================
+   CUENTA / CREAR USUARIO / EDITAR USUARIO (crear_usuario.html, editar_usuario.html)
+   ============================================================ */
+.container{
+    background: var(--card-bg); margin-bottom:20px; border-radius:8px; overflow:hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+/* Cabecera interna de contenedores */
+.container-header{ background: var(--card-muted); padding:15px 20px; border-bottom:2px solid var(--card-brd); font-weight:bold; color:#495057; }
+.container-content{ padding:20px; }
+.form-title{
+    color:#333; font-size:18px; font-weight:600; text-align:center; margin:20px 0 30px;
+    padding-bottom:15px; border-bottom:2px solid var(--card-muted);
+}
+
+/* Imagen perfil (crear/editar) */
+.profile-image{
+    width:120px; height:120px; background:#7cb342; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:#fff; margin:0 auto 20px;
+    cursor:pointer; transition:.3s;
+}
+.profile-image:hover{ background:#689f38; transform:scale(1.05); }
+
+/* Formularios */
+.form-label{ font-size:13px; color:#6c757d; margin-bottom:5px; }
+.form-label.required::after{ content:' *'; color:#dc3545; }
+
+.form-control{
+    border-radius:6px; border:1px solid #777;
+    background:#d9d9d9; padding:10px 12px; font-size:14px; color:#333; transition:.3s;
+}
+.form-control:focus{
+    border-color:#555; background:#e5e5e5; box-shadow:0 0 0 .2rem rgba(85,85,85,.15);
+}
+.form-control.is-invalid{ border-color:#dc3545; background:#ffe6e6; }
+.form-control.is-valid{   border-color:#28a745; background:#e6f7e6; }
+.input-group .form-control{ border-right:none; }
+.input-group .btn-outline-secondary{
+    border-color:#777; background:#d9d9d9; color:#555;
+}
+.input-group .btn-outline-secondary:hover{
+    background:#c9c9c9; border-color:#666;
+}
+
+.btn-save{
+    background: var(--btn-success); border-color: var(--btn-success);
+    padding:12px 30px; font-weight:500; border-radius:8px; transition:.3s; color:#fff;
+}
+.btn-save:hover{ background: var(--btn-success-hov); border-color:#1e7e34; transform:translateY(-1px); }
+
+.btn-cancel{
+    background: var(--btn-secondary); border-color: var(--btn-secondary);
+    padding:12px 30px; font-weight:500; border-radius:8px; color:#fff; transition:.3s;
+}
+.btn-cancel:hover{ background: var(--btn-secondary-hov); border-color:#545b62; transform:translateY(-1px); }
+
+.btn-back{ color:#666 !important; transition:color .3s; }
+.btn-back:hover{ color:#333 !important; }
+
+/* Cards fuertes (direcciones/métodos de pago en cuenta.html) */
+.address-card, .payment-card{
+    background: var(--panel-strong); color:#fff; padding:20px; border-radius:4px; min-height:200px; position:relative;
+}
+.card-title{ font-size:1.1rem; font-weight:700; margin-bottom:15px; }
+.card-content{ line-height:1.6; }
+
+.add-card{
+    border:2px dashed var(--btn-secondary);
+    background:transparent; color: var(--btn-secondary);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; transition:.3s; min-height:200px; border-radius:4px;
+}
+.add-card:hover{ border-color:#495057; color:#495057; }
+
+/* Divisor simple */
+.divider{ height:2px; background: var(--card-brd); margin:20px 0; }
+
+/* =======================
+   MODALES (crear/editar/cuenta)
+   ======================= */
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: var(--overlay);
+    z-index:1055;
+    backdrop-filter: blur(3px);
+}
+.modal-content{
+    background:#fff;
+    color:#1b1b1b;
+    margin:5% auto;
+    padding:30px;
+    border-radius:15px;
+    width:90%;
+    max-width:500px;
+    position:relative;
+    border:none;
+    box-shadow:0 10px 30px rgba(2,30,155,.3);
+}
+.close-btn{ position:absolute; right:15px; top:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666; }
+.modal-title{ margin-bottom:20px; color:#495057; }
+.modal-form .form-group{ margin-bottom:15px; }
+.modal-buttons{ display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.btn-save, .btn-cancel{ border:none; }
+
+/* ===============================
+   PRODUCTO / INFO (cuenta/producto)
+   =============================== */
+.product-image{
+    width:200px; height:200px; background:#666; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; text-align:center;
+    cursor:pointer; transition:background-color .3s;
+}
+.product-image:hover{ background:#777; }
+
+.product-info{
+    background:#666; border-radius:8px; padding:20px; display:flex; flex-direction:column; justify-content:center; min-height:200px;
+}
+.product-info-item{ padding:8px 0; font-size:16px; color:#fff; border-bottom:1px solid var(--panel-strong-brd); }
+.product-info-item:last-child{ border-bottom:none; color:#66ccff; cursor:pointer; }
+.product-info-item:last-child:hover{ text-decoration:underline; }
+
+/* Reseñas */
+.review-box{ background:#ccc; border-radius:8px; padding:20px; min-height:300px; }
+.review-title{ color:#333; font-weight:700; margin-bottom:15px; font-size:18px; }
+.review-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.review-item{
+    background:#f5f5f5; border-radius:6px; padding:15px; min-height:100px;
+    display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; text-align:center;
+}
+.review-add-btn{ border:2px dashed #666; background:transparent; cursor:pointer; transition:.3s; }
+.review-add-btn:hover{ border-color:#333; background:rgba(255,255,255,.1); }
+
+/* ===============================
+   NAV INFERIOR (opcional, móvil)
+   =============================== */
+.bottom-nav{ background:#666; position:fixed; left:0; right:0; bottom:0; z-index:1000; padding:12px 0; }
+.nav-item-custom{
+    color:#ccc !important; text-decoration:none; font-size:12px; text-align:center; padding:8px 5px; display:block; transition:color .3s;
+}
+.nav-item-custom:hover{ color:#fff !important; }
+.nav-item-custom.active{ color:#fff !important; font-weight:500; }
+
+/* ===============================
+   RESULTADOS DE BÚSQUEDA (index → resultados)
+   =============================== */
+.results-container{ background: var(--results-bg); min-height:calc(100vh - 160px); padding:30px 20px; }
+.results-title{ color:#333; font-size:18px; font-weight:500; margin-bottom:25px; text-align:center; }
+
+.product-card{          /* OJO: este .product-card es de resultados */
+    background: linear-gradient(135deg, var(--res-card-grad-a) 0%, var(--res-card-grad-b) 100%);
+    border:3px solid var(--res-card-brd); border-radius:12px; padding:20px; margin-bottom:20px;
+    display:flex; align-items:center; justify-content:flex-start; gap:20px; cursor:pointer; flex-direction:row;
+}
+.product-details{ display:flex; flex-direction:column; justify-content:center; }
+.product-name{  font-size:18px; font-weight:600; margin-bottom:8px; color: var(--res-name); }
+.product-price{ font-size:16px; font-weight:500; margin-bottom:8px; color: var(--res-price); }
+.product-brand{ font-size:14px; color: var(--res-brand); }
+.no-results{ text-align:center; color:#666; font-style:italic; margin-top:50px; }
+.product-image{ width:100px; height:100px; } /* mantiene tamaño en resultados */
+
+/* ===============================
+   CARRITO (Carrito.html)
+   =============================== */
+.cart-item{
+    background:#fff; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,.1);
+}
+.product-image-small{
+    width:80px; height:80px; background:#ddd; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; text-align:center; margin:0 auto;
+}
+.quantity-controls{ display:flex; align-items:center; gap:8px; justify-content:center; }
+.quantity-btn{
+    width:32px; height:32px; border:1px solid var(--qty-brd); background: var(--qty-bg); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.3s;
+}
+.quantity-btn:hover{ background: var(--qty-bg-hov); border-color: var(--qty-brd-hov); }
+.quantity-input{ width:50px; text-align:center; border:1px solid var(--qty-brd); border-radius:4px; padding:6px; }
+.remove-btn{ color:#dc3545; cursor:pointer; transition:.3s; }
+.remove-btn:hover{ color:#b02a37; }
+
+.cart-summary{
+    background:#666; border-radius:8px; padding:20px; color:#fff;
+}
+.summary-row{
+    display:flex; justify-content:space-between; margin-bottom:15px; padding-bottom:12px; border-bottom:1px solid #888;
+}
+.summary-row:last-child{ border-bottom:none; font-weight:700; font-size:18px; margin-top:15px; padding-top:10px; }
+
+.checkout-btn{
+    background: var(--btn-success); color:#fff; border:none; border-radius:6px; padding:12px 20px; width:100%;
+    font-weight:700; margin-top:15px; cursor:pointer; transition:.3s;
+}
+.checkout-btn:hover{ background: var(--btn-success-hov); }
+
+.continue-shopping-btn{
+    background:#007bff; color:#fff; border:none; border-radius:6px; padding:10px 20px; margin-top:20px; cursor:pointer; transition:.3s;
+}
+.continue-shopping-btn:hover{ background:#0056b3; }
+
+.empty-cart{
+    text-align:center; padding:60px 20px; background:#fff; border-radius:8px; color:#666;
+}
+.empty-cart i{ font-size:64px; margin-bottom:20px; color:#ccc; }
+
+/* =======================
+   RESPONSIVE (igual que original)
+   ======================= */
+@media (max-width: 768px){
+    .header{ padding:10px 15px; }
+    .search-container{ margin:0 15px; }
+    .main-content{ padding:15px; }
+    .footer-nav{ gap:20px; }
+    .slider-title{ font-size:2rem; }
+    .categories-grid{ grid-template-columns:repeat(2,1fr); }
+
+    .product-image{ width:150px; height:150px; font-size:12px; margin-bottom:15px; }
+    .product-info{ padding:15px; min-height:150px; margin-bottom:15px; }
+    .review-box{ padding:15px; min-height:250px; }
+    .review-grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
+    .review-item{ min-height:80px; padding:10px; }
+
+    .nav-item-custom{ font-size:11px; padding:6px 3px; }
+}
+@media (max-width: 576px){
+    .footer-nav{ flex-direction:column; gap:10px; }
+
+    .product-image{ width:120px; height:120px; }
+    .product-info{ min-height:120px; padding:12px; }
+    .review-box{ min-height:200px; padding:12px; }
+    .review-grid{ grid-template-columns:1fr; }
+}
+@media (min-width: 992px){
+    .container{ max-width:900px; } /* crear/editar usuario */
+    .product-info{ min-height:220px; padding:25px; }
+    .review-box{ min-height:350px; padding:25px; }
+    .product-image{ width:250px; height:250px; }
+}
+@media (min-width: 1200px){
+    .container{ max-width:1000px; }
+    .product-info{ min-height:250px; padding:30px; }
+    .review-box{ min-height:400px; padding:30px; }
+    .product-image{ width:280px; height:280px; }
+}
+
+
+/* ============================
+   CUENTA – Información Personal
+   (cuenta.html → perfil)
+   ============================ */
+
+/* Layout de la sección: avatar a la izquierda, form a la derecha */
+.profile-section{
+    display:grid;
+    grid-template-columns: 240px 1fr;
+    gap:24px;
+    align-items:start;
+}
+
+/* Avatar + caption */
+.avatar-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+
+/* Perfil → avatar circular (modo claro) */
+.avatar-wrap img{
+    width:220px;              /* mismo tamaño que ya tenías */
+    height:220px;
+    aspect-ratio: 1 / 1;      /* asegura forma cuadrada antes del recorte */
+    object-fit: cover;
+    border-radius: 50%;       /* <-- círculo */
+    background:#e9ecef;
+    border:1px solid #d0d7de; /* borde suave */
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+@media (max-width:768px){
+    .avatar-wrap img{ width:180px; height:180px; }
+}
+.avatar-caption{
+    font-size:14px; color: var(--label);
+}
+
+/* Formulario (mapea .form-input a los tokens del form) */
+.profile-form{ display:grid; grid-template-columns: repeat(2, minmax(220px,1fr)); gap:16px 20px; }
+.form-group{ display:flex; flex-direction:column; gap:6px; }
+.form-group.full-width{ grid-column: 1 / -1; }
+
+/* Igualamos .form-input al estilo de .form-control del tema */
+.form-input{
+    border-radius:6px; border:1px solid #777;
+    background:#d9d9d9;
+    padding:10px 12px; font-size:14px; color:#333; transition:.2s;
+}
+.form-input:focus{
+    border-color:#555; background:#e5e5e5; outline:none;
+    box-shadow:0 0 0 .2rem rgba(85,85,85,.15);
+}
+.form-input[readonly]{
+    opacity:.9; cursor:default;
+}
+
+/* Botón editar (que navega a editar_usuario.html) */
+.edit-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background: var(--btn-success); color:#fff; border:1px solid var(--btn-success);
+    padding:10px 16px; border-radius:8px; font-weight:600; cursor:pointer;
+    transition: transform .1s ease, background .2s ease;
+}
+.edit-btn:hover{ background: var(--btn-success-hov); transform: translateY(-1px); }
+
+/* Responsive */
+@media (max-width: 992px){
+    .profile-form{ grid-template-columns:1fr; }
+}
+@media (max-width: 768px){
+    .profile-section{ grid-template-columns:1fr; }
+    .avatar-wrap img{ width:180px; height:180px; }
+}
+
+/* ===== Botón “Guardar Dirección” igual al de Pago ===== */
+.save-btn{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:.625rem 1rem;border-radius:.5rem;
+    background:#198754;border:1px solid #157347;
+    color:#fff;font-weight:600;
+    box-shadow:0 1px 0 rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.save-btn:hover{
+    background:#157f4a;
+    border-color:#13653f;
+}
+.save-btn:active{ background:#13653f;
+    border-color:#115c38;
+}
+/* --- PC Builder slideshow --- */
+.pc-builder-container{
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;            /* conserva tu estilo redondeado */
+  min-height: 280px;              /* mismo alto visual aproximado */
+  background: #6f2bd1;            /* color de respaldo mientras carga */
+}
+
+.pcb-bg{
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1000ms ease-in-out;  /* 1s de fade */
+  will-change: opacity;
+  z-index: 0;                     /* detrás de todo */
+}
+
+.pcb-bg.show{ opacity: 1; }
+
+.pcb-overlay{
+  position: absolute;
+  inset: 0;
+  /* degradado para legibilidad del texto (ajusta opacidades a gusto) */
+  background: linear-gradient(90deg, rgba(88,0,220,0.55), rgba(135,0,255,0.30));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pcb-content{
+  position: relative;
+  z-index: 2;                     /* por encima de fondos y overlay */
+  /* Mantiene tu padding y layout existentes (usa los tuyos si ya los tienes) */
+  padding: 2rem;
+  color: #fff;
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Recuperar contraseña</title>
+
+    <link rel="stylesheet" href="style.css"/>
+    <script src="/js/auth-menu.js?v=8" defer></script>
+    <script src="/js/role-utils.js" defer></script>
+</head>
+<body>
+<div class="container">
+    <div class="left-section">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+
+    <div class="right-section">
+        <div class="login-container">
+            <h1 class="welcome-text">Recuperar contraseña</h1>
+            <p style="margin: 8px 0 18px; color:#666;">Ingresa tu correo para enviarte una contraseña temporal.</p>
+
+            <form id="recoverForm" autocomplete="on">
+                <div class="form-group">
+                    <label for="correo">Correo electrónico</label>
+                    <input
+                            type="email"
+                            id="correo"
+                            class="form-input"
+                            placeholder="tucorreo@ejemplo.com"
+                            required
+                            autofocus
+                            inputmode="email"
+                            autocomplete="email"
+                            autocapitalize="off"
+                            spellcheck="false"
+                    />
+                </div>
+
+                <button type="submit" class="login-button" id="btnEnviar" aria-live="polite">Enviar</button>
+                <div style="clear: both;"></div>
+            </form>
+
+            <div class="footer-links" style="margin-top: 14px;">
+                <div><a href="Login.html">¿Recordaste tu contraseña? Inicia sesión</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================== SCRIPT 1: UI/animaciones/mensajes ================== -->
+<script>
+    (function () {
+        'use strict';
+
+        // Mensajes flotantes
+        function showMessage(message, type) {
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) existingMessage.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+      position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+      border-radius: 8px; color: #fff; font-weight: 500; z-index: 1000;
+      animation: slideIn 0.25s ease; ${type === 'success' ? 'background:#4CAF50;' : 'background:#dc3545;'}
+    `;
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOut 0.25s ease';
+                setTimeout(() => messageDiv.remove(), 250);
+            }, 4000);
+        }
+        window.ttShowMessage = showMessage;
+
+        // Animaciones CSS para mensajes
+        const style = document.createElement('style');
+        style.textContent = `
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+  `;
+        document.head.appendChild(style);
+
+        // Partículas del fondo
+        function createParticle() {
+            const leftSection = document.querySelector('.left-section');
+            if (!leftSection) return;
+            const particle = document.createElement('div');
+            const size = Math.random() * 4 + 2;
+            particle.style.position = 'absolute';
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.background = 'rgba(255,255,255,0.3)';
+            particle.style.borderRadius = '50%';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = '100%';
+            particle.style.pointerEvents = 'none';
+            leftSection.appendChild(particle);
+
+            let position = 100;
+            const speed = Math.random() * 2 + 1;
+            (function anim() {
+                position -= speed;
+                particle.style.top = position + '%';
+                if (position > -10) requestAnimationFrame(anim);
+                else particle.remove();
+            })();
+        }
+        setInterval(createParticle, 3000);
+
+        // Efecto de focus en inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.addEventListener('focus', function(){ this.style.transform = 'translateY(-2px)'; });
+                input.addEventListener('blur', function(){ this.style.transform = 'translateY(0)'; });
+            });
+        });
+    })();
+</script>
+
+<!-- ============== SCRIPT 2: lógica de envío/llamada al backend ============== -->
+<script>
+    (function () {
+        'use strict';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('recoverForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const input = document.getElementById('correo');
+                const correo = (input?.value || '').trim();
+                const btn = document.getElementById('btnEnviar');
+                const showMessage = window.ttShowMessage || ((msg) => alert(msg));
+
+                if (!correo) {
+                    showMessage('Por favor ingresa tu correo.', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                const oldText = btn.textContent;
+                btn.textContent = 'Enviando...';
+                btn.style.background = '#665';
+
+                // Timeout de 10s por si el server no responde
+                const controller = new AbortController();
+                const to = setTimeout(() => controller.abort(), 10000);
+
+                try {
+                    // Endpoint que genera + hashea + actualiza con tu SP + envía correo
+                    const res = await fetch('/api/usuarios/recuperar-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ correo }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(to);
+
+                    const txt = await res.text();
+                    let data = null; try { data = txt ? JSON.parse(txt) : null; } catch {}
+
+                    if (res.ok) {
+                        showMessage('¡Listo! Te enviamos una contraseña temporal a tu correo.', 'success');
+                        btn.style.background = '#4CAF50';
+                    } else if (res.status === 404 || /no existe/i.test(data?.message || '')) {
+                        showMessage('No existe el correo registrado.', 'error');
+                        btn.style.background = '#dc3545';
+                    } else if (res.status === 429) {
+                        showMessage('Demasiadas solicitudes. Inténtalo más tarde.', 'error');
+                        btn.style.background = '#dc3545';
+                    } else {
+                        showMessage(data?.message || 'No se pudo enviar el correo. Intenta más tarde.', 'error');
+                        btn.style.background = '#dc3545';
+                    }
+                } catch (err) {
+                    const aborted = err?.name === 'AbortError';
+                    showMessage(aborted ? 'Tiempo de espera agotado.' : 'Error de conexión con el servidor.', 'error');
+                    btn.style.background = '#dc3545';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = oldText;
+                    setTimeout(() => { btn.style.background = ''; }, 1500);
+                }
+            });
+        });
+    })();
+</script>
+</body>
+</html>

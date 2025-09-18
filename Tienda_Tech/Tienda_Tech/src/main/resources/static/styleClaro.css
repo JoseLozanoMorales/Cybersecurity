@@ -1,0 +1,298 @@
+/* ===========================
+   TiendaTech Admin — MODO CLARO
+   Todo el CSS del admin está scopeado a .tt-admin
+   =========================== */
+
+.tt-admin {
+    /* TOKENS */
+    --tt-admin-bg: #f5f6f8;
+    --tt-admin-surface: #ffffff;
+    --tt-admin-surface-2: #f8fafc;
+    --tt-admin-text: #1f2937;
+    --tt-admin-muted: #6b7280;
+    --tt-admin-border: #e5e7eb;
+    --tt-admin-accent: #7cb342;      /* verde TiendaTech */
+    --tt-admin-accent-600: #689f38;
+    --tt-admin-danger: #f44336;
+    --tt-admin-warning: #ff9800;
+
+    background: var(--tt-admin-bg);
+    color: var(--tt-admin-text);
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Reset local */
+.tt-admin * { box-sizing: border-box; }
+
+/* ===== Layout principal ===== */
+.tt-admin .sidebar {
+    width: 200px;
+    flex: 0 0 200px;
+    background: var(--tt-admin-surface);
+    border-right: 1px solid #dfe6ef;   /* borde un poco más visible */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 2px 0 18px rgba(16,24,40,.06); /* sutil */
+}
+
+.tt-admin .logo {
+    color: var(--tt-admin-text);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 18px;
+    font-size: 16px;
+}
+
+.tt-admin .sidebar .nav-item{
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--tt-admin-text);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    transition: background .2s, border-color .2s, color .2s, transform .1s;
+}
+
+.tt-admin .sidebar .nav-item.active{
+    background: var(--tt-admin-accent);
+    border-color: var(--tt-admin-accent);
+    color: #fff;
+}
+
+/* Área de trabajo: usa surface como en oscuro para que no “cambie” la proporción visual */
+.tt-admin .main-content{
+    flex: 1;
+    min-width: 0;
+    padding: 20px;
+    background: var(--tt-admin-surface); /* añadido para igualar al oscuro */
+}
+
+/* ===== Header Admin ===== */
+.tt-admin .admin-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--tt-admin-surface);
+    border: 1px solid var(--tt-admin-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+.tt-admin .admin-header h1{
+    margin: 0;
+    font-size: 26px;
+    color: var(--tt-admin-accent);
+    letter-spacing: .2px;
+}
+.tt-admin .user-info,
+.tt-admin .admin-user{
+    background: var(--tt-admin-surface-2);
+    color: var(--tt-admin-text);
+    border: 1px solid var(--tt-admin-border);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+/* ===== Secciones ===== */
+.tt-admin .admin-section { display: none; animation: tt-fade .25s ease-in; }
+.tt-admin .admin-section.active { display: block; }
+
+@keyframes tt-fade { from{opacity:.0; transform: translateY(2px);} to{opacity:1; transform:none;} }
+
+.tt-admin .section-title{
+    font-size: 20px;
+    margin-bottom: 14px;
+    color: var(--tt-admin-accent);
+    border-bottom: 2px solid var(--tt-admin-accent);
+    padding-bottom: 8px;
+}
+
+/* ===== Tarjetas / grids ===== */
+.tt-admin .action-grid{
+    display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    margin-bottom: 20px;
+}
+.tt-admin .action-card{
+    background: var(--tt-admin-surface);
+    border: 1px solid var(--tt-admin-border);
+    border-left: 4px solid var(--tt-admin-accent);
+    border-radius: 12px;
+    padding: 18px;
+}
+.tt-admin .action-card h3{
+    color: var(--tt-admin-accent);
+    font-size: 18px;
+    margin: 0 0 12px;
+}
+
+/* ===== Formularios ===== */
+.tt-admin .form-group{ margin-bottom: 12px; }
+.tt-admin .form-group label{
+    display:block; margin-bottom:6px; font-size: 13px; color: var(--tt-admin-muted);
+}
+.tt-admin .form-control{
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--tt-admin-text);
+    border: 1px solid var(--tt-admin-border);
+    border-radius: 8px;
+    transition: border-color .15s, box-shadow .15s, background .15s, color .15s;
+}
+.tt-admin .form-control:focus{
+    outline: none;
+    border-color: var(--tt-admin-accent);
+    box-shadow: 0 0 0 3px rgba(124,179,66,.18);
+}
+.tt-admin .form-control[readonly]{
+    background: #f4f6f8;
+    color: #4b5563;
+    border-color: var(--tt-admin-border);
+}
+
+/* ===== Botones ===== */
+.tt-admin .btn{
+    padding: 10px 16px;
+    font-size: 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .07s, color .15s;
+}
+.tt-admin .btn:active{ transform: translateY(1px); }
+.tt-admin .btn--sm{ padding: 6px 10px; font-size: 12px; }
+
+.tt-admin .btn-primary{
+    background: var(--tt-admin-accent);
+    border-color: var(--tt-admin-accent);
+    color: #fff;
+}
+.tt-admin .btn-primary:hover{ background: var(--tt-admin-accent-600); border-color: var(--tt-admin-accent-600); }
+
+.tt-admin .btn-warning{ background: var(--tt-admin-warning); color: #fff; }
+.tt-admin .btn-danger { background: var(--tt-admin-danger);  color: #fff; }
+.tt-admin .btn-secondary{
+    background: var(--tt-admin-surface-2);
+    color: var(--tt-admin-text);
+    border-color: var(--tt-admin-border);
+}
+
+/* ===== Tablas ===== */
+.tt-admin .data-table{
+    background: var(--tt-admin-surface);
+    border: 1px solid var(--tt-admin-border);
+    border-radius: 12px;
+    overflow: auto;
+    margin-top: 14px;
+}
+.tt-admin .data-table table{ width:100%; border-collapse: collapse; }
+.tt-admin .data-table thead th{
+    background: var(--tt-admin-accent);
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+}
+.tt-admin .data-table td{
+    padding: 10px 12px;
+    border-top: 1px solid var(--tt-admin-border);
+}
+.tt-admin .status{
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.tt-admin .status.active{ background: #4caf50; color:#fff; }
+.tt-admin .status.blocked{ background: #f44336; color:#fff; }
+
+.tt-admin .tt-muted-row{ padding: 14px; opacity: .9; color: var(--tt-admin-muted); }
+
+/* ===== Toolbar ===== */
+.tt-admin .toolbar{ display:flex; justify-content:flex-end; gap:10px; margin-bottom: 12px; }
+
+/* ===== Enlaces útiles ===== */
+.tt-admin .link--external{ color:#0b72e7; text-decoration: underline; }
+
+/* ===== Modal (Bootstrap-safe y sin contaminación) ===== */
+.tt-admin .modal-backdrop{ position:fixed; inset:0; background: rgba(0,0,0,.45); z-index: 1040; }
+.tt-admin .modal{
+    display:block;
+    background: transparent;
+    color: var(--tt-admin-text);
+    border-radius: 16px;
+    width: min(920px, 95vw);
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 10px 28px rgba(0,0,0,.25);
+}
+.tt-admin .modal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--tt-admin-border);
+    position: sticky; top: 0; background: #fff; z-index: 1;
+}
+
+/* *** Blindaje: tabs/nav dentro del modal *** */
+.tt-admin .modal .nav,
+.tt-admin .modal .nav-tabs{
+    margin:0; padding:0; background:transparent; border:0;
+}
+.tt-admin .modal .nav-item{
+    /* NO hereda del sidebar */
+    margin:0 !important;
+    padding:0 !important;
+    background:transparent !important;
+    border:0 !important;
+    border-radius:0 !important;
+}
+.tt-admin .modal .nav-link{
+    display:inline-block;
+    margin:0;
+    padding:.5rem 1rem;
+    background:transparent !important;
+    border:0 !important;
+    color: inherit !important;
+    border-radius:.25rem;
+}
+.tt-admin .modal .nav-link.active{
+    background: rgba(124,179,66,.15) !important;
+    color: inherit !important;
+}
+
+/* ===== Utilidades ===== */
+.tt-admin .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tt-admin .tt-text-center{ text-align:center; }
+.tt-admin .tt-icon-xl{ font-size: 40px; }
+
+/* ===== Cuenta (avatar) ===== */
+.tt-admin .account-grid{
+    display:grid;
+    grid-template-columns: clamp(96px, 12vw, 140px) 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+.tt-admin .acc-avatar{
+    width: clamp(96px, 12vw, 140px);
+    height: clamp(96px, 12vw, 140px);
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--tt-admin-border);
+}
+@media (max-width: 768px){
+    .tt-admin .account-grid{ grid-template-columns: 1fr; }
+    .tt-admin .acc-avatar{ justify-self: center; margin-bottom: .75rem; }
+}
+
+

@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Crear Usuario - TiendaTech</title>
 
-    <link rel="stylesheet" href="style2.css"/>
-    <script src="/js/auth-menu.js?v=4" defer></script>
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"/>
     <!-- Bootstrap Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet"/>
+
+    <link id="themeStylesheet" rel="stylesheet"
+          href="styleClaroMenu.css" data-light="styleClaroMenu.css"
+          data-dark="styleOscuroMenu.css" />
 </head>
 <body>
 <!-- Header -->
@@ -20,6 +22,11 @@
         <input type="text" class="search-bar" placeholder="Buscar..." />
     </div>
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <!-- Modo oscuro -->
+    <button id="themeToggle" class="theme-toggle"
+            type="button" aria-pressed="false">
+        <span class="ico">🌙</span><span class="txt">Oscuro</span>
+    </button>
 </header>
 
 <!-- Overlay -->
@@ -166,7 +173,7 @@
 <!-- Bootstrap JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script: Menú / Logout -->
+<!-- Script: Menú / Logout (igual que tenías) -->
 <script>
     (function () {
         const REDIRECT_TO = 'login.html';
@@ -312,112 +319,241 @@
     window.addEventListener('load', function() {});
 </script>
 
-<!-- Script: Registro (submit) -->
+<!-- ========================= -->
+<!-- Script A: Registro (submit) + Envío de OTP -->
+<!-- ========================= -->
 <script>
-    document.getElementById('editUserForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = this;
-        const correo = document.getElementById('correo');
-
-        /* ... tus validaciones como ya las tienes ... */
-        /* Si es válido: */
-        const data = {
-            nombre: document.getElementById('nombre').value.trim(),
-            correo: correo.value.trim(),
-            contrasena: document.getElementById('contrasena').value.trim(),
-            cedula: document.getElementById('cedula').value.trim(),
-            telefono: document.getElementById('telefono').value.trim(),
-            usuario: document.getElementById('usuario').value.trim()
-        };
-
-        fetch('/api/usuarios/crear', {
-            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
-        })
-            .then(async r => {
-                if (!r.ok) {
-                    const txt = await r.text().catch(()=> '');
-                    showToast('Error al crear usuario' + (txt?`: ${txt}`:''), 'danger');
-                    return;
+    // Namespace compartido
+    window.TTREG = {
+        API_OTP: '/api/otp',
+        API_USER_CREATE: '/api/usuarios/crear',
+        pendingUserData: null,
+        pendingEmail: null,
+        txId: null,
+        resendTimerId: null,
+        resendLeft: 60,
+        setFormDisabled(disabled) {
+            const formEl = document.getElementById('editUserForm');
+            if (!formEl) return;
+            Array.from(formEl.elements).forEach(el => {
+                if (el.id === 'togglePassword') return; // deja el ojo activo
+                el.disabled = disabled;
+            });
+        },
+        startResendTimer() {
+            const btn = document.getElementById('btnResend');
+            const lbl = document.getElementById('resendTimer');
+            if (!btn || !lbl) return;
+            btn.disabled = true;
+            this.resendLeft = 60;
+            lbl.textContent = `(${this.resendLeft})`;
+            clearInterval(this.resendTimerId);
+            this.resendTimerId = setInterval(() => {
+                this.resendLeft--;
+                lbl.textContent = `(${this.resendLeft})`;
+                if (this.resendLeft <= 0) {
+                    clearInterval(this.resendTimerId);
+                    btn.disabled = false;
+                    lbl.textContent = '';
                 }
-                showToast('Usuario creado, enviando código...', 'success');
-                Array.from(form.elements).forEach(el => el.disabled = true);
-                sendOtp(data.correo);  // <<-- NO redirigir aquí
-            })
-            .catch(()=> showToast('Error de conexión', 'danger'));
+            }, 1000);
+        },
+        async sendOtp(email) {
+            try {
+                const r = await fetch(this.API_OTP, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accion: 'enviar', correo: email, txId: this.txId })
+                });
+                if (!r.ok) {
+                    const txt = await r.text().catch(() => '');
+                    showToast(`Error al enviar código (HTTP ${r.status})` + (txt ? `: ${txt}` : ''), 'danger');
+                    this.setFormDisabled(false);
+                    return false;
+                }
+                const payload = await r.json();
+                this.txId = payload.txId;
+                this.pendingEmail = payload.correo;
+
+                // Mostrar bloque OTP
+                document.getElementById('verifyEmailLabel').textContent = this.pendingEmail;
+                document.getElementById('verifyBlock').style.display = 'block';
+                this.startResendTimer();
+                showToast('Código enviado al correo', 'info');
+                return true;
+            } catch (e) {
+                console.error('OTP/enviar EXCEPTION', e);
+                showToast('Error de conexión al enviar OTP', 'danger');
+                this.setFormDisabled(false);
+                return false;
+            }
+        }
+    };
+
+    // Submit: valida y SOLO envía OTP (no crea usuario aún)
+    document.getElementById('editUserForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const nombre      = document.getElementById('nombre').value.trim();
+        const correo      = document.getElementById('correo').value.trim();
+        const contrasena  = document.getElementById('contrasena').value.trim();
+        const repetir     = document.getElementById('repetirContrasena').value.trim();
+        const cedula      = document.getElementById('cedula').value.trim();
+        const telefono    = document.getElementById('telefono').value.trim();
+        const usuario     = document.getElementById('usuario').value.trim();
+
+        if (!nombre || !correo || !contrasena || !repetir || !cedula || !telefono) {
+            showToast('Completa los campos obligatorios.', 'danger');
+            return;
+        }
+        if (contrasena !== repetir) {
+            showToast('Las contraseñas no coinciden.', 'danger');
+            document.getElementById('repetirContrasena').classList.add('is-invalid');
+            return;
+        }
+        if (!/^[0-9]{10}$/.test(cedula)) {
+            showToast('Cédula inválida (10 dígitos).', 'danger');
+            return;
+        }
+        if (!/^[0-9]{10}$/.test(telefono)) {
+            showToast('Teléfono inválido (10 dígitos).', 'danger');
+            return;
+        }
+
+        // Guarda los datos hasta que verifique OTP
+        window.TTREG.pendingUserData = { nombre, correo, contrasena, cedula, telefono, usuario };
+
+        // Deshabilita el form y envía OTP
+        window.TTREG.setFormDisabled(true);
+        const ok = await window.TTREG.sendOtp(correo);
+        if (!ok) {
+            // Si falla el envío de OTP, re-habilita para corregir
+            window.TTREG.setFormDisabled(false);
+        }
     });
 </script>
 
-<!-- Script: Verificación OTP (aparte, mismo HTML) -->
+<!-- ================================== -->
+<!-- Script B: Verificación OTP + Creación de Usuario -->
+<!-- ================================== -->
 <script>
-    const API_OTP = '/api/otp';
-    let pendingEmail = null, txId = null, resendTimerId = null, resendLeft = 60;
+    async function TTREG_createUser() {
+        const ns = window.TTREG;
+        if (!ns || !ns.pendingUserData) {
+            showToast('No hay datos de registro en espera. Intenta nuevamente.', 'danger');
+            ns?.setFormDisabled(false);
+            return;
+        }
 
-    function startResendTimer(){
-        const btn = document.getElementById('btnResend');
-        const lbl = document.getElementById('resendTimer');
-        if (!btn || !lbl) return;
-        btn.disabled = true; resendLeft = 60; lbl.textContent = `(${resendLeft})`;
-        resendTimerId = setInterval(()=>{ resendLeft--; lbl.textContent = `(${resendLeft})`;
-            if(resendLeft<=0){ clearInterval(resendTimerId); btn.disabled=false; lbl.textContent=''; }
-        },1000);
-    }
+        // Sugerido: enviar otpTxId para validación en backend
+        const body = { ...ns.pendingUserData, otpTxId: ns.txId };
 
-    async function sendOtp(email){
-        try{
-            const r = await fetch(API_OTP, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ accion:'enviar', correo: email, txId })
+        try {
+            const r = await fetch(ns.API_USER_CREATE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
             });
-            if(!r.ok){
-                const txt = await r.text().catch(()=> '');
-                showToast(`Error al enviar código (HTTP ${r.status})` + (txt?`: ${txt}`:''), 'danger');
-                console.error('OTP/enviar ERROR', r.status, txt);
+            const txt = await r.text().catch(() => '');
+
+            if (!r.ok) {
+                showToast('Error al crear usuario' + (txt ? `: ${txt}` : ''), 'danger');
+                document.getElementById('verifyBlock').style.display = 'none';
+                ns.setFormDisabled(false);
                 return;
             }
-            const payload = await r.json();
-            txId = payload.txId; pendingEmail = payload.correo;
 
-            document.getElementById('verifyEmailLabel').textContent = pendingEmail;
-            document.getElementById('verifyBlock').style.display = 'block';
-            startResendTimer();
-            showToast('Código enviado al correo', 'info');
-        }catch(e){
-            console.error('OTP/enviar EXCEPTION', e);
-            showToast('Error de conexión al enviar OTP', 'danger');
+            showToast('Cuenta creada. Redirigiendo al login…', 'success');
+            // Limpieza
+            ns.pendingUserData = null;
+            ns.txId = null;
+            try {
+                document.getElementById('contrasena').value = '';
+                document.getElementById('repetirContrasena').value = '';
+            } catch {}
+            setTimeout(() => location.href = '/login.html', 1200);
+        } catch (e) {
+            console.error('CREATE USER EXCEPTION', e);
+            showToast('Error de conexión al crear la cuenta', 'danger');
+            document.getElementById('verifyBlock').style.display = 'none';
+            ns.setFormDisabled(false);
         }
     }
 
-    async function verifyOtp(){
+    async function TTREG_verifyOtp() {
+        const ns = window.TTREG;
         const input = document.getElementById('otpCode');
-        const code = (input.value||'').trim();
-        if(!/^[0-9]{6}$/.test(code)){ input.classList.add('is-invalid'); return; }
+        const code = (input.value || '').trim();
+        if (!/^[0-9]{6}$/.test(code)) {
+            input.classList.add('is-invalid');
+            return;
+        }
         input.classList.remove('is-invalid');
 
-        try{
-            const r = await fetch(API_OTP, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ accion:'validar', correo: pendingEmail, codigo: code, txId })
+        try {
+            const r = await fetch(ns.API_OTP, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: 'validar', correo: ns.pendingEmail, codigo: code, txId: ns.txId })
             });
-            const txt = await r.text().catch(()=> '');
-            if(r.ok){
-                showToast('Correo verificado. Redirigiendo...', 'success');
-                setTimeout(()=> location.href='/login.html', 1200);
-            }else{
-                showToast('Código inválido o expirado' + (txt?`: ${txt}`:''), 'danger');
-                console.error('OTP/validar ERROR', r.status, txt);
+            const txt = await r.text().catch(() => '');
+
+            if (r.ok) {
+                showToast('Código verificado. Creando la cuenta…', 'success');
+                await TTREG_createUser();
+            } else {
+                showToast('Código inválido o expirado' + (txt ? `: ${txt}` : ''), 'danger');
             }
-        }catch(e){
+        } catch (e) {
             console.error('OTP/validar EXCEPTION', e);
             showToast('Error de conexión al verificar OTP', 'danger');
         }
     }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
+    document.addEventListener('DOMContentLoaded', () => {
         const btnVerify = document.getElementById('btnVerify');
         const btnResend = document.getElementById('btnResend');
-        if (btnVerify) btnVerify.addEventListener('click', verifyOtp);
-        if (btnResend) btnResend.addEventListener('click', ()=> sendOtp(pendingEmail));
+        if (btnVerify) btnVerify.addEventListener('click', TTREG_verifyOtp);
+        if (btnResend) btnResend.addEventListener('click', () => {
+            if (!window.TTREG?.pendingEmail) {
+                showToast('No hay un correo pendiente. Completa el formulario primero.', 'warning');
+                return;
+            }
+            window.TTREG.sendOtp(window.TTREG.pendingEmail);
+        });
     });
+</script>
+
+<!-- Script: Theme toggle (igual que tenías) -->
+<script>
+    (function(){
+        const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
+        function setTheme(theme){
+            const link=document.getElementById(LINK_ID); if(!link) return;
+            const href = theme==='dark'
+                ? (link.dataset.dark  || 'styleOscuroMenu.css')
+                : (link.dataset.light || 'styleClaroMenu.css');
+            if(link.getAttribute('href')!==href) link.setAttribute('href', href);
+            localStorage.setItem(STORAGE_KEY, theme);
+            const btn=document.getElementById(BTN_ID);
+            if(btn){
+                const dark=theme==='dark';
+                btn.textContent = dark ? '☀️ Claro' : '🌙 Oscuro';
+                btn.title       = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+                btn.setAttribute('aria-pressed', String(dark));
+                btn.classList.toggle('btn-warning', dark);
+                btn.classList.toggle('btn-secondary', !dark);
+            }
+        }
+        function toggleTheme(){
+            const current=localStorage.getItem(STORAGE_KEY)||'light';
+            setTheme(current==='light' ? 'dark' : 'light');
+        }
+        document.addEventListener('DOMContentLoaded',()=>{
+            document.getElementById(BTN_ID)?.addEventListener('click', toggleTheme);
+            setTheme(localStorage.getItem(STORAGE_KEY)||'light');
+        });
+    })();
 </script>
 </body>
 </html>

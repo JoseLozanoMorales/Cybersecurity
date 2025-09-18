@@ -1,6 +1,7 @@
 package com.example.tienda_tech.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -174,5 +175,30 @@ public class OtpService {
         String pwd = generarPasswordLegible(L);
         enviarCredenciales(correo, usuario, pwd); // si esto falla, que reviente
         return pwd;
+    }
+
+    public void enviarPasswordTemporalRecuperacion(String correo, String usuario, String passwordPlano) {
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(correo);
+        msg.setSubject("Recuperación de contraseña - TiendaTech");
+
+        String body = """
+            ¡Hola %s!
+
+            Generamos una contraseña temporal para que puedas ingresar:
+
+            %s
+
+            Por seguridad, cámbiala apenas inicies sesión.
+            Si no solicitaste este cambio, ignora este correo o contáctanos.
+
+            -- TiendaTech
+            """.formatted(
+                (usuario == null || usuario.isBlank()) ? "usuario" : usuario,
+                passwordPlano
+        );
+
+        msg.setText(body);
+        mailSender.send(msg); // si falla, lanza excepción
     }
 }

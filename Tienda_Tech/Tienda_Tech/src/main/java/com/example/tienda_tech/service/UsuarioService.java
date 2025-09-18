@@ -14,12 +14,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.tienda_tech.dto.ClienteUpdateRequest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.tienda_tech.repository.UsuarioQueryRepository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -155,8 +156,6 @@ public class UsuarioService {
         return usuarioQueryRepository.buscarMin(q, rolId, limit);
     }
 
-
-
     @Transactional
     public void actualizarAdmin(Integer id, Integer rolId, ClienteUpdateRequest req) {
         String contrasenia = emptyToNull(req.getContrasena());
@@ -221,6 +220,28 @@ public class UsuarioService {
                 : usuarioRepository.findTop50ByUsuarioContainingIgnoreCaseAndIdRol(q, rolId);
 
         return lista.size() > lim ? lista.subList(0, lim) : lista;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void resetearPasswordYNotificarPorCorreo(String correo) {
+        String c = (correo == null ? "" : correo.trim());
+        if (c.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo es requerido");
+        }
+
+        // 1) Validar existencia (para no “crear” ni ocultar errores del SP)
+        Usuario u = usuarioRepository.findByCorreoIgnoreCase(c)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el correo"));
+
+        // 2) Generar password temporal legible + hashear (BCrypt)
+        String plain = otpService.generarPasswordLegible(12);
+        String hash  = passwordEncoder.encode(plain);
+
+        // 3) Actualizar en BD con tu PROCEDURE (CALL) usando JSONB
+        usuarioRepository.actualizarContraseniaPorCorreoCall(c, hash);
+
+        // 4) Enviar el correo (si falla => excepción => rollback de la TX => NO se cambia la clave)
+        otpService.enviarPasswordTemporalRecuperacion(u.getCorreo(), u.getUsuario(), plain);
     }
 
     private String emptyToNull(String s) {

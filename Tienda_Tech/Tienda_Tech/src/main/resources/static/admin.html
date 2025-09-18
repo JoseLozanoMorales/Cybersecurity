@@ -8,7 +8,9 @@
   <!-- Carga utilidades comunes (guards / helpers). Actualiza v= según tu proyecto -->
   <script src="/js/auth-menu.js?v=9" defer></script>
   <script src="/js/admin.js?v=2" defer></script>
-
+  <link id="themeStylesheet" rel="stylesheet"
+        href="styleClaro.css" data-light="styleClaro.css"
+        data-dark="styleOscuro.css" />
   <!-- <script src="/js/admin/Aqui-Usuarios.js" defer></script>
   <!-- después vienen los demás -->
   <!--<script src="/js/admin/Aqui-Core.js" defer></script>
@@ -21,7 +23,6 @@
   
   
 
-  <link rel="stylesheet" href="style2.css"/></head>
 <body class="tt-admin">
   <div class="sidebar">
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
@@ -39,6 +40,12 @@
     <div class="admin-header">
       <h1>Panel de Administración</h1>
       <div class="user-info">👤 Administrador: Admin</div>
+      <!-- Modo oscuro -->
+      <button id="themeToggle"
+              type="button"
+              class="btn btn-secondary btn--sm"
+              aria-pressed="false"
+              title="Cambiar a modo oscuro">🌙 Oscuro</button>
     </div>
 
     <!-- Productos -->

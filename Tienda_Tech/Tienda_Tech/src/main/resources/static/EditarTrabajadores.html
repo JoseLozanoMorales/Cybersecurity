@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editar usuario - TiendaTech</title>
+
+    <!-- Tema -->
+    <link id="themeStylesheet" rel="stylesheet"
+          href="styleClaroMenu.css" data-light="styleClaroMenu.css"
+          data-dark="styleOscuroMenu.css" />
+
+    <!-- Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+    <!-- Menú / sesión (tu archivo existente) -->
+    <script src="/js/auth-menu.js?v=4" defer></script>
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+    <div class="logo">TiendaTech</div>
+    <!-- Modo oscuro -->
+    <button id="themeToggle" class="theme-toggle btn btn-sm btn-outline-secondary" type="button" aria-pressed="false">
+        <span class="ico">🌙</span><span class="txt ms-1">Oscuro</span>
+    </button>
+</header>
+
+<!-- Main Container -->
+<div class="container my-4" style="max-width: 920px;">
+    <!-- Back button -->
+    <div class="back-button-container mb-2">
+        <button class="btn btn-link btn-back p-0" type="button" onclick="goBack()">
+            <i class="bi bi-arrow-left fs-4"></i>
+        </button>
+    </div>
+
+    <h2 class="form-title">Editar datos de usuario</h2>
+
+    <!-- Feedback (mensajes en pantalla) -->
+    <div id="feedback" class="mb-3" aria-live="polite"></div>
+
+    <!-- Profile Image -->
+    <div class="text-center mb-4">
+        <div class="profile-image" onclick="changeProfileImage()">
+            Foto de perfil
+        </div>
+        <small class="text-muted">Haz clic para cambiar la foto</small>
+    </div>
+
+    <!-- User Form -->
+    <form id="editUserForm" method="post" novalidate>
+        <input type="hidden" id="usuarioId" />
+        <div class="row g-3">
+            <!-- Nombre -->
+            <div class="col-12">
+                <label class="form-label required" for="nombre">Nombre</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required />
+                <div class="invalid-feedback">Por favor, ingresa el nombre.</div>
+            </div>
+
+            <!-- Usuario y Correo -->
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="usuario">Usuario</label>
+                <input type="text" class="form-control" id="usuario" name="usuario" />
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label required" for="correo">Correo electrónico</label>
+                <input type="email" class="form-control" id="correo" name="correo" required />
+                <div class="invalid-feedback">Por favor, ingresa un correo electrónico válido.</div>
+            </div>
+
+            <!-- Contraseña y repetir -->
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="contrasena">Contraseña (dejar en blanco para no cambiar)</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="contrasena" name="contrasena" />
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="Mostrar/ocultar contraseña">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="repetirContrasena">Repetir contraseña</label>
+                <input type="password" class="form-control" id="repetirContrasena" name="repetirContrasena" />
+                <div class="invalid-feedback">Las contraseñas no coinciden.</div>
+            </div>
+
+            <!-- Teléfono -->
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="telefono">Número de teléfono</label>
+                <input type="tel" class="form-control" id="telefono" name="telefono" pattern="[0-9]{10}" />
+                <div class="invalid-feedback">Por favor, ingresa un número de teléfono válido (10 dígitos).</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4 g-2">
+            <div class="col-12 col-md-6 d-flex gap-2">
+                <button type="submit" class="save-btn btn btn-primary">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="btnSpinner" role="status" aria-hidden="true"></span>
+                    <i class="bi bi-check-circle me-1"></i>
+                    <span id="btnText">Guardar cambios</span>
+                </button>
+                <button type="button" id="btnDeshabilitar" class="danger-btn btn btn-outline-danger d-none">
+                    <i class="bi bi-person-x"></i> Deshabilitar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<!-- Utils: feedback, menú, foto, toggle password -->
+<script>
+    // Componente de mensajes
+    function showMessage(type, text) {
+        const box = document.getElementById('feedback');
+        if (!box) return;
+        const html = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${text}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>`;
+        box.innerHTML = html;
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function toggleMenu() {
+        document.getElementById('hamburgerMenu')?.classList.toggle('active');
+        document.getElementById('overlay')?.classList.toggle('active');
+    }
+    function closeMenu() {
+        document.getElementById('hamburgerMenu')?.classList.remove('active');
+        document.getElementById('overlay')?.classList.remove('active');
+    }
+
+    // Toggle password visibility
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('togglePassword');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                const input = document.getElementById('contrasena');
+                const icon = this.querySelector('i');
+                if (!input) return;
+                const toType = input.type === 'password' ? 'text' : 'password';
+                input.type = toType;
+                icon.className = toType === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+            });
+        }
+    });
+
+    // Cambiar imagen de perfil (demo local)
+    function changeProfileImage() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const el = document.querySelector('.profile-image');
+                el.style.backgroundImage = `url(${ev.target.result})`;
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundPosition = 'center';
+                el.textContent = '';
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+
+    function goBack() {
+        if (document.referrer && document.referrer !== location.href) {
+            history.back();
+        } else {
+            location.href = '/cuenta.html';
+        }
+    }
+</script>
+
+<!-- Modo claro/oscuro -->
+<script>
+    (function(){
+        const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
+        function setTheme(theme){
+            const link=document.getElementById(LINK_ID); if(!link) return;
+            const href = theme==='dark'
+                ? (link.dataset.dark  || 'styleOscuroMenu.css')
+                : (link.dataset.light || 'styleClaroMenu.css');
+            if(link.getAttribute('href')!==href) link.setAttribute('href', href);
+            localStorage.setItem(STORAGE_KEY, theme);
+            const btn=document.getElementById(BTN_ID);
+            if(btn){
+                const dark=theme==='dark';
+                btn.innerHTML = dark ? '☀️ <span class="txt ms-1">Claro</span>' : '🌙 <span class="txt ms-1">Oscuro</span>';
+                btn.setAttribute('aria-pressed', String(dark));
+                btn.classList.toggle('btn-warning', dark);
+                btn.classList.toggle('btn-outline-secondary', !dark);
+            }
+        }
+        function toggleTheme(){
+            const current=localStorage.getItem(STORAGE_KEY)||'light';
+            setTheme(current==='light' ? 'dark' : 'light');
+        }
+        document.addEventListener('DOMContentLoaded',()=>{
+            document.getElementById(BTN_ID)?.addEventListener('click', toggleTheme);
+            setTheme(localStorage.getItem(STORAGE_KEY)||'light');
+        });
+    })();
+</script>
+
+<!-- === ROL DESDE LOGIN (helper global) === -->
+<script>
+    function rolActualDesdeCache() {
+        try {
+            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+            if (!raw) return 0;
+            const u = JSON.parse(raw);
+            const idRol = Number(u?.id_rol ?? u?.rol_id ?? u?.idRol ?? 0);
+            return Number.isFinite(idRol) ? idRol : 0;
+        } catch {
+            return 0;
+        }
+    }
+</script>
+
+<!-- Lógica de edición -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const $ = (s) => document.querySelector(s);
+
+        // -------- Resolver userId --------
+        const qsId = Number(new URLSearchParams(location.search).get('id')) || 0;
+        function resolveUserIdFromCache(){
+            try{
+                const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                if(!raw) return 0;
+                const u = JSON.parse(raw);
+                const keys = ['usuario_id','usuarioId','id_usuario','idUsuario','id','userId','idUser'];
+                for (const k of keys) {
+                    const v = Number(u?.[k]); if (Number.isFinite(v) && v>0) return v;
+                }
+                return 0;
+            } catch { return 0; }
+        }
+        function resolveUserIdFromPath(){
+            const segs = location.pathname.split('/').filter(Boolean);
+            const last = Number(segs.at(-1));
+            return Number.isFinite(last) && last>0 ? last : 0;
+        }
+        let userId = qsId || resolveUserIdFromCache() || resolveUserIdFromPath();
+        $('#usuarioId').value = userId || '';
+
+        if (!userId) {
+            showMessage('warning', 'No se pudo resolver el ID de usuario. Abre esta página como <code>editar_usuario.html?id=16</code> o inicia sesión para precargar tu perfil.');
+        }
+
+        // -------- Inputs --------
+        const form      = $('#editUserForm');
+        const iNombre   = $('#nombre');
+        const iUsuario  = $('#usuario');
+        const iCorreo   = $('#correo');
+        const iTelefono = $('#telefono');
+        const iPass     = $('#contrasena');
+        const iPass2    = $('#repetirContrasena');
+        const sRol      = $('#rolId'); // puede no existir
+
+        // -------- Prefill desde cache (si existe) --------
+        try {
+            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+            if (raw) {
+                const u = JSON.parse(raw);
+                if (u?.nombre)   iNombre.value   = u.nombre;
+                if (u?.usuario)  iUsuario.value  = u.usuario;
+                if (u?.correo)   iCorreo.value   = u.correo;
+                if (u?.telefono) iTelefono.value = u.telefono;
+                const cachedRol = Number(u?.id_rol ?? u?.rol_id ?? u?.idRol ?? 0);
+                if (cachedRol && sRol) sRol.value = String(cachedRol);
+            }
+        } catch {}
+
+        // -------- Helpers --------
+        const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s||'').trim());
+        const onlyDigits = (s) => (s||'').replace(/\D+/g,'');
+
+        // -------- UI estado botón / form --------
+        const btn = form.querySelector('button[type="submit"]');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        function setBusy(busy){
+            if (busy){
+                btnSpinner?.classList.remove('d-none');
+                btn?.setAttribute('disabled','true');
+                btnText && (btnText.textContent = 'Guardando…');
+                Array.from(form.elements).forEach(el => el.disabled = true);
+            } else {
+                btnSpinner?.classList.add('d-none');
+                btn?.removeAttribute('disabled');
+                btnText && (btnText.textContent = 'Guardar cambios');
+                Array.from(form.elements).forEach(el => el.disabled = false);
+            }
+        }
+
+        // -------- Submit: PUT --------
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!userId) { showMessage('danger', 'Falta el ID de usuario.'); return; }
+
+            // Validaciones mínimas
+            const correo = iCorreo.value.trim();
+            if (correo && !isEmail(correo)) { showMessage('warning', 'Correo inválido.'); return; }
+
+            const tel = onlyDigits(iTelefono.value);
+            if (tel && tel.length !== 10) { showMessage('warning', 'El teléfono debe tener 10 dígitos.'); return; }
+
+            if ((iPass.value || iPass2.value) && iPass.value !== iPass2.value) {
+                showMessage('warning', 'Las contraseñas no coinciden.'); return;
+            }
+
+            // Construir payload; null => no cambiar
+            const payload = {
+                nombre:     (iNombre.value   || '').trim() || null,
+                usuario:    (iUsuario.value  || '').trim() || null,
+                correo:     correo || null,
+                telefono:   (tel || '') || null,
+                contrasena: (iPass.value     || '').trim() || null,
+                cedula:     null // no se edita aquí
+            };
+
+            // === ELEGIR ENDPOINT SEGÚN ROL (usa select si existe, si no usa cache del login) ===
+            const rolIdSel   = sRol ? Number(sRol.value || 0) : 0;
+            const rolIdCache = rolActualDesdeCache();
+            const rolId      = rolIdSel || rolIdCache;
+
+            const isAdminOrTrab = (rolId === 1 || rolId === 3);
+
+            // IMPORTANTE: si es admin/trabajador, pasa rolId en la query
+            const url = isAdminOrTrab
+                ? `/api/usuarios/admin/${userId}?rolId=${rolId}`
+                : `/api/usuarios/cliente/${userId}`;
+
+            // Limpia feedback anterior y envía
+            showMessage('info', 'Enviando cambios…');
+            setBusy(true);
+
+            try {
+                const res  = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const raw = await res.text().catch(() => '');
+                let serverMsg = '';
+                try {
+                    const j = raw ? JSON.parse(raw) : null;
+                    if (j && typeof j === 'object') {
+                        serverMsg = j.message || j.error || j.detail || JSON.stringify(j);
+                    } else {
+                        serverMsg = raw;
+                    }
+                } catch { serverMsg = raw; }
+
+                if (!res.ok) {
+                    if (res.status === 409) {
+                        showMessage('danger', serverMsg || 'Correo o usuario ya están en uso.');
+                    } else if (res.status === 400) {
+                        showMessage('danger', serverMsg || 'Solicitud inválida. Revisa los datos ingresados.');
+                    } else if (res.status === 404) {
+                        showMessage('danger', serverMsg || 'Usuario no encontrado.');
+                    } else {
+                        showMessage('danger', serverMsg || `Error HTTP ${res.status}.`);
+                    }
+                    setBusy(false);
+                    return;
+                }
+
+                showMessage('success', '✅ Cambios guardados correctamente. Redirigiendo…');
+
+                // Refresca cache (sin contraseña)
+                try {
+                    const cacheRaw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                    const cached = cacheRaw ? JSON.parse(cacheRaw) : {};
+                    const updated = {
+                        ...cached,
+                        nombre:   payload.nombre   ?? cached?.nombre,
+                        usuario:  payload.usuario  ?? cached?.usuario,
+                        correo:   payload.correo   ?? cached?.correo,
+                        telefono: payload.telefono ?? cached?.telefono,
+                        ...(sRol ? { id_rol: rolId } : {})  // si hay select, refleja cambio local
+                    };
+                    sessionStorage.setItem('user', JSON.stringify(updated));
+                } catch {}
+
+                setTimeout(() => { goBack(); }, 800);
+
+            } catch (err) {
+                showMessage('danger', '❌ Error de conexión. ' + (err?.message || 'Inténtalo más tarde.'));
+                setBusy(false);
+            }
+        });
+    });
+</script>
+</body>
+</html>

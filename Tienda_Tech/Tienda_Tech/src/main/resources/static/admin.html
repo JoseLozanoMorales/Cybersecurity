@@ -26,6 +26,7 @@
 <body class="tt-admin">
   <div class="sidebar">
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
+    <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
     <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
     <div class="nav-item" onclick="showSection('inventory', this)">Movimiento de Inventario</div>
@@ -46,6 +47,34 @@
               class="btn btn-secondary btn--sm"
               aria-pressed="false"
               title="Cambiar a modo oscuro">🌙 Oscuro</button>
+    </div>
+
+
+    <!-- Cuenta -->
+    <div id="account" class="admin-section">
+      <div class="section-title">👤 Mi Cuenta</div>
+
+      <div class="action-card">
+        <h3>🪪 Datos personales</h3>
+
+        <div class="account-grid">
+          <img id="acc_avatar" src="/assets/avatars/defaults/user.png"
+               alt="Foto de perfil" class="acc-avatar">
+          <div class="grid-2">
+            <div class="form-group"><label>Nombre</label>   <input id="acc_nombre"   class="form-control" readonly></div>
+            <div class="form-group"><label>Usuario</label>  <input id="acc_usuario"  class="form-control" readonly></div>
+            <div class="form-group"><label>Teléfono</label> <input id="acc_telefono" class="form-control" readonly></div>
+            <div class="form-group"><label>Cédula</label>   <input id="acc_cedula"   class="form-control" readonly></div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label>Correo</label> <input id="acc_correo" class="form-control" readonly>
+            </div>
+
+            <div style="grid-column:1/-1;display:flex;gap:.5rem;">
+              <a class="btn btn-primary" href="EditarTrabajadores.html">✏️ Editar</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Productos -->

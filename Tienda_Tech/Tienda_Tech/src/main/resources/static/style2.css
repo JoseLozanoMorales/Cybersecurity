@@ -1840,3 +1840,42 @@ a.product-card{
   background: #3a5f0b;        /* color del header (igual al que ya usas) */
   color: #fff;
 }
+/* --- PC Builder slideshow --- */
+.pc-builder-container{
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;            /* conserva tu estilo redondeado */
+  min-height: 280px;              /* mismo alto visual aproximado */
+  background: #6f2bd1;            /* color de respaldo mientras carga */
+}
+
+.pcb-bg{
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1000ms ease-in-out;  /* 1s de fade */
+  will-change: opacity;
+  z-index: 0;                     /* detrás de todo */
+}
+
+.pcb-bg.show{ opacity: 1; }
+
+.pcb-overlay{
+  position: absolute;
+  inset: 0;
+  /* degradado para legibilidad del texto (ajusta opacidades a gusto) */
+  background: linear-gradient(90deg, rgba(88,0,220,0.55), rgba(135,0,255,0.30));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pcb-content{
+  position: relative;
+  z-index: 2;                     /* por encima de fondos y overlay */
+  /* Mantiene tu padding y layout existentes (usa los tuyos si ya los tienes) */
+  padding: 2rem;
+  color: #fff;
+}

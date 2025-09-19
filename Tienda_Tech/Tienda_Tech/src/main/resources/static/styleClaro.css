@@ -406,7 +406,7 @@ body.tt-no-scroll{ overflow: hidden; }
 
 /* SOLO el modal de Agregar producto */
 .tt-admin #modalNuevoProducto .modal{
-  background: var(--tt-admin-surface);      /* fondo sólido */
+  background: var(--tt-admin-surface);      /* fondo sólido xdxd */
   color: var(--tt-admin-text);
   border: 1px solid var(--tt-admin-border);
   border-radius: 16px;

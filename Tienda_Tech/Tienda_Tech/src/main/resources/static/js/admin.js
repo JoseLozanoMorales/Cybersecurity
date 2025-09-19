@@ -2503,3 +2503,4 @@ function resetMovimientoModal() {
       setTheme(localStorage.getItem(STORAGE_KEY)||'light');
     });
   })();
+

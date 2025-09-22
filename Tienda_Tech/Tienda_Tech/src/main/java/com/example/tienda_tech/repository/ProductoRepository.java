@@ -9,7 +9,7 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
   // existsById estándar (ya viene de JpaRepository)
 
-  // Chequeo nativo directo a la tabla, evita errores de mapeo
+  /*Chequeo nativo directo a la tabla, evita errores de mapeo
   @Query(value = "select count(*) > 0 from producto where producto_id = :id", nativeQuery = true)
-  boolean existsByIdNative(@Param("id") Integer id);
+  boolean existsByIdNative(@Param("id") Integer id);*/
 }

@@ -1515,8 +1515,6 @@ const API_SUBTIPOS = '/api/subtipos-movimiento';
     })();
 
 
-
-    // ¿El subtipo seleccionado es COMPRA?
     // ¿El subtipo seleccionado es COMPRA?
     function isCompraSelected() {
       const sel = document.getElementById('mov_subtipo_id');

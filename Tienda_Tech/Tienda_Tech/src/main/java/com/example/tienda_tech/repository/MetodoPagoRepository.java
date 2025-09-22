@@ -34,8 +34,6 @@ public interface MetodoPagoRepository extends JpaRepository<MetodoPago, Integer>
         """, nativeQuery = true)
     List<Object[]> fnListarTipos();
 
-
-    // ⬇️ AQUÍ EL CAMBIO: usa parámetro posicional y CAST
     // ===== Escrituras con JSONB construido en SQL =====
 
     // AGREGAR

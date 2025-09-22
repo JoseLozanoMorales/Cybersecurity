@@ -53,10 +53,16 @@
                         <select id="selDireccion" class="form-select"></select>
                     </div>
                     <div class="col-12 col-md-4">
-                        <button class="btn btn-outline-secondary w-100 h-100" id="btnNuevaDir" type="button">
+                        <button
+                                class="btn btn-outline-secondary w-100 h-100"
+                                id="btnNuevaDir"
+                                type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addressModal">
                             <i class="bi bi-plus-lg me-1"></i> Nueva dirección
                         </button>
                     </div>
+
                 </div>
 
                 <div class="addr-preview mt-3">
@@ -140,6 +146,65 @@
     </div>
 </main>
 
+<!-- Modal: Agregar dirección -->
+<div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addressModalLabel">
+                    <i class="bi bi-geo-alt me-2"></i> Agregar Dirección
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="addressForm">
+                    <div class="mb-3">
+                        <label for="addressStreet" class="form-label">
+                            <i class="bi bi-signpost me-1"></i> Calle y Número
+                        </label>
+                        <input type="text" class="form-control" id="addressStreet" name="calle"
+                               placeholder="Ej: Av. Principal 123, Casa azul" required/>
+                    </div>
+
+                    <!-- Provincia la dejamos oculta por ahora (si la vas a usar, quita el style) -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3" style="display:none;">
+                            <label for="addressProvince" class="form-label">
+                                <i class="bi bi-map me-1"></i> Provincia
+                            </label>
+                            <select class="form-select" id="addressProvince" name="provincia_id">
+                                <option value="">Seleccionar provincia</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="addressCity" class="form-label">
+                                <i class="bi bi-building me-1"></i> Ciudad
+                            </label>
+                            <select class="form-select" id="addressCity" name="ciudad_id" required>
+                                <option value="">Seleccionar ciudad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addressReference" class="form-label">
+                            <i class="bi bi-info-circle me-1"></i> Referencia (Opcional)
+                        </label>
+                        <textarea class="form-control" id="addressReference" name="referencia" rows="2"
+                                  placeholder="Ej: Cerca del centro comercial, edificio azul, segunda planta"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save me-2"></i> Guardar Dirección
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="footer">
     <nav class="footer-nav">
         <a href="index.html">Inicio</a>
@@ -147,6 +212,7 @@
         <a href="Carrito.html">Carrito</a>
     </nav>
 </footer>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
@@ -401,6 +467,134 @@ async function initHostedFields(){
           setMsg('Error inicializando el pago.', 'text-danger');
         }
       });
+
+        /* ====== EXPORT PARA EL MODAL (no rompe tu lógica) ====== */
+        window.PAGO = {
+            reloadDirecciones: loadDirecciones,               // vuelve a llenar el <select>
+            getDirecciones:    () => DIRECCIONES,             // retorna el array actual
+            setDireccion:      (d) => { pintarDireccion(d);   // aplica en la UI
+                /* DIRECCION_ID ya se fija en pintarDireccion */ }
+        };
+        /* (luego viene tu línea de cierre) */
+
+    })();
+</script>
+
+<script>
+    /* ==========================================================
+       MODAL "Agregar Dirección"
+       - Abre el modal, carga ciudades y crea la dirección
+       - Usa window.PAGO del script grande para refrescar el <select>
+       ========================================================== */
+    (function(){
+        // --- Elementos del modal ---
+        const modalEl  = document.getElementById('addressModal');
+        const formEl   = document.getElementById('addressForm');
+        const citySel  = document.getElementById('addressCity');
+        const inCalle  = document.getElementById('addressStreet');
+        const inRef    = document.getElementById('addressReference');
+        const selDir   = document.getElementById('selDireccion');
+
+        // Instancia Bootstrap Modal (reutilizable)
+        const modal    = () => (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl));
+
+        // --- Helpers mínimos (consistentes con tu script grande) ---
+        function getUsuarioId(){
+            try{
+                const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                const u = raw ? JSON.parse(raw) : null;
+                return u?.UsuarioID ?? u?.usuarioId ?? u?.usuario_id ?? u?.id ?? null;
+            }catch{ return null; }
+        }
+        async function fetchJSON(url, opt){
+            const uid = getUsuarioId();
+            const headers = Object.assign({}, (opt && opt.headers) || {});
+            if (uid) headers['X-User-Id'] = uid;                // 👈 consistente con tu backend
+            const r = await fetch(url, Object.assign({ credentials:'include', headers }, opt||{}));
+            if (!r.ok) throw new Error(await r.text());
+            const ct = r.headers.get('content-type') || '';
+            return ct.includes('application/json') ? r.json() : r.text();
+        }
+
+        // --- Cargar ciudades cada vez que se abre el modal ---
+        async function loadCities(){
+            citySel.innerHTML = `<option value="">Cargando...</option>`;
+            try{
+                const arr = await fetchJSON('/api/ciudades');
+                const list = (Array.isArray(arr)?arr:[])
+                    .map(c => ({ id: c.ciudadId ?? c.id ?? c.ciudad_id, nombre: c.nombre||'' }))
+                    .filter(c => c.id != null)
+                    .sort((a,b)=> a.nombre.localeCompare(b.nombre, 'es'));
+                citySel.innerHTML = `<option value="">Seleccionar ciudad</option>` +
+                    list.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            }catch(e){
+                console.error(e);
+                citySel.innerHTML = `<option value="">(error)</option>`;
+            }
+        }
+
+        // Limpiar y cargar ciudades al abrir
+        modalEl?.addEventListener('show.bs.modal', async ()=>{
+            formEl?.reset();
+            await loadCities();
+        });
+
+        // (Opcional) Autofocus al mostrarse
+        modalEl?.addEventListener('shown.bs.modal', ()=>{
+            document.getElementById('addressStreet')?.focus();
+        });
+
+        // --- Crear la dirección desde el modal ---
+        formEl?.addEventListener('submit', async (ev)=>{
+            ev.preventDefault();
+
+            const uid = getUsuarioId();
+            if (!uid){ alert('Sesión no resuelta.'); return; }
+
+            // Validación mínima
+            const payload = {
+                calle: inCalle.value.trim(),
+                referencia: (inRef.value.trim() || null),
+                ciudadId: citySel.value ? Number(citySel.value) : null
+            };
+            if (!payload.calle){ alert('Calle es obligatoria'); return; }
+            if (!payload.ciudadId){ alert('Seleccione una ciudad'); return; }
+
+            // Bloquea doble submit
+            const submitBtn = formEl.querySelector('button[type="submit"]');
+            if (submitBtn?.disabled) return;
+            submitBtn && (submitBtn.disabled = true);
+
+            try{
+                // 1) Crea en backend
+                const created = await fetchJSON(`/api/usuarios/${uid}/direcciones`, {
+                    method:'POST',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // 2) Recarga el combo con tu función original (expuesta en window.PAGO)
+                await window.PAGO?.reloadDirecciones?.();
+
+                // 3) Preselecciona la recién creada y pinta en la UI (fija DIRECCION_ID)
+                const newId = (created?.direccionId ?? created?.id ?? null);
+                if (newId && selDir){
+                    selDir.value = String(newId);
+                    const list = window.PAGO?.getDirecciones?.() || [];
+                    const d = list.find(x => Number(x.direccionId) === Number(newId));
+                    if (d) window.PAGO?.setDireccion?.(d);
+                }
+
+                // 4) Cierra modal y (opcional) muestra feedback
+                modal().hide();
+                if (typeof setMsg === 'function') setMsg('Dirección agregada.', 'text-success');
+            }catch(err){
+                console.error(err);
+                alert('No se pudo guardar la dirección.');
+            }finally{
+                submitBtn && (submitBtn.disabled = false);
+            }
+        });
     })();
 </script>
 </body>

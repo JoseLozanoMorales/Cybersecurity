@@ -49,25 +49,6 @@ public class ProductoSpService {
         );
     }
 
-    @Transactional
-    public void crearCpu(CpuCreateRequest r) {
-        jdbc.update(
-                "CALL public.agregar_cpu(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                r.getNombre(),
-                r.getPreciounitario(),
-                r.getEnlace(),
-                r.getStock(),
-                r.getMarca_id(),
-                r.getGama_id(),
-                r.getIva_id(),
-                r.getCosto(),
-                r.getSockets(),
-                r.getGeneracion()
-        );
-    }
-    @Value("${app.sp.twoArgs:false}")   // si tu SP acepta (jsonb, text) pon true en application.properties
-    private boolean spTwoArgs;
-
     /** Lee el usuario autenticado (username del token/sesión). */
     private String currentUsername() {
         Authentication a = SecurityContextHolder.getContext().getAuthentication();

@@ -56,7 +56,7 @@ const USE_MOCK = false; // pon true para probar sin backend
         redirectByRole(mockUser);
         return;
       }
-
+//ay mi corazon
       // ===== BACKEND REAL =====
       uiBusy(true);
       try {

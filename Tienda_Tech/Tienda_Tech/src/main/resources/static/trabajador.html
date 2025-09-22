@@ -18,10 +18,9 @@
 <div class="sidebar">
     <div class="logo">TiendaTech<br><small>Panel Trabajador</small></div>
     <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
-    <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
     <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
-    <div class="nav-item">Cerrar sesión</div>
+    <div class="nav-item" onclick="logout()">Cerrar sesión</div>
 </div>
 
 <div class="main-content">
@@ -57,7 +56,7 @@
                     </div>
 
                     <div style="grid-column:1/-1;display:flex;gap:.5rem;">
-                        <a class="btn btn-primary" href="EditarTrabajador.html">✏️ Editar</a>
+                        <a class="btn btn-primary" href="EditarTrabajadores.html">✏️ Editar</a>
                     </div>
                 </div>
             </div>

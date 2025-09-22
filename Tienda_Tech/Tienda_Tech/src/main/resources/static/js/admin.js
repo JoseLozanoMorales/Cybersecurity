@@ -1499,7 +1499,7 @@ const API_SUBTIPOS = '/api/subtipos-movimiento';
     });
     sel.dataset.bound = '1';
   }
-  
+
 }
     // Cargar al abrir el modal de Movimiento
     (function initSubtiposOnModalOpen(){
@@ -1523,7 +1523,7 @@ const API_SUBTIPOS = '/api/subtipos-movimiento';
       const txt = sel?.options?.[sel.selectedIndex]?.text || '';
       return txt.trim().toUpperCase() === 'COMPRA';
     }
-    
+
     function isAjusteSelected() {
       const sel = document.getElementById('mov_subtipo_id');
       const txt = sel?.options?.[sel.selectedIndex]?.text || '';
@@ -1947,7 +1947,7 @@ const API_MOVS = '/api/movimientos'; // <-- ajusta a tu ruta real
 
 
 
-//ShwowSection 
+//ShwowSection
 function showSection(sectionId, el){
       // cambiar de sección
       document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
@@ -2248,7 +2248,7 @@ function resetMovimientoModal() {
         nombre:   $('ep_nombre'),
         enlace:   $('ep_enlace'),
         iva:      $('ep_iva'),
-        hab:      $('ep_hab'),
+        hab:      $('ep_habi'),
         precio:   $('ep_precio'),
       };
 
@@ -2290,7 +2290,7 @@ function resetMovimientoModal() {
           precio:     d.precioUnitario ?? d.preciounitario ?? d.precio_unitario ?? null
           // costoActual: (eliminado)
         };
-        
+
       }
 
       // === Abrir/cerrar modal ===
@@ -2308,7 +2308,7 @@ function resetMovimientoModal() {
           EP.enlace.value = detalle.enlace || '';
           EP.hab.value    = String(!!detalle.habilitado);
           EP.precio.value = (detalle.precio != null ? Number(detalle.precio).toFixed(2) : '');
-          
+
           await fillIvaSelect(detalle.ivaId);
         } catch(e){
           alert('❌ No se pudo cargar el detalle: ' + (e.message || e));
@@ -2476,7 +2476,7 @@ function resetMovimientoModal() {
       }
     }catch{}
   }
-//TEMA OSCURO    
+//TEMA OSCURO
   (function(){
     const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
     function setTheme(theme){

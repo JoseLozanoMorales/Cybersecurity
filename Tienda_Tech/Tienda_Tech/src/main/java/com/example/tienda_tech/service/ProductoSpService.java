@@ -35,34 +35,34 @@ public class ProductoSpService {
     public void crearAlmacenamiento(AlmacenamientoCreateRequest r) {
         // Ajusta la lista de ? si tu SP tiene más/menos parámetros
         jdbc.update(
-            "CALL public.agregar_almacenamiento(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            r.getNombre(),
-            r.getPreciounitario(),
-            r.getEnlace(),
-            r.getStock(),
-            r.getMarca_id(),
-            r.getGama_id(),
-            r.getIva_id(),
-            r.getCosto(),
-            r.getCapacidad(),
-            r.getTipo()
+                "CALL public.agregar_almacenamiento(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                r.getNombre(),
+                r.getPreciounitario(),
+                r.getEnlace(),
+                r.getStock(),
+                r.getMarca_id(),
+                r.getGama_id(),
+                r.getIva_id(),
+                r.getCosto(),
+                r.getCapacidad(),
+                r.getTipo()
         );
     }
 
     @Transactional
     public void crearCpu(CpuCreateRequest r) {
         jdbc.update(
-            "CALL public.agregar_cpu(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            r.getNombre(),
-            r.getPreciounitario(),
-            r.getEnlace(),
-            r.getStock(),
-            r.getMarca_id(),
-            r.getGama_id(),
-            r.getIva_id(),
-            r.getCosto(),
-            r.getSockets(),
-            r.getGeneracion()
+                "CALL public.agregar_cpu(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                r.getNombre(),
+                r.getPreciounitario(),
+                r.getEnlace(),
+                r.getStock(),
+                r.getMarca_id(),
+                r.getGama_id(),
+                r.getIva_id(),
+                r.getCosto(),
+                r.getSockets(),
+                r.getGeneracion()
         );
     }
     @Value("${app.sp.twoArgs:false}")   // si tu SP acepta (jsonb, text) pon true en application.properties
@@ -80,7 +80,7 @@ public class ProductoSpService {
         if (usuario != null && !usuario.isBlank()) {
             prod.put("usuario", usuario);
         }
-       jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);
+        jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);
     }
 
     // Llama al SP de actualizar (tu SP es de 2 parámetros)
@@ -93,20 +93,20 @@ public class ProductoSpService {
 
     @Transactional
     public void crearAlmacenamientoJsonV2(AlmacenamientoCreateRequest r, String usuario) {
-    var cap = CapacidadNormalizer.normalizeFromGb(
-        r.getCapacidad() == null ? 0L : r.getCapacidad());
+        var cap = CapacidadNormalizer.normalizeFromGb(
+                r.getCapacidad() == null ? 0L : r.getCapacidad());
 
-    var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-    var prod = mapper.createObjectNode();
-    prod.put("nombre", r.getNombre());
-    if (r.getEnlace() != null) prod.put("enlace", r.getEnlace());
-    prod.put("marca_id", r.getMarca_id());
-    prod.put("gama_id", r.getGama_id());
-    prod.put("iva_id", r.getIva_id());
-    prod.put("categoria_id", 1); // Almacenamiento
-    prod.put("capacidad", cap.valor);
-    prod.put("capacidad_unidad", cap.unidad); // "GB" o "TB"
-    prod.put("tipo", r.getTipo());
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var prod = mapper.createObjectNode();
+        prod.put("nombre", r.getNombre());
+        if (r.getEnlace() != null) prod.put("enlace", r.getEnlace());
+        prod.put("marca_id", r.getMarca_id());
+        prod.put("gama_id", r.getGama_id());
+        prod.put("iva_id", r.getIva_id());
+        prod.put("categoria_id", 1); // Almacenamiento
+        prod.put("capacidad", cap.valor);
+        prod.put("capacidad_unidad", cap.unidad); // "GB" o "TB"
+        prod.put("tipo", r.getTipo());
 
         callSpAgregar(prod, usuario);
     }
@@ -328,22 +328,22 @@ public class ProductoSpService {
     }
 
     // ===== Detalle para precargar el modal =====
-        public Optional<com.example.tienda_tech.dto.ProductoEditarDetalleDTO> detalleParaEditarOpt(Integer id) {
-            final String sql = "select * from public.fn_producto_detalle_actualizar(?)";
-            var list = jdbc.query(sql, new Object[]{ id }, (rs, i) -> {
-                var d = new com.example.tienda_tech.dto.ProductoEditarDetalleDTO();
-                d.setProductoId(rs.getInt("producto_id"));
-                d.setNombre(rs.getString("nombre"));
-                d.setEnlace(rs.getString("enlace"));
-                d.setIvaId((Integer) rs.getObject("iva_id"));
-                d.setHabilitado((Boolean) rs.getObject("habilitado"));
-                d.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
-                d.setCostoActual(rs.getBigDecimal("costo_actual"));
-                d.setCategoriaId((Integer) rs.getObject("categoria_id"));
-                return d;
-            });
-            return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
-        }
+    public Optional<com.example.tienda_tech.dto.ProductoEditarDetalleDTO> detalleParaEditarOpt(Integer id) {
+        final String sql = "select * from public.fn_producto_detalle_actualizar(?)";
+        var list = jdbc.query(sql, new Object[]{ id }, (rs, i) -> {
+            var d = new com.example.tienda_tech.dto.ProductoEditarDetalleDTO();
+            d.setProductoId(rs.getInt("producto_id"));
+            d.setNombre(rs.getString("nombre"));
+            d.setEnlace(rs.getString("enlace"));
+            d.setIvaId((Integer) rs.getObject("iva_id"));
+            d.setHabilitado((Boolean) rs.getObject("habilitado"));
+            d.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
+            d.setCostoActual(rs.getBigDecimal("costo_actual"));
+            d.setCategoriaId((Integer) rs.getObject("categoria_id"));
+            return d;
+        });
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
     // ===== Listar IVAs =====
     public java.util.List<com.example.tienda_tech.dto.IvaDTO> listarIvas(){
         return jdbc.query("select * from public.fn_listar_ivas()", (rs,i) -> {

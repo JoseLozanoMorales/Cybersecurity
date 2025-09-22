@@ -249,6 +249,19 @@
 
     <!-- ===== Script: Cuenta ===== -->
     <script>
+        //cerrar sesion
+          async function logout() {
+            try {
+              sessionStorage.removeItem('user');
+              localStorage.removeItem('user');
+              sessionStorage.removeItem('token');
+              localStorage.removeItem('token');
+
+              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+            } finally {
+              location.replace('Login.html');
+            }
+          }
         /* Si entras por el sidebar, también carga el perfil */
         document.addEventListener('DOMContentLoaded', () => {
             const item = Array.from(document.querySelectorAll('.sidebar .nav-item'))

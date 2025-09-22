@@ -2,6 +2,8 @@
 //HOLA gente
 //COMO ANDÁS?
 //ay dio mio
+const fetch = (...args) =>
+  (window.authFetch ? window.authFetch(...args) : window.fetch(...args));
 function currentUsername(){
   try {
     const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -2504,3 +2506,376 @@ function resetMovimientoModal() {
     });
   })();
 
+
+
+
+
+
+
+
+
+  // ===== Sugerencias (Admin) =====
+  (() => {
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+    const api = {
+      encuesta: {
+        get: () => fetch("/api/encuesta").then(r => r.json()),
+        upsertPregunta: b => fetch("/api/encuesta/preguntas", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)}),
+        deletePregunta: (key) => fetch(`/api/encuesta/preguntas/${encodeURIComponent(key)}`, {method:"DELETE"}),
+        upsertOpcion: b => fetch("/api/encuesta/opciones", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)}),
+        deleteOpcion: (key, valor) => fetch(`/api/encuesta/opciones/${encodeURIComponent(key)}/${encodeURIComponent(valor)}`, {method:"DELETE"}),
+        upsertRegla: b => fetch("/api/encuesta/reglas", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(b)}),
+        deleteRegla: (key, valor, categoria) => fetch(`/api/encuesta/reglas/${encodeURIComponent(key)}/${encodeURIComponent(valor)}/${encodeURIComponent(categoria)}`, {method:"DELETE"}),
+      },
+      sugerencias: {
+        lastOfUser: (usuarioId) => fetch(`/api/usuarios/${usuarioId}/sugerencias/ultima`).then(r => r.json()),
+      }
+    };
+
+    // Elements
+    const sec = $("#suggestions");
+    if (!sec) return; // no render si no existe la sección
+
+    const tabEncuestaBtn = $("#tab_encuesta_btn");
+    const tabHistorialBtn = $("#tab_historial_btn");
+    const panelEncuesta   = $("#sg_encuesta");
+    const panelHistorial  = $("#sg_historial");
+    const btnRefrescar    = $("#btn_refrescar_sug");
+
+    // Forms
+    const ep = { key: $("#ep_key"), texto: $("#ep_texto"), orden: $("#ep_orden"), hab: $("#ep_hab"), guardar: $("#ep_guardar"), borrar: $("#ep_borrar") };
+    const eo = { key: $("#eo_key"), valor: $("#eo_valor"), texto: $("#eo_texto"), orden: $("#eo_orden"), hab: $("#eo_hab"), guardar: $("#eo_guardar"), borrar: $("#eo_borrar") };
+    const er = { key: $("#er_key"), valor: $("#er_valor"), cat: $("#er_categoria"), gama: $("#er_gama"), delta: $("#er_delta"), hab: $("#er_hab"), guardar: $("#er_guardar"), borrar: $("#er_borrar") };
+
+    // Tables
+    const tPreg = $("#enc_preguntas_list");
+    const tOpc  = $("#enc_opciones_list");
+    const tReg  = $("#enc_reglas_list");
+
+    // Historial
+    const shUserId = $("#sh_usuario_id");
+    const shVerUlt = $("#sh_ver_ultima");
+    const shTable  = $("#sh_result");
+
+    // State
+    let encuesta = null;
+    let selectedPreguntaKey = null;
+    let selectedOpcionValor = null;
+
+    // Helpers
+    const toast = (msg, ok=true) => {
+      console[ok ? "log" : "warn"]("[Sugerencias]", msg);
+    };
+    const safe = fn => async (...args) => {
+      try { return await fn(...args); } catch (e) { toast(e.message || e, false); alert("Error: " + (e.message || e)); }
+    };
+
+    // Renderers
+    function renderPreguntas() {
+      const rows = (encuesta?.preguntas || []).map(p => `
+        <tr data-key="${p.key}">
+          <td>${p.key}</td>
+          <td>${p.texto ?? ""}</td>
+          <td>${p.orden ?? ""}</td>
+          <td>${p.habilitado === false ? "Deshabilitada" : "Habilitada"}</td>
+        </tr>
+      `).join("");
+      tPreg.innerHTML = rows || `<tr><td colspan="4" class="tt-muted-row">Sin preguntas</td></tr>`;
+      // click to select
+      $$("#enc_preguntas_list tr").forEach(tr => {
+        tr.addEventListener("click", () => {
+          selectedPreguntaKey = tr.dataset.key;
+          const p = (encuesta.preguntas || []).find(x => x.key === selectedPreguntaKey);
+          ep.key.value = p?.key || "";
+          ep.texto.value = p?.texto || "";
+          ep.orden.value = p?.orden ?? "";
+          ep.hab.value = p?.habilitado === false ? "false" : "true";
+          // render opciones de esa pregunta
+          renderOpciones(selectedPreguntaKey);
+          // limpiar reglas/opción seleccionada
+          selectedOpcionValor = null;
+          tReg.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Selecciona una opción para ver sus reglas…</td></tr>`;
+        });
+      });
+    }
+
+    function renderOpciones(key) {
+      const p = (encuesta?.preguntas || []).find(x => x.key === key);
+      const opts = p?.opciones || [];
+      const rows = opts.map(o => `
+        <tr data-valor="${o.valor}">
+          <td>${key}</td>
+          <td>${o.valor}</td>
+          <td>${o.texto ?? ""}</td>
+          <td>${o.orden ?? ""}</td>
+          <td>${o.habilitado === false ? "Deshabilitada" : "Habilitada"}</td>
+        </tr>
+      `).join("");
+      tOpc.innerHTML = rows || `<tr><td colspan="5" class="tt-muted-row">Sin opciones</td></tr>`;
+      // click to select
+      $$("#enc_opciones_list tr").forEach(tr => {
+        tr.addEventListener("click", () => {
+          selectedOpcionValor = tr.dataset.valor;
+          const opt = opts.find(x => x.valor === selectedOpcionValor);
+          eo.key.value   = key;
+          eo.valor.value = opt?.valor || "";
+          eo.texto.value = opt?.texto || "";
+          eo.orden.value = opt?.orden ?? "";
+          eo.hab.value   = opt?.habilitado === false ? "false" : "true";
+          // precargar regla form
+          er.key.value   = key;
+          er.valor.value = opt?.valor || "";
+          // cargar reglas (si tu API f_encuesta_json ya trae reglas, podrías mostrarlas aquí; si no, dejamos vacío)
+          renderReglas(key, opt?.valor);
+        });
+      });
+    }
+
+    function renderReglas(key, valor) {
+      // Si la encuesta JSON trae reglas por opción, puedes agregarlas aquí. Como mínimo vaciamos la tabla:
+      tReg.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Listo para guardar/ver reglas de "${key}"="${valor}"</td></tr>`;
+    }
+
+    // Load
+    const loadEncuesta = safe(async () => {
+      encuesta = await api.encuesta.get();
+      renderPreguntas();
+      tOpc.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Selecciona una pregunta…</td></tr>`;
+      tReg.innerHTML = `<tr><td colspan="6" class="tt-muted-row">Selecciona una opción…</td></tr>`;
+    });
+
+    // Actions: Preguntas
+    ep.guardar?.addEventListener("click", safe(async () => {
+      const body = {
+        key: ep.key.value.trim(),
+        texto: ep.texto.value.trim(),
+        orden: ep.orden.value ? Number(ep.orden.value) : null,
+        habilitado: ep.hab.value === "true"
+      };
+      if (!body.key) return alert("Key es requerida");
+      await api.encuesta.upsertPregunta(body);
+      toast("Pregunta guardada");
+      await loadEncuesta();
+    }));
+
+    ep.borrar?.addEventListener("click", safe(async () => {
+      const key = ep.key.value.trim();
+      if (!key) return alert("Key es requerida");
+      if (!confirm(`¿Borrar la pregunta "${key}" y sus opciones/reglas?`)) return;
+      await api.encuesta.deletePregunta(key);
+      toast("Pregunta borrada");
+      await loadEncuesta();
+    }));
+
+    // Actions: Opciones
+    eo.guardar?.addEventListener("click", safe(async () => {
+      const body = {
+        key: eo.key.value.trim(),
+        valor: eo.valor.value.trim(),
+        texto: eo.texto.value.trim(),
+        orden: eo.orden.value ? Number(eo.orden.value) : null,
+        habilitado: eo.hab.value === "true"
+      };
+      if (!body.key || !body.valor) return alert("pregunta_key y valor son requeridos");
+      await api.encuesta.upsertOpcion(body);
+      toast("Opción guardada");
+      await loadEncuesta();
+      // reseleccionar pregunta
+      if (body.key) {
+        const row = $(`#enc_preguntas_list tr[data-key="${CSS.escape(body.key)}"]`);
+        row?.click();
+      }
+    }));
+
+    eo.borrar?.addEventListener("click", safe(async () => {
+      const key = eo.key.value.trim();
+      const valor = eo.valor.value.trim();
+      if (!key || !valor) return alert("pregunta_key y valor son requeridos");
+      if (!confirm(`¿Borrar la opción "${key}"="${valor}"?`)) return;
+      await api.encuesta.deleteOpcion(key, valor);
+      toast("Opción borrada");
+      await loadEncuesta();
+      // reseleccionar pregunta
+      if (key) {
+        const row = $(`#enc_preguntas_list tr[data-key="${CSS.escape(key)}"]`);
+        row?.click();
+      }
+    }));
+
+    // Actions: Reglas
+    er.guardar?.addEventListener("click", safe(async () => {
+      const body = {
+        key:   er.key.value.trim(),
+        valor: er.valor.value.trim(),
+        categoria: er.cat.value,
+        gamaObjetivo: er.gama.value,
+        deltaRank: er.delta.value ? Number(er.delta.value) : 0,
+        habilitado: er.hab.value === "true"
+      };
+      if (!body.key || !body.valor) return alert("pregunta_key y valor son requeridos");
+      await api.encuesta.upsertRegla(body);
+      toast("Regla guardada");
+      // solo avisamos; el listado de reglas depende de cómo expongas la data en /api/encuesta
+    }));
+
+    er.borrar?.addEventListener("click", safe(async () => {
+      const key = er.key.value.trim();
+      const valor = er.valor.value.trim();
+      const cat = er.cat.value;
+      if (!key || !valor) return alert("pregunta_key y valor son requeridos");
+      if (!confirm(`¿Borrar la regla de ${cat} para "${key}"="${valor}"?`)) return;
+      await api.encuesta.deleteRegla(key, valor, cat);
+      toast("Regla borrada");
+    }));
+
+    // Tabs
+    tabEncuestaBtn?.addEventListener("click", () => {
+      panelEncuesta.style.display = "";
+      panelHistorial.style.display = "none";
+      tabEncuestaBtn.classList.add("active");
+      tabHistorialBtn.classList.remove("active");
+    });
+    tabHistorialBtn?.addEventListener("click", () => {
+      panelEncuesta.style.display = "none";
+      panelHistorial.style.display = "";
+      tabHistorialBtn.classList.add("active");
+      tabEncuestaBtn.classList.remove("active");
+    });
+
+    // Historial: ver última del usuario
+    shVerUlt?.addEventListener("click", safe(async () => {
+      const uid = Number(shUserId.value);
+      if (!uid) return alert("Ingresa un ID de usuario");
+      const data = await api.sugerencias.lastOfUser(uid);
+      const rec = data?.recomendaciones || {};
+      const rows = []
+        .concat((rec.gpu || []).map(x => ["GPU", x.nombre, x.precio, x.gama]))
+        .concat((rec.cpu || []).map(x => ["CPU", x.nombre, x.precio, x.gama]))
+        .concat((rec.ram || []).map(x => ["RAM", x.nombre, x.precio, x.gama]))
+        .concat((rec.almacenamiento || []).map(x => ["ALMACENAMIENTO", x.nombre, x.precio, x.gama]))
+        .concat((rec.motherboard || []).map(x => ["MOTHERBOARD", x.nombre, x.precio, x.gama]))
+        .map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${Number(r[2] ?? 0).toFixed(2)}</td><td>${r[3] ?? ""}</td></tr>`)
+        .join("");
+      shTable.innerHTML = rows || `<tr><td colspan="4" class="tt-muted-row">Sin recomendaciones</td></tr>`;
+    }));
+
+    // Refrescar
+    btnRefrescar?.addEventListener("click", safe(loadEncuesta));
+
+    // Auto-load al entrar
+    loadEncuesta();
+  })();
+    // ==== Extensión Historial de sugerencias ====
+    (() => {
+      const $  = (s,r=document)=>r.querySelector(s);
+      const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+
+      // Reusa el mismo objeto api si ya existe; si no, créalo.
+      window.__tt_api = window.__tt_api || {};
+      const api = window.__tt_api;
+
+      api.sugerencias = api.sugerencias || {};
+      api.sugerencias.lastOfUser = api.sugerencias.lastOfUser || (uid =>
+        fetch(`/api/usuarios/${uid}/sugerencias/ultima`).then(r=>r.json())
+      );
+      api.sugerencias.get = api.sugerencias.get || (id =>
+        fetch(`/api/sugerencias/${id}`).then(r=>r.json())
+      );
+      api.sugerencias.listForUser = api.sugerencias.listForUser || ((uid,limit=20,offset=0) =>
+        fetch(`/api/usuarios/${uid}/sugerencias?limit=${limit}&offset=${offset}`).then(r=>r.json())
+      );
+
+      const panelHist = $("#sg_historial");
+      if (!panelHist) return;
+
+      // Elementos existentes
+      const shUserId = $("#sh_usuario_id");
+      const shVerUlt = $("#sh_ver_ultima");
+      const shTable  = $("#sh_result");
+
+      // ====== UI mínimo para historial ======
+      // Crea un contenedor de lista si no existe
+      let listBox = $("#sh_listbox");
+      if (!listBox) {
+        listBox = document.createElement("div");
+        listBox.id = "sh_listbox";
+        listBox.style.margin = "1rem 0";
+        listBox.innerHTML = `
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <strong>Historial</strong>
+            <button class="btn btn-outline" id="sh_cargar_hist">Cargar historial</button>
+            <span id="sh_hist_status" class="tt-muted-row"></span>
+          </div>
+          <div class="data-table" style="margin-top:.5rem;">
+            <table>
+              <thead><tr><th>ID</th><th>Creado</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody id="sh_hist_tbody"><tr><td colspan="4" class="tt-muted-row">Sin datos…</td></tr></tbody>
+            </table>
+          </div>
+        `;
+        // Inserta antes de la tabla de resultados
+        panelHist.insertBefore(listBox, shTable.parentElement);
+      }
+
+      const btnCargar = $("#sh_cargar_hist");
+      const histTbody = $("#sh_hist_tbody");
+      const histStatus= $("#sh_hist_status");
+
+      const toast = (m, ok=true)=>console[ok?"log":"warn"]("[Historial]", m);
+      const safe = fn => async (...a)=>{ try{ return await fn(...a); } catch(e){ alert("Error: "+(e.message||e)); } };
+
+      function renderDetalle(data) {
+        const rec = data?.recomendaciones || {};
+        const rows = []
+          .concat((rec.gpu || []).map(x => ["GPU", x.nombre, x.precio, x.gama]))
+          .concat((rec.cpu || []).map(x => ["CPU", x.nombre, x.precio, x.gama]))
+          .concat((rec.ram || []).map(x => ["RAM", x.nombre, x.precio, x.gama]))
+          .concat((rec.almacenamiento || []).map(x => ["ALMACENAMIENTO", x.nombre, x.precio, x.gama]))
+          .concat((rec.motherboard || []).map(x => ["MOTHERBOARD", x.nombre, x.precio, x.gama]))
+          .map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${Number(r[2] ?? 0).toFixed(2)}</td><td>${r[3] ?? ""}</td></tr>`)
+          .join("");
+        shTable.innerHTML = rows || `<tr><td colspan="4" class="tt-muted-row">Sin recomendaciones</td></tr>`;
+      }
+
+      const cargarUltima = safe(async () => {
+        const uid = Number(shUserId.value);
+        if (!uid) return alert("Ingresa un ID de usuario");
+        const data = await api.sugerencias.lastOfUser(uid);
+        renderDetalle(data);
+      });
+
+      const cargarHistorial = safe(async () => {
+        const uid = Number(shUserId.value);
+        if (!uid) return alert("Ingresa un ID de usuario");
+        histStatus.textContent = "Cargando…";
+        const hist = await api.sugerencias.listForUser(uid, 20, 0);
+        const items = hist?.items || [];
+        histTbody.innerHTML = items.length
+          ? items.map(it => `
+              <tr>
+                <td>#${it.sugerencia_id}</td>
+                <td>${it.created_at ?? "-"}</td>
+                <td>${it.habilitado ? "Habilitada" : "Deshabilitada"}</td>
+                <td><button class="btn btn-outline btn-sm" data-sug="${it.sugerencia_id}">Ver detalle</button></td>
+              </tr>
+            `).join("")
+          : `<tr><td colspan="4" class="tt-muted-row">Sin sugerencias</td></tr>`;
+
+        // wire buttons
+        $$("#sh_hist_tbody [data-sug]").forEach(btn => {
+          btn.addEventListener("click", safe(async () => {
+            const id = Number(btn.dataset.sug);
+            const data = await api.sugerencias.get(id);
+            renderDetalle(data);
+          }));
+        });
+        histStatus.textContent = items.length ? `${items.length} resultado(s)` : "0 resultados";
+      });
+
+      shVerUlt?.addEventListener("click", cargarUltima);
+      btnCargar?.addEventListener("click", cargarHistorial);
+    })();
+  window.addEventListener('DOMContentLoaded', () => window.SessionAuth?.initAuthUI?.());
+  document.querySelectorAll('[data-logout]')
+    .forEach(b => b.addEventListener('click', () => window.SessionAuth?.sessionLogout?.()));

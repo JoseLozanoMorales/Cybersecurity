@@ -182,3 +182,108 @@
   // traza de carga para que veas en consola
   console.log('[auth-menu] loaded');
 })();
+
+
+
+
+
+// === Idle/refresh por rol ===
+const KEEPALIVE_ENABLED = false; // <- apaga/enciende el keepalive y el refresh inicial
+
+let ACCESS = null;
+let ROLE = null;
+let LAST_INTERACTION = Date.now();
+let keepaliveTimer = null;
+
+const KA_INTERVAL_MS = 70_000;
+const KA_TOUCH_WINDOW_MS = 30_000;
+const ROLES_CON_IDLE = new Set(['ADMIN','TRABAJADOR']);
+
+['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+  window.addEventListener(ev, ()=> { LAST_INTERACTION = Date.now(); }, {passive:true})
+);
+//
+const _fetch = window.fetch.bind(window);
+window.fetch = async (url, opts = {}) => {
+  opts.headers = opts.headers || {};
+  if (ACCESS) opts.headers['Authorization'] = `Bearer ${ACCESS}`;
+  opts.credentials = 'include';       // importante para cookie refresh
+  return _fetch(url, opts);
+};
+//Session
+function sessionStart({ access, user }) {
+  ACCESS = access;
+  ROLE = user?.rol || user?.role;
+  sessionStorage.setItem('user', JSON.stringify(user));
+  if (KEEPALIVE_ENABLED && ROLES_CON_IDLE.has(ROLE)) startKeepalive();
+}
+
+async function sessionLogout(){
+  try { await fetch('/auth/logout', {method:'POST'}); } catch {}
+  ACCESS = null; ROLE = null;
+  sessionStorage.removeItem('user');
+  stopKeepalive(); hideIdleModal?.();
+  location.href = '/login.html';
+}
+
+async function initAuthUI(){
+  const u = JSON.parse(sessionStorage.getItem('user') || 'null');
+  if (KEEPALIVE_ENABLED && u && ROLES_CON_IDLE.has(u.rol || u.role)) {
+    startKeepalive();
+    try {
+      const r = await fetch('/auth/refresh', { method:'POST' });
+      if (r.ok) {
+        const d = await r.json();
+        ACCESS = d.access;
+        maybeWarnIdle(d.meta?.remainingIdleSeconds);
+      }
+    } catch {}
+  }
+}
+
+window.SessionAuth = { sessionStart, sessionLogout, initAuthUI };
+//
+function startKeepalive(){   if (!KEEPALIVE_ENABLED) return;
+                             stopKeepalive();
+                             keepaliveTimer = setInterval(doKeepalive, KA_INTERVAL_MS); }
+function stopKeepalive(){ if (keepaliveTimer) { clearInterval(keepaliveTimer); keepaliveTimer = null; } }
+
+async function doKeepalive(){
+  if (!KEEPALIVE_ENABLED || !ROLES_CON_IDLE.has(ROLE)) return;
+  if (Date.now() - LAST_INTERACTION > KA_TOUCH_WINDOW_MS) return;
+  try {
+    const r = await fetch('/auth/keepalive', {method:'POST'});
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    ACCESS = d.access;
+    maybeWarnIdle(d.meta?.remainingIdleSeconds);
+  } catch {}
+}
+function maybeWarnIdle(remaining){ if (typeof remaining === 'number' && remaining <= 120) showIdleModal(Math.max(remaining,1)); }
+
+let idleModalShown=false, idleCountdownTimer=null;
+function ensureIdleModal(){
+  let m=document.getElementById('idle-modal'); if (m) return m;
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="idle-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999">
+    <div style="background:#111;color:#fff;padding:22px 20px;border-radius:12px;max-width:420px;width:92%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)">
+      <h3 style="margin:0 0 10px">Sesión por inactividad</h3>
+      <p>Tu sesión se cerrará en <b class="idle-secs">120</b> segundos.</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+        <button class="btn-seguir">Seguir aquí</button>
+        <button class="btn-salir">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>`);
+  return document.getElementById('idle-modal');
+}
+function showIdleModal(seconds){
+  if (idleModalShown) return; idleModalShown = true;
+  const el=ensureIdleModal(); let remaining=seconds;
+  el.querySelector('.idle-secs').textContent=remaining; el.style.display='flex';
+  idleCountdownTimer=setInterval(()=>{ remaining--; el.querySelector('.idle-secs').textContent=remaining; if (remaining<=0){clearInterval(idleCountdownTimer); sessionLogout();}},1000);
+  el.querySelector('.btn-seguir').onclick = async ()=>{ try{const r=await fetch('/auth/keepalive',{method:'POST'}); if(r.ok){const d=await r.json(); ACCESS=d.access;}}catch{} hideIdleModal();};
+  el.querySelector('.btn-salir').onclick = sessionLogout;
+}
+function hideIdleModal(){ idleModalShown=false; if (idleCountdownTimer) clearInterval(idleCountdownTimer); const m=document.getElementById('idle-modal'); if (m) m.style.display='none'; }
+window.SessionAuth = { sessionStart, sessionLogout, initAuthUI };

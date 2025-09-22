@@ -23,6 +23,8 @@
             type="button" aria-pressed="false">
       <span class="ico">🌙</span><span class="txt">Oscuro</span>
     </button>
+      <button id="openSurveyBtn" class="btn btn-primary ttq-btn" type="button">Recomiéndame una PC</button>
+
   </header>
 
   <!-- Overlay -->
@@ -69,16 +71,16 @@
       </div>
     </section>
 
-    <!-- 3. PC Builder Container -->
+    <!-- 3. PC Builder Container
     <section class="content-container">
-        <div class="pc-builder-container">
+        <div class="pc-builder-container">-->
             <!-- capas de fondo -->
-            <div class="pcb-bg layer-a"></div>
-            <div class="pcb-bg layer-b"></div>
+            <!--<div class="pcb-bg layer-a"></div>
+            <div class="pcb-bg layer-b"></div>-->
             <!-- overlay para mantener legible el texto -->
-            <div class="pcb-overlay"></div>
+            <!--<div class="pcb-overlay"></div>-->
 
-            <!-- contenido encima -->
+            <!-- contenido encima --><!--
             <div class="pcb-content">
                 <h2 class="pc-builder-title">Crea tu propia PC</h2>
                 <p class="pc-builder-description">
@@ -89,7 +91,7 @@
                 <button class="pc-builder-btn">Ver más</button>
             </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- 4. Categories Grid Container -->
     <section class="content-container">
@@ -119,7 +121,30 @@
       <a href="Carrito.html" class="requires-auth">Carrito</a>
     </nav>
   </footer>
+  <!-- Overlay -->
+  <div id="ttSurveyOverlay" class="ttq-overlay" hidden></div>
 
+  <!-- Modal -->
+  <div id="ttSurveyModal" class="ttq-modal" role="dialog" aria-modal="true" hidden>
+      <div class="ttq-content tt-modal-content">
+          <button class="ttq-close tt-modal-close" type="button" title="Cerrar">&times;</button>
+          <h3 class="ttq-title tt-modal-title">Cuestionario de recomendaciones</h3>
+
+          <form id="ttSurveyForm">
+              <!-- El JS rellena las preguntas aquí -->
+              <div class="ttq-actions tt-modal-actions">
+                  <button id="ttSurveySubmit"
+                          class="ttq-btn btn btn-primary"
+                          type="submit">
+                      Enviar
+                  </button>
+              </div>
+          </form>
+
+
+          <div id="ttSurveyResult" class="ttq-result tt-result"></div>
+      </div>
+  </div>
   <!-- Logout dentro del menú -->
   <script>
   (function () {
@@ -328,7 +353,7 @@
     }
   })();
   </script>
-  <script>
+  <!-- <script>
       (function pcBuilderSlideshow(){
         // Rutas absolutas desde /static: ajusta nombres según tus archivos
         const IMAGES = [
@@ -388,7 +413,7 @@
           setInterval(next, INTERVAL_MS);
         }
       })();
-  </script>
+  </script> -->
   <script>
     (function(){
       const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
@@ -419,5 +444,243 @@
       });
     })();
   </script>
+<script>
+    // ===== Modal de Encuesta (clientes logueados) =====
+(() => {
+  const LOGIN_URL = '/Login.html';
+  const ENCUESTA_ID = 1;
+  const TOP_N = 3;
+
+  const $ = (s, r=document)=>r.querySelector(s);
+  const el = (tag, attrs={}) => Object.assign(document.createElement(tag), attrs);
+
+  function isLogged(){
+    try {
+      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+      if (raw) { JSON.parse(raw); return true; }
+    } catch {}
+    return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+  }
+
+  function getUserFromStorage(){
+    try {
+      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  // UI bootstrap: botón + modal
+function injectUI(){
+  // 🔁 Usamos los elementos existentes en el DOM (no creamos nada)
+  const btn     = document.getElementById('openSurveyBtn');
+  const overlay = document.getElementById('ttSurveyOverlay');
+  const modal   = document.getElementById('ttSurveyModal');
+  const form    = document.getElementById('ttSurveyForm');
+  const result  = document.getElementById('ttSurveyResult');
+  const close   = modal.querySelector('.tt-modal-close');
+
+  const open = () => {
+    if (!isLogged()) {
+      const next = encodeURIComponent(location.pathname);
+      location.href = `/Login.html?next=${next}`;
+      return;
+    }
+    // mostrar modal
+    overlay.removeAttribute('hidden');
+    modal.removeAttribute('hidden');
+    overlay.style.display = 'block';
+    modal.style.display   = 'flex';
+    result.innerHTML = '';
+    loadSurvey(form);
+  };
+
+  const closeAll = () => {
+    overlay.style.display = 'none';
+    modal.style.display   = 'none';
+    overlay.setAttribute('hidden', '');
+    modal.setAttribute('hidden', '');
+    form.innerHTML = '';
+    result.innerHTML = '';
+  };
+
+  btn.addEventListener('click', open);
+  overlay.addEventListener('click', closeAll);
+  close.addEventListener('click', closeAll);
+
+  // submit
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await submitSurvey(form, result, closeAll);
+  });
+}
+
+
+  async function loadSurvey(formEl){
+    formEl.innerHTML = '<div class="field"><em>Cargando encuesta…</em></div>';
+    try {
+      const enc = await fetch('/api/encuesta', {credentials:'include'}).then(r=>r.json());
+      formEl.innerHTML = '';
+      (enc.preguntas || []).sort((a,b)=>(a.orden??0)-(b.orden??0)).forEach(p=>{
+        if (p.habilitado === false) return;
+        const field = el('div', { className:'field' });
+        const label = el('label', { htmlFor:`f_${p.key}`, textContent: p.texto || p.key });
+        field.appendChild(label);
+
+        if (Array.isArray(p.opciones) && p.opciones.length){
+          // SELECT por opciones
+          const sel = el('select', { id:`f_${p.key}`, name: p.key });
+          sel.appendChild(el('option', { value:'', textContent:'-- Selecciona --' }));
+          p.opciones
+            .filter(o => o.habilitado !== false)
+            .sort((a,b)=>(a.orden??0)-(b.orden??0))
+            .forEach(o => sel.appendChild(el('option', { value:o.valor, textContent:o.texto || o.valor })));
+          field.appendChild(sel);
+        } else {
+          // Heurística simple por key
+          const k = String(p.key || '').toLowerCase();
+          if (k.includes('presupuesto') || k.includes('anio') || k.includes('años') || k === 'horizonte_anios'){
+            field.appendChild(el('input', { type:'number', id:`f_${p.key}`, name:p.key, min:'0', step:'1', placeholder:'Ingresa un número' }));
+          } else if (k.includes('ray_tracing') || k.includes('rt') || k.startsWith('bool_')){
+            const wrap = el('div', { className:'field inline' });
+            const chk = el('input', { type:'checkbox', id:`f_${p.key}`, name:p.key });
+            wrap.append(chk, el('label', { htmlFor:`f_${p.key}`, textContent:'Sí' }));
+            field.appendChild(wrap);
+          } else {
+            field.appendChild(el('input', { type:'text', id:`f_${p.key}`, name:p.key, placeholder:'Tu respuesta…' }));
+          }
+        }
+        formEl.appendChild(field);
+      });
+
+      if (!formEl.querySelector('#ttSurveySubmit')) {
+        const actions = el('div', { className:'tt-modal-actions' });
+        const btn = el('button', { id:'ttSurveySubmit', type:'submit', className:'btn btn-primary', textContent:'Enviar' });
+        actions.appendChild(btn);
+        formEl.appendChild(actions);
+      }
+
+    } catch (e){
+      formEl.innerHTML = `<div class="field"><span style="color:#e66">No se pudo cargar la encuesta.</span></div>`;
+      console.warn(e);
+    }
+  }
+
+  function collectAnswers(formEl){
+    const data = {};
+    formEl.querySelectorAll('input,select,textarea').forEach(inp=>{
+      const name = inp.name || inp.id;
+      if (!name) return;
+      if (inp.type === 'checkbox') {
+        data[name] = inp.checked ? 'true' : 'false'; // el backend ya acepta strings "true"/"false"
+      } else if (inp.type === 'number') {
+        data[name] = inp.value === '' ? null : Number(inp.value);
+      } else {
+        data[name] = inp.value;
+      }
+    });
+    return data;
+  }
+
+async function submitSurvey(formEl, resultEl, closeModal){
+  // 1) Usuario desde storage
+  const getUserFromStorage = () => {
+    try {
+      const keys = ['user','usuario','usuarioLogueado','currentUser'];
+      for (const k of keys) {
+        const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const user = getUserFromStorage();
+  if (!user) {
+    const next = encodeURIComponent(location.pathname);
+    location.href = `/Login.html?next=${next}`;
+    return;
+  }
+
+  const userId   = user.usuario_id ?? user.id ?? user.userId ?? null;
+  const username = user.usuario    ?? user.username ?? user.nombreUsuario ?? null;
+
+  // 2) Respuestas
+  const respuestas = collectAnswers(formEl);
+  if (userId)   respuestas.usuario_id = userId;
+  if (username) respuestas.usuario    = username;
+
+  if ('presupuesto' in respuestas && (respuestas.presupuesto == null || respuestas.presupuesto === '')) {
+    alert('Por favor ingresa tu presupuesto.');
+    return;
+  }
+
+  // 3) Enviar (UNA sola llamada) y pintar
+  try {
+    const resp = await fetch('/api/sugerencias/full', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        respuestas,
+        topN: TOP_N,
+        encuestaId: ENCUESTA_ID,
+        usuarioFallback: username || null
+      })
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text().catch(()=> '');
+      throw new Error(`Error ${resp.status}: ${txt || 'no se pudo crear la sugerencia'}`);
+    }
+
+    const data = await resp.json();     // ✅ ESTA es la respuesta buena
+    renderResult(data, resultEl);       // ✅ pinta con 'data'
+  } catch (e) {
+    console.error(e);
+    resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
+  }
+}
+
+
+
+  function renderResult(data, box){
+    const rec = data?.recomendaciones || {};
+    const rows = []
+      .concat((rec.gpu || []).map(x => ['GPU', x.nombre, x.precio, x.gama, x.enlace]))
+      .concat((rec.cpu || []).map(x => ['CPU', x.nombre, x.precio, x.gama, x.enlace]))
+      .concat((rec.ram || []).map(x => ['RAM', x.nombre, x.precio, x.gama, x.enlace]))
+      .concat((rec.almacenamiento || []).map(x => ['ALMACENAMIENTO', x.nombre, x.precio, x.gama, x.enlace]))
+      .concat((rec.motherboard || []).map(x => ['MOTHERBOARD', x.nombre, x.precio, x.gama, x.enlace]));
+
+    if (!rows.length){
+      box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
+      return;
+    }
+
+    box.innerHTML = `
+      <h4 style="margin:10px 0;">Tus recomendaciones</h4>
+      <div class="data-table">
+        <table>
+          <thead><tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Gama</th></tr></thead>
+          <tbody>
+            ${rows.map(([cat, nom, pre, gam, url]) => `
+              <tr>
+                <td>${cat}</td>
+                <td>${url ? `<a href="${url}" target="_blank" rel="noopener">${nom}</a>` : nom}</td>
+                <td>${Number(pre||0).toFixed(2)}</td>
+                <td>${gam ?? ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // init
+  document.addEventListener('DOMContentLoaded', injectUI);
+})();
+
+</script>
 </body>
 </html>

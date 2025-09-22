@@ -698,3 +698,226 @@ textarea.form-control::placeholder {
   color: #fff;
 }
 
+
+
+
+
+
+
+
+
+
+
+/* ========= TiendaTech Questionnaire (ttq) =========
+   - Prefijo único: ttq-
+   - Seguro de colisiones
+   - Incluye soporte para los IDs antiguos (#ttSurvey...) por compatibilidad
+   ------------------------------------------------- */
+
+/* Paleta mínima (puedes adaptar a tu theme) */
+:root {
+  --ttq-bg: #1e1e1e;
+  --ttq-fg: #ffffff;
+  --ttq-border: #3a3a3a;
+  --ttq-muted: #a9b0a6;
+  --ttq-shadow: rgba(0,0,0,.4);
+  --ttq-accent: #5fb13d;
+  --ttq-accent-2: #2e7d32;
+}
+
+/* Overlay */
+#ttq-overlay,
+#ttSurveyOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: none;
+  z-index: 9998;
+}
+
+/* Modal wrapper */
+#ttq-modal,
+#ttSurveyModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Modal content */
+.ttq-content,
+.tt-modal-content {
+  max-width: 680px;
+  width: 92%;
+  background: var(--ttq-bg);
+  color: var(--ttq-fg);
+  border-radius: 12px;
+  padding: 16px 16px 12px;
+  box-shadow: 0 10px 30px var(--ttq-shadow);
+  position: relative;
+}
+
+/* Título */
+.ttq-title,
+.tt-modal-title {
+  margin: 4px 32px 12px 4px;
+  font-weight: 700;
+}
+
+/* Botón cerrar (X) */
+.ttq-close,
+.tt-modal-close {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  margin-top: -4px;
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* Campos del formulario */
+#ttq-form .ttq-field,
+#ttSurveyForm .field {
+  margin-bottom: 10px;
+}
+
+#ttq-form label,
+#ttSurveyForm label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#ttq-form input,
+#ttq-form select,
+#ttq-form textarea,
+#ttSurveyForm input,
+#ttSurveyForm select,
+#ttSurveyForm textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--ttq-border);
+  background: transparent;
+  color: inherit;
+  outline: none;
+}
+
+#ttq-form .ttq-field.ttq-inline,
+#ttSurveyForm .field.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#ttq-form .ttq-field.ttq-inline label,
+#ttSurveyForm .field.inline label {
+  margin: 0;
+}
+
+/* Acciones (pie del modal) */
+.ttq-actions,
+.tt-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Botones */
+.ttq-btn,
+.btn.ttq-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ttq-accent-2);
+  background: var(--ttq-accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ttq-btn.ttq-secondary {
+  background: #333;
+  border-color: #555;
+}
+
+/* Resultado */
+.ttq-result,
+.tt-result {
+  margin-top: 12px;
+}
+
+.ttq-result table,
+.tt-result table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ttq-result th,
+.ttq-result td,
+.tt-result th,
+.tt-result td {
+  padding: 8px;
+  border-bottom: 1px solid var(--ttq-border);
+  text-align: left;
+}
+
+.ttq-muted {
+  color: var(--ttq-muted);
+}
+
+/* Accesibilidad hover/focus */
+#ttq-form input:focus,
+#ttq-form select:focus,
+#ttSurveyForm input:focus,
+#ttSurveyForm select:focus {
+  border-color: var(--ttq-accent);
+  box-shadow: 0 0 0 2px rgba(95,177,61,.2);
+}
+
+/* Responsive pequeño */
+@media (max-width: 420px) {
+  .ttq-content,
+  .tt-modal-content {
+    padding: 12px;
+  }
+  .ttq-close,
+  .tt-modal-close {
+    right: 12px;
+  }
+}
+/* Forzar controles nativos en modo oscuro dentro del modal */
+#ttSurveyModal,
+.ttq-modal,
+#ttSurveyForm {
+  color-scheme: dark;               /* ✅ hace que el menú desplegable nativo sea oscuro */
+}
+
+/* Estilo del select y sus opciones (fallback para navegadores que ignoran color-scheme) */
+#ttSurveyForm select {
+  background: #1f1f1f;
+  color: #eaeaea;
+  border: 1px solid #444;
+}
+
+#ttSurveyForm select option {
+  background: #1f1f1f;              /* fondo del panel de opciones */
+  color: #eaeaea;                   /* texto de las opciones */
+}
+
+#ttSurveyForm select option:hover,
+#ttSurveyForm select option:checked {
+  background: #2a2a2a;              /* resalte al pasar/seleccionar */
+  color: #fff;
+}
+
+/* (opcional) anular fondo blanco por autofill en algunos navegadores */
+#ttSurveyForm select:-internal-autofill-selected {
+  background: #1f1f1f !important;
+  color: #eaeaea !important;
+}
+

@@ -28,7 +28,8 @@
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
     <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
-    <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
+      <div class="nav-item" onclick="showSection('suggestions', this)">Sugerencias</div>
+      <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
     <div class="nav-item" onclick="showSection('inventory', this)">Movimiento de Inventario</div>
     <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
     <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
@@ -111,7 +112,149 @@
       </div>
     </div>
 
-  <!-- Usuarios -->
+      <!-- Sugerencias -->
+      <div id="suggestions" class="admin-section">
+          <div class="section-title">🧠 Sugerencias</div>
+
+          <!-- Pestañas simples -->
+          <div class="toolbar" style="gap:.5rem; display:flex; flex-wrap:wrap;">
+              <button class="btn btn-outline" id="tab_encuesta_btn">Encuesta</button>
+              <button class="btn btn-outline" id="tab_historial_btn">Historial</button>
+              <div style="flex:1"></div>
+              <button class="btn btn-primary" id="btn_refrescar_sug">Refrescar</button>
+          </div>
+
+          <!-- Sub-sección: Encuesta (única) -->
+          <div id="sg_encuesta" class="action-grid">
+              <div class="action-card">
+                  <h3>📝 Preguntas</h3>
+                  <div class="form-group">
+                      <label>Nueva/editar pregunta</label>
+                      <div class="grid-2">
+                          <input class="form-control" id="ep_key" placeholder="key (ej: uso, resolucion)">
+                          <input class="form-control" id="ep_texto" placeholder="Texto visible">
+                      </div>
+                      <div class="grid-2">
+                          <input class="form-control" id="ep_orden" type="number" placeholder="Orden">
+                          <select class="form-control" id="ep_hab">
+                              <option value="true">Habilitada</option>
+                              <option value="false">Deshabilitada</option>
+                          </select>
+                      </div>
+                      <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                          <button class="btn btn-primary" id="ep_guardar">Guardar</button>
+                          <button class="btn btn-danger"  id="ep_borrar">Borrar</button>
+                      </div>
+                  </div>
+
+                  <div class="data-table">
+                      <table>
+                          <thead><tr><th>Key</th><th>Texto</th><th>Orden</th><th>Estado</th></tr></thead>
+                          <tbody id="enc_preguntas_list">
+                          <tr><td colspan="4" class="tt-muted-row">Cargando…</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+
+              <div class="action-card">
+                  <h3>🔘 Opciones</h3>
+                  <div class="form-group">
+                      <label>Nueva/editar opción</label>
+                      <div class="grid-2">
+                          <input class="form-control" id="eo_key"   placeholder="pregunta_key (ej: uso)">
+                          <input class="form-control" id="eo_valor" placeholder="valor (ej: gaming)">
+                      </div>
+                      <div class="grid-2">
+                          <input class="form-control" id="eo_texto" placeholder="Texto visible">
+                          <input class="form-control" id="eo_orden" type="number" placeholder="Orden">
+                      </div>
+                      <select class="form-control" id="eo_hab" style="margin-top:.5rem;">
+                          <option value="true">Habilitada</option>
+                          <option value="false">Deshabilitada</option>
+                      </select>
+                      <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.5rem;">
+                          <button class="btn btn-primary" id="eo_guardar">Guardar</button>
+                          <button class="btn btn-danger"  id="eo_borrar">Borrar</button>
+                      </div>
+                  </div>
+
+                  <div class="data-table">
+                      <table>
+                          <thead><tr><th>Key</th><th>Valor</th><th>Texto</th><th>Orden</th><th>Estado</th></tr></thead>
+                          <tbody id="enc_opciones_list">
+                          <tr><td colspan="5" class="tt-muted-row">Selecciona una pregunta…</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+
+              <div class="action-card">
+                  <h3>🧩 Reglas (respuesta → gama)</h3>
+                  <div class="form-group">
+                      <div class="grid-2">
+                          <input class="form-control" id="er_key"   placeholder="pregunta_key">
+                          <input class="form-control" id="er_valor" placeholder="valor">
+                      </div>
+                      <div class="grid-2">
+                          <select class="form-control" id="er_categoria">
+                              <option>GPU</option><option>CPU</option><option>RAM</option>
+                              <option>ALMACENAMIENTO</option><option>MOTHERBOARD</option>
+                          </select>
+                          <select class="form-control" id="er_gama">
+                              <option>BAJA</option><option>MEDIA</option><option>ALTA</option>
+                          </select>
+                      </div>
+                      <div class="grid-2">
+                          <input class="form-control" id="er_delta" type="number" placeholder="delta_rank (ej: 0, 1)">
+                          <select class="form-control" id="er_hab">
+                              <option value="true">Habilitada</option>
+                              <option value="false">Deshabilitada</option>
+                          </select>
+                      </div>
+                      <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.5rem;">
+                          <button class="btn btn-primary" id="er_guardar">Guardar</button>
+                          <button class="btn btn-danger"  id="er_borrar">Borrar</button>
+                      </div>
+                  </div>
+
+                  <div class="data-table">
+                      <table>
+                          <thead><tr><th>Key</th><th>Valor</th><th>Categoría</th><th>Gama</th><th>Δ</th><th>Estado</th></tr></thead>
+                          <tbody id="enc_reglas_list">
+                          <tr><td colspan="6" class="tt-muted-row">Selecciona una pregunta/opción…</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Sub-sección: Historial de Sugerencias -->
+          <div id="sg_historial" class="action-grid" style="display:none;">
+              <div class="action-card">
+                  <h3>📜 Últimas sugerencias</h3>
+                  <div class="form-group">
+                      <label>ID de usuario</label>
+                      <input id="sh_usuario_id" class="form-control" placeholder="Ej: 1">
+                  </div>
+                  <div style="display:flex; gap:.5rem;">
+                      <button class="btn btn-primary" id="sh_ver_ultima">Ver última del usuario</button>
+                  </div>
+
+                  <div class="data-table" style="margin-top:1rem;">
+                      <table>
+                          <thead><tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Gama</th></tr></thead>
+                          <tbody id="sh_result">
+                          <tr><td colspan="4" class="tt-muted-row">Sin datos…</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+
+      <!-- Usuarios -->
   <div id="users" class="admin-section">
     <div class="section-title">👥 Gestión de Usuarios</div>
 

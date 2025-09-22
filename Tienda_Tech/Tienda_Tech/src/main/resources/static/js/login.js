@@ -1,111 +1,95 @@
 // /js/login.js
-// === Configura aquí ===
-const USE_MOCK = false; // true = sin backend; false = usa /api/login
+const USE_MOCK = false; // pon true para probar sin backend
 
 (function () {
-  // --- Helpers de sesión (fallback si auth-menu no los define) ---
   function getSessionUser() {
-    if (typeof window.getSessionUser === 'function') return window.getSessionUser();
     const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
     try { return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
-  function isLoggedIn() {
-    if (typeof window.isLoggedIn === 'function') return window.isLoggedIn();
-    return !!getSessionUser();
-  }
+  function isLoggedIn() { return !!getSessionUser(); }
   function setLoggedUser(u, token) {
-    if (typeof window.setLoggedUser === 'function') return window.setLoggedUser(u, token);
     sessionStorage.setItem('user', JSON.stringify(u));
     if (token) localStorage.setItem('token', token);
   }
 
-  // --- Normaliza rol del objeto user ---
   function parseRole(u) {
-    if (!u) return { id: 0, name: '', isAdmin: false, isWorker: false, isClient: false };
-    const id  = parseInt(u.id_rol ?? u.idRol ?? u.rol_id ?? u.role_id ?? u.idrol ?? 0, 10);
-    const name = String(u.rol ?? u.role ?? u.roleName ?? u.rolNombre ?? u.nombreRol ?? '').toLowerCase();
-    const isAdmin  = name === 'admin'      || id === 1;
-    const isClient = name === 'cliente'    || name === 'client' || id === 2;
-    const isWorker = name === 'trabajador' || name === 'worker' || id === 3;
-    return { id, name, isAdmin, isWorker, isClient };
+    if (!u) return { isAdmin:false, isWorker:false };
+    const id  = parseInt(u.id_rol ?? u.idRol ?? u.rol_id ?? 0, 10);
+    const name = String(u.rol ?? u.role ?? '').toLowerCase();
+    return {
+      isAdmin:  name === 'admin' || id === 1,
+      isWorker: name === 'trabajador' || name === 'worker' || id === 3
+    };
   }
-
-  // --- Decide adónde ir según rol ---
   function redirectByRole(u) {
     const { isAdmin, isWorker } = parseRole(u);
     let home = '/index.html';
-    if (isAdmin)  home = '/admin.html';
+    if (isAdmin) home = '/admin.html';
     else if (isWorker) home = '/trabajador.html';
     const next = new URLSearchParams(location.search).get('next') || home;
     location.href = next;
   }
+  if (isLoggedIn()) { redirectByRole(getSessionUser()); return; }
 
-  // --- Si YA hay sesión, salta directo a la home por rol ---
-  if (isLoggedIn()) {
-    redirectByRole(getSessionUser());
-    return;
-  }
-
-  // --- UI helpers opcionales ---
-  function notify(msg, type) {
-    if (typeof window.showMessage === 'function') return window.showMessage(msg, type);
-    alert(msg);
-  }
+  function notify(msg) { alert(msg); }
 
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('loginForm') || document.querySelector('form[data-login]');
-    if (!form) { console.warn('login.js: No se encontró el formulario (#loginForm o [data-login]).'); return; }
+    if (!form) { console.warn('login.js: no hay #loginForm ni [data-login]'); return; }
 
-    // Inputs (con y sin ñ)
     const $u = form.querySelector('#usuario, [name="usuario"]');
     const $p = form.querySelector('#contraseña, #contrasena, [name="contraseña"], [name="contrasena"], input[type="password"]');
     const btn = form.querySelector('.login-button');
-
-    const uiBusy = (on) => { if (!btn) return; btn.disabled = !!on; btn.textContent = on ? 'Validando...' : 'Entrar'; btn.style.background = on ? '#666' : ''; };
+    const uiBusy = (on) => { if (!btn) return; btn.disabled = !!on; btn.textContent = on ? 'Validando...' : 'Entrar'; };
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const usuario    = ($u?.value || '').trim();
       const contrasena = $p?.value || '';
-      if (!usuario || !contrasena) { notify('Por favor completa todos los campos', 'error'); return; }
+      if (!usuario || !contrasena) { notify('Completa usuario y contraseña'); return; }
 
-      // ====== MODO MOCK ======
+      // ===== MOCK (para probar UI sin backend) =====
       if (USE_MOCK) {
-        // escribe "admin", "trabajador" o cualquier otro para simular
-        let mockId = 2;
-        if (usuario.toLowerCase() === 'admin') mockId = 1;
-        if (usuario.toLowerCase() === 'trabajador') mockId = 3;
-        const mockUser = { usuarioId: 999, usuario, nombre: usuario, id_rol: mockId, rol: mockId===1?'admin':mockId===3?'trabajador':'cliente' };
+        const mockId = usuario.toLowerCase()==='admin' ? 1 : (usuario.toLowerCase()==='trabajador' ? 3 : 2);
+        const mockUser = { usuarioId: 1, usuario, nombre: usuario, id_rol: mockId, rol: mockId===1?'admin':mockId===3?'trabajador':'cliente' };
         setLoggedUser(mockUser, 'mock-token');
         redirectByRole(mockUser);
         return;
       }
 
-      // ====== BACKEND REAL ======
+      // ===== BACKEND REAL =====
       uiBusy(true);
       try {
-        // Acepta "contrasenia", "contrasena" o "contraseña" del lado del server
+        // Usa UNO de tus endpoints (sé consistente). Aquí /api/login:
         const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usuario, contrasena }) // sin ñ
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          credentials:'include',
+          // Enviamos las 3 variantes por si tu controller espera una en particular:
+          body: JSON.stringify({ usuario, contrasena, contrasenia: contrasena, password: contrasena })
         });
-        let data; try { data = await res.json(); } catch { data = {}; }
+
+        const data = await res.json().catch(()=> ({}));
 
         if (!res.ok) {
-          notify(data.message || `Error ${res.status} en el servidor`, 'error');
-          uiBusy(false); return;
+          notify(data.message || `Error ${res.status} en el servidor`);
+          return;
         }
-        if (!(data.success && data.user)) {
-          notify(data.message || 'Credenciales inválidas', 'error');
-          uiBusy(false); return;
-        }
+        // Ajusta a tu respuesta real:
+        // ejemplos válidos: {success:true, user:{...}, token:'...'} o {user:{...}, access:'...'}
+        const user  = data.user || data.usuario || null;
+        const token = data.token || data.access || data.accessToken || null;
 
-        setLoggedUser(data.user, data.token);
-        redirectByRole(data.user);
+        if (!user) { notify(data.message || 'Credenciales inválidas'); return; }
+
+        setLoggedUser(user, token);
+        // si tienes un helper global
+        window.SessionAuth?.sessionStart?.({ access: token, user });
+
+        redirectByRole(user);
       } catch (err) {
         console.error(err);
-        notify('Error de conexión con el servidor', 'error');
+        notify('Error de conexión con el servidor');
       } finally {
         uiBusy(false);
       }

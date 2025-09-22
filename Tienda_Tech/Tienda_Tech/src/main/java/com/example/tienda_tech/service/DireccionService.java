@@ -8,9 +8,9 @@ import com.example.tienda_tech.repository.CiudadRepository;
 import com.example.tienda_tech.repository.DireccionRepository;
 import com.example.tienda_tech.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
@@ -26,6 +26,8 @@ public class DireccionService {
         return repo.findByUsuario_UsuarioIdAndHabilitadoTrue(usuarioId)
                 .stream().map(this::toDTO).toList();
     }
+
+    private final JdbcTemplate jdbc;
 
     @Transactional
     public DireccionDTO crear(Integer usuarioId, DireccionDTO dto){
@@ -101,4 +103,23 @@ public class DireccionService {
         );
         return dto;
     }
+    @Transactional(readOnly = true)
+    public List<DireccionDTO> listarDetallado(Integer usuarioId){
+        final String sql = "SELECT * FROM public.f_mostrar_direccion_usuario_(?)";
+        return jdbc.query(sql, (rs, i) -> {
+            DireccionDTO dto = new DireccionDTO();
+            Number n = (Number) rs.getObject("direccion_id");
+            dto.setDireccionId(n == null ? null : n.shortValue());  // ← Short, como en tu DTO
+            dto.setUsuarioId(usuarioId);
+            dto.setCalle(rs.getString("calle"));
+            dto.setReferencia(rs.getString("referencia"));
+            dto.setCiudadNombre(rs.getString("nombre_de_ciudad"));
+            dto.setProvinciaNombre(rs.getString("nombre_de_provincia"));
+            dto.setHabilitado(true);
+            // Nota: tu función no devuelve ciudad_id; si lo necesitas, amplíala para incluirlo.
+            // dto.setCiudadId( ... );
+            return dto;
+        }, usuarioId);
+    }
+
 }

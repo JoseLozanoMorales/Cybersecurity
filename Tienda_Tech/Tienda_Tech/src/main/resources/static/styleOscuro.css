@@ -235,6 +235,7 @@
     .tt-admin .account-grid{ grid-template-columns: 1fr; }
     .tt-admin .acc-avatar{ justify-self: center; margin-bottom: .75rem; }
 }
+
 /* ===========================
     MODAL PARA EDITAR EL PRODUCTO
    ===== Backdrop + ventana (para Editar Producto) =====

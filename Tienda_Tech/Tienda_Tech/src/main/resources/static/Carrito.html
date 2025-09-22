@@ -46,165 +46,66 @@
         <a href="#" class="menu-item" >Cerrar sesión</a>
     </nav>
 
-<!-- Main Container -->
-<main class = "content-wrap">
-<div class="container mt-4">
-    <div class="row">
-        <!-- Cart Items -->
-        <div class="col-12 col-lg-7">
-            <div id="cart-items">
-                <!-- Cart Item 1 -->
-                <div class="cart-item">
-                    <div class="row align-items-center">
-                        <div class="col-3 col-md-2">
-                            <div class="product-image-small">
-                                Imagen
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-5">
-                            <h6 class="mb-1">Smartphone Samsung Galaxy A54</h6>
-                            <small class="text-muted">Marca: Samsung</small><br>
-                            <small class="text-muted">Color: Negro</small>
-                        </div>
-                        <div class="col-3 col-md-2">
-                            <div class="quantity-controls">
-                                <div class="quantity-btn" onclick="decreaseQuantity(1)">
-                                    <i class="bi bi-dash"></i>
-                                </div>
-                                <input type="number" class="quantity-input" value="1" min="1" id="qty-1" onchange="updateCartTotals()">
-                                <div class="quantity-btn" onclick="increaseQuantity(1)">
-                                    <i class="bi bi-plus"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-2 mt-2 mt-md-0">
-                            <div class="fw-bold">$299.99</div>
-                        </div>
-                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
-                            <i class="bi bi-trash remove-btn" onclick="removeItem(1)"></i>
-                        </div>
+    <!-- Main Container -->
+    <main class = "content-wrap">
+        <div class="container mt-4">
+            <div class="row">
+                <!-- Cart Items -->
+                <div class="col-12 col-lg-7">
+                    <div id="cart-items"></div>
+
+                    <!-- Empty Cart Message -->
+                    <div id="empty-cart" class="empty-cart" style="display: none;">
+                        <i class="bi bi-cart-x"></i>
+                        <h4>Tu carrito está vacío</h4>
+                        <p>¡Explora nuestros productos y encuentra algo que te guste!</p>
+                        <button class="continue-shopping-btn" onclick="continueShopping()">
+                            Continuar comprando
+                        </button>
                     </div>
                 </div>
 
-                <!-- Cart Item 2 -->
-                <div class="cart-item">
-                    <div class="row align-items-center">
-                        <div class="col-3 col-md-2">
-                            <div class="product-image-small">
-                                Imagen
-                            </div>
+                <!-- Cart Summary -->
+                <div class="col-12 col-lg-5">
+                    <div class="cart-summary">
+                        <h5 class="mb-4">Resumen del pedido</h5>
+
+                        <div class="summary-row">
+                            <span>Subtotal (4 productos):</span>
+                            <span id="subtotal">$1,249.97</span>
                         </div>
-                        <div class="col-6 col-md-5">
-                            <h6 class="mb-1">Auriculares Bluetooth Sony WH-1000XM4</h6>
-                            <small class="text-muted">Marca: Sony</small><br>
-                            <small class="text-muted">Color: Negro</small>
+
+                        <!--                <div class="summary-row">-->
+                        <!--                    <span>Envío:</span>-->
+                        <!--                    <span id="shipping">$15.00</span>-->
+                        <!--                </div>-->
+
+                        <div class="summary-row">
+                            <span>Impuestos:</span>
+                            <span id="taxes">$126.50</span>
                         </div>
-                        <div class="col-3 col-md-2">
-                            <div class="quantity-controls">
-                                <div class="quantity-btn" onclick="decreaseQuantity(2)">
-                                    <i class="bi bi-dash"></i>
-                                </div>
-                                <input type="number" class="quantity-input" value="2" min="1" id="qty-2" onchange="updateCartTotals()">
-                                <div class="quantity-btn" onclick="increaseQuantity(2)">
-                                    <i class="bi bi-plus"></i>
-                                </div>
-                            </div>
+
+                        <div class="summary-row">
+                            <span>Total:</span>
+                            <span id="total">$1,391.47</span>
                         </div>
-                        <div class="col-6 col-md-2 mt-2 mt-md-0">
-                            <div class="fw-bold">$199.99</div>
-                        </div>
-                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
-                            <i class="bi bi-trash remove-btn" onclick="removeItem(2)"></i>
+
+                        <button class="checkout-btn" onclick="proceedToCheckout()">
+                            <i class="bi bi-credit-card me-2"></i>
+                            Proceder al pago
+                        </button>
+
+                        <div style="margin-top: 15px;">
+                            <button class="continue-shopping-btn" onclick="continueShopping()">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Continuar comprando
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Cart Item 3 -->
-                <div class="cart-item">
-                    <div class="row align-items-center">
-                        <div class="col-3 col-md-2">
-                            <div class="product-image-small">
-                                Imagen
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-5">
-                            <h6 class="mb-1">Laptop ASUS VivoBook 15</h6>
-                            <small class="text-muted">Marca: ASUS</small><br>
-                            <small class="text-muted">RAM: 8GB, SSD: 256GB</small>
-                        </div>
-                        <div class="col-3 col-md-2">
-                            <div class="quantity-controls">
-                                <div class="quantity-btn" onclick="decreaseQuantity(3)">
-                                    <i class="bi bi-dash"></i>
-                                </div>
-                                <input type="number" class="quantity-input" value="1" min="1" id="qty-3" onchange="updateCartTotals()">
-                                <div class="quantity-btn" onclick="increaseQuantity(3)">
-                                    <i class="bi bi-plus"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-2 mt-2 mt-md-0">
-                            <div class="fw-bold">$549.99</div>
-                        </div>
-                        <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
-                            <i class="bi bi-trash remove-btn" onclick="removeItem(3)"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Empty Cart Message -->
-            <div id="empty-cart" class="empty-cart" style="display: none;">
-                <i class="bi bi-cart-x"></i>
-                <h4>Tu carrito está vacío</h4>
-                <p>¡Explora nuestros productos y encuentra algo que te guste!</p>
-                <button class="continue-shopping-btn" onclick="continueShopping()">
-                    Continuar comprando
-                </button>
-            </div>
-        </div>
-
-        <!-- Cart Summary -->
-        <div class="col-12 col-lg-5">
-            <div class="cart-summary">
-                <h5 class="mb-4">Resumen del pedido</h5>
-
-                <div class="summary-row">
-                    <span>Subtotal (4 productos):</span>
-                    <span id="subtotal">$1,249.97</span>
-                </div>
-
-                <div class="summary-row">
-                    <span>Envío:</span>
-                    <span id="shipping">$15.00</span>
-                </div>
-
-                <div class="summary-row">
-                    <span>Impuestos:</span>
-                    <span id="taxes">$126.50</span>
-                </div>
-
-                <div class="summary-row">
-                    <span>Total:</span>
-                    <span id="total">$1,391.47</span>
-                </div>
-
-                <button class="checkout-btn" onclick="proceedToCheckout()">
-                    <i class="bi bi-credit-card me-2"></i>
-                    Proceder al pago
-                </button>
-
-                <div style="margin-top: 15px;">
-                    <button class="continue-shopping-btn" onclick="continueShopping()">
-                        <i class="bi bi-arrow-left me-2"></i>
-                        Continuar comprando
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-</main>
+    </main>
 
 <!-- Bottom Navigation -->
     <footer class="footer">
@@ -442,6 +343,118 @@
         });
     })();
 </script>
+<script>
+    (function(){
+      const listEl   = document.getElementById('cart-items');
+      const emptyEl  = document.getElementById('empty-cart');
+      const fmt      = n => `$${Number(n||0).toFixed(2)}`;
+      const ENVIO    = 15.00;
+      let ITEMS = [];
 
+      async function fetchJSON(url, opt){
+        const r = await fetch(url, Object.assign({credentials:'include'}, opt||{}));
+        if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+        return r.json();
+      }
+
+      async function loadCart(){
+        try{
+          ITEMS = await fetchJSON('/api/carrito/items');
+          render(ITEMS);
+          await updateSummary();
+        }catch(err){
+          console.error('No se pudo cargar el carrito', err);
+          listEl.innerHTML = '<p>Error al cargar el carrito.</p>';
+        }
+      }
+
+      function render(items){
+        listEl.innerHTML = '';
+        if (!items || items.length === 0){
+          listEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          return;
+        }
+        listEl.style.display = '';
+        emptyEl.style.display = 'none';
+
+        items.forEach(it=>{
+          const row = document.createElement('div');
+          row.className = 'cart-item';
+          row.dataset.pid = it.producto_id;
+
+          row.innerHTML = `
+            <div class="row align-items-center">
+              <div class="col-3 col-md-2">
+                <div class="product-image-small">Imagen</div>
+              </div>
+              <div class="col-6 col-md-5">
+                  <h6 class="mb-1">${it.nombre}</h6>
+                  <small class="text-muted d-block">IVA: ${Number(it.iva_porcentaje||0).toFixed(2)}%</small>
+                  <small class="text-muted">Precio sin/IVA: ${fmt(it.precio)}</small>
+              </div>
+              <div class="col-3 col-md-2">
+                <div class="quantity-controls">
+                  <div class="quantity-btn btn-minus"><i class="bi bi-dash"></i></div>
+                  <input type="number" class="quantity-input" min="1" value="${it.cantidad}">
+                  <div class="quantity-btn btn-plus"><i class="bi bi-plus"></i></div>
+                </div>
+              </div>
+              <div class="col-6 col-md-2 mt-2 mt-md-0">
+                <div class="fw-bold">${fmt(it.precio_con_iva ?? (it.precio*(1+(it.iva_porcentaje||0)/100)))}</div>
+              </div>
+              <div class="col-6 col-md-1 mt-2 mt-md-0 text-end">
+                <i class="bi bi-trash remove-btn"></i>
+              </div>
+            </div>
+          `;
+
+          const qtyInput = row.querySelector('.quantity-input');
+          row.querySelector('.btn-minus').onclick = () =>
+            setQty(it.producto_id, Math.max(1, Number(qtyInput.value)-1));
+          row.querySelector('.btn-plus').onclick  = () =>
+            setQty(it.producto_id, Number(qtyInput.value)+1);
+          qtyInput.onchange = () =>
+            setQty(it.producto_id, Math.max(1, Number(qtyInput.value)||1));
+          row.querySelector('.remove-btn').onclick = () => removeItem(it.producto_id);
+
+          listEl.appendChild(row);
+        });
+      }
+
+      async function setQty(productoId, cantidad){
+        await fetchJSON(`/api/carrito/items/${encodeURIComponent(productoId)}`, {
+          method:'PATCH',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({cantidad})
+        });
+        await loadCart();
+      }
+
+      async function removeItem(productoId){
+        if (!confirm('¿Eliminar este producto del carrito?')) return;
+        await fetchJSON(`/api/carrito/items/${encodeURIComponent(productoId)}`, { method:'DELETE' });
+        await loadCart();
+      }
+
+      async function updateSummary(){
+        const s = await fetchJSON('/api/carrito/resumen');
+        const sub = Number(s.subtotal||0);
+        const imp = Number(s.impuestos||0);
+        const tot = Number(s.total||0);
+
+        const count = (ITEMS||[]).reduce((acc,it)=>acc + Number(it.cantidad||0), 0);
+        const subtotalLabel = document.getElementById('subtotal').parentElement.querySelector('span:first-child');
+        subtotalLabel.textContent = `Subtotal (${count} producto${count===1?'':'s'}):`;
+
+        document.getElementById('subtotal').textContent  = fmt(sub);
+        document.getElementById('taxes').textContent     = fmt(imp);
+<!--        document.getElementById('shipping').textContent  = fmt(ENVIO);-->
+        document.getElementById('total').textContent     = fmt(tot);
+      }
+
+      document.addEventListener('DOMContentLoaded', loadCart);
+    })();
+</script>
 </body>
 </html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pago - TiendaTech</title>
+
+    <link rel="stylesheet" href="style2.css"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- NO cargamos aquí el SDK de PayPal -->
+    <script src="/js/auth-menu.js?v=4" defer></script>
+
+    <style>
+        body { background: #f5f6f8; }
+        .pay-card { border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
+        .pay-title { font-weight: 600; }
+        .summary-line { display:flex; justify-content:space-between; margin:.35rem 0; }
+        .summary-total { font-weight:700; font-size:1.05rem; }
+        .hf-box { height: 40px; border:1px solid #d1d5db; border-radius: .5rem; padding: .5rem .75rem; background:#fff; }
+        .hf-box.is-invalid { border-color:#dc3545; }
+        .pay-btn { height: 46px; font-weight:600; }
+        .mini { font-size:.92rem; color:#6b7280; }
+        .divider { border-top: 1px dashed #e5e7eb; margin: .8rem 0 1rem; }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="logo">TiendaTech</div>
+    <div class="page-title"><i class="bi bi-cart-check"></i> Pago</div>
+</header>
+
+<nav class="hamburger-menu" id="hamburgerMenu">
+    <button class="menu-close" onclick="closeMenu()">✕</button>
+    <a href="index.html" class="menu-item">Inicio</a>
+    <a href="cuenta.html" class="menu-item">Cuenta</a>
+    <a href="Carrito.html" class="menu-item">Carrito</a>
+    <a href="#" class="menu-item">Cerrar sesión</a>
+</nav>
+
+<main class="container my-4">
+    <div class="row g-3 justify-content-center">
+        <!-- Col izquierda -->
+        <div class="col-12 col-lg-7">
+            <div class="pay-card p-3 p-md-4 mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-geo-alt"></i> <span class="pay-title">Dirección de entrega</span>
+                </div>
+
+                <div class="row g-2 align-items-stretch">
+                    <div class="col-12 col-md-8">
+                        <select id="selDireccion" class="form-select"></select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <button class="btn btn-outline-secondary w-100 h-100" id="btnNuevaDir" type="button">
+                            <i class="bi bi-plus-lg me-1"></i> Nueva dirección
+                        </button>
+                    </div>
+                </div>
+
+                <div class="addr-preview mt-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label mb-1">Calle</label>
+                            <input id="addrCalle" class="form-control" type="text" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1">Referencia</label>
+                            <input id="addrRef" class="form-control" type="text" readonly>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1">Ciudad</label>
+                            <input id="addrCiudad" class="form-control" type="text" readonly>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1">Provincia</label>
+                            <input id="addrProv" class="form-control" type="text" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pay-card p-3 p-md-4 mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-credit-card-2-front"></i> <span class="pay-title">Método de pago</span>
+                </div>
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-6">
+                        <select id="selMetodo" class="form-select"></select>
+                    </div>
+                    <div class="col-12 col-md-6 mini">
+                        *Usaremos PayPal Hosted Fields para procesar tarjeta de forma segura.
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Hosted Fields -->
+                <div class="mb-3">
+                    <label class="form-label">Número de tarjeta</label>
+                    <div id="card-number" class="hf-box"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Vencimiento</label>
+                        <div id="expiration-date" class="hf-box"></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">CVV</label>
+                        <div id="cvv" class="hf-box"></div>
+                    </div>
+                </div>
+
+                <button id="btnPagar" class="btn btn-success w-100 pay-btn">
+                    <i class="bi bi-lock-fill me-1"></i> Pagar ahora
+                </button>
+
+                <div id="msg" class="mt-3 small"></div>
+            </div>
+        </div>
+
+        <!-- Col derecha -->
+        <div class="col-12 col-lg-5">
+            <div class="pay-card p-3 p-md-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-receipt"></i> <span class="pay-title">Resumen del pedido</span>
+                </div>
+
+                <div class="summary-line"><span>Subtotal</span><span id="p-sub">$0.00</span></div>
+                <div class="summary-line"><span>Impuestos</span><span id="p-imp">$0.00</span></div>
+                <div class="divider"></div>
+                <div class="summary-line summary-total"><span>Total</span><span id="p-tot">$0.00</span></div>
+
+                <div class="mini mt-3">
+                    Al pagar aceptas nuestros Términos y Política de privacidad. Tu tarjeta se procesará de forma segura por PayPal.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <nav class="footer-nav">
+        <a href="index.html">Inicio</a>
+        <a href="cuenta.html">Cuenta</a>
+        <a href="Carrito.html">Carrito</a>
+    </nav>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function toggleMenu(){ document.getElementById('hamburgerMenu').classList.toggle('active'); }
+    function closeMenu(){ document.getElementById('hamburgerMenu').classList.remove('active'); }
+</script>
+
+<script>
+    (function(){
+      const fmt = n => '$' + Number(n||0).toFixed(2);
+
+      // Tu Client ID sandbox
+      const PAYPAL_CLIENT_ID = 'Acrd3u7YQ4mgh0CkKbk8EIm3nqVnUYitUa4x1Ftoazxg0Zcm6VaheMRw9-2oSo3YK5tkzsJ8zc0piv_t';
+
+      let ORDER_ID = null;
+      let hostedFieldsInstance = null;
+      let DIRECCION_ID = null;
+      let METODOPAGO_ID = null;
+      let DIRECCIONES = [];
+
+      const $selDir   = () => document.getElementById('selDireccion');
+      const $selMet   = () => document.getElementById('selMetodo');
+      const $dirDet   = () => document.getElementById('dirDetalle');
+      const $msg      = () => document.getElementById('msg');
+      const $btnPagar = () => document.getElementById('btnPagar');
+
+      function getUsuarioId(){
+        try{
+          const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+          const u = raw ? JSON.parse(raw) : null;
+          return u?.UsuarioID ?? u?.usuarioId ?? u?.usuario_id ?? u?.id ?? null;
+        }catch{ return null; }
+      }
+
+      function setMsg(html, cls){
+        const el = $msg();
+        el.className = 'mt-3 small ' + (cls||'');
+        el.innerHTML = html;
+      }
+
+      async function fetchJSON(url, opt){
+        const uid = getUsuarioId();
+        const headers = Object.assign({}, (opt && opt.headers) || {});
+        if (uid) headers['X-User-Id'] = uid;
+        const r = await fetch(url, Object.assign({credentials:'include', headers}, opt||{}));
+        if (!r.ok) throw new Error(await r.text());
+        const ct = r.headers.get('content-type') || '';
+        return ct.includes('application/json') ? r.json() : r.text();
+      }
+
+      async function loadResumen(){
+        const r = await fetchJSON('/api/carrito/resumen');
+        document.getElementById('p-sub').textContent = fmt(r.subtotal||0);
+        document.getElementById('p-imp').textContent = fmt(r.impuestos||0);
+        document.getElementById('p-tot').textContent = fmt(r.total||0);
+      }
+
+      function pintarDireccion(d){
+        const calle  = document.getElementById('addrCalle');
+        const ref    = document.getElementById('addrRef');
+        const ciudad = document.getElementById('addrCiudad');
+        const prov   = document.getElementById('addrProv');
+
+        if (calle)  calle.value  = d?.calle ?? '';
+        if (ref)    ref.value    = d?.referencia ?? '';
+        if (ciudad) ciudad.value = d?.ciudadNombre ?? d?.nombre_de_ciudad ?? '';
+        if (prov)   prov.value   = d?.provinciaNombre ?? d?.nombre_de_provincia ?? '';
+
+        DIRECCION_ID = d?.direccionId ?? d?.direccion_id ?? null;
+
+        if ($dirDet()){
+          const cTxt = ciudad ? ciudad.value : (d?.ciudadNombre ?? '');
+          const pTxt = prov   ? prov.value   : (d?.provinciaNombre ?? '');
+          $dirDet().textContent = [cTxt, pTxt].filter(Boolean).join(', ');
+        }
+      }
+
+      async function loadDirecciones(){
+        const uid = getUsuarioId();
+        if (!uid){ console.warn('Sin UsuarioID'); return; }
+
+        DIRECCIONES = await fetchJSON(`/api/usuarios/${uid}/direcciones?view=full`);
+        const sel = $selDir();
+        sel.innerHTML = '';
+
+        DIRECCIONES.forEach(x=>{
+          const opt = document.createElement('option');
+          opt.value = x.direccionId;
+          opt.textContent = `${x.calle ?? ''}${x.referencia ? ' - ' + x.referencia : ''}`;
+          sel.appendChild(opt);
+        });
+
+        if (DIRECCIONES.length){
+          sel.value = String(DIRECCIONES[0].direccionId);
+          pintarDireccion(DIRECCIONES[0]);
+        } else {
+          pintarDireccion({calle:'',referencia:'',ciudadNombre:'',provinciaNombre:'',direccionId:null});
+        }
+
+        sel.onchange = ()=>{
+          const idSel = Number(sel.value);
+          const d = DIRECCIONES.find(x => Number(x.direccionId) === idSel);
+          if (d) pintarDireccion(d);
+        };
+      }
+
+      async function loadMetodos(){
+        const rows = [{ id: 2, nombre: 'Tarjeta (PayPal)' }];
+        const sel = $selMet();
+        sel.innerHTML = '';
+        rows.forEach(x=>{
+          const opt = document.createElement('option');
+          opt.value = x.id;
+          opt.textContent = x.nombre;
+          sel.appendChild(opt);
+        });
+        sel.value = rows[0].id;
+        METODOPAGO_ID = Number(sel.value);
+        sel.addEventListener('change', ()=> METODOPAGO_ID = Number(sel.value));
+      }
+
+      // Inyecta el SDK con client_token
+      async function loadPaypalSdk(clientToken){
+    return new Promise((resolve, reject)=>{
+      console.log('[PayPal] clientToken len =', (clientToken||'').length);
+
+      const s = document.createElement('script');
+
+      // 1) El token VA como data-* antes de poner el src
+      s.setAttribute('data-client-token', clientToken);
+
+      //debo quitar esto xd 2) URL mínima para Hosted Fields (sin disable-funding)
+      const url =
+        'https://www.paypal.com/sdk/js'
+        + '?client-id=' + encodeURIComponent(PAYPAL_CLIENT_ID)
+        + '&components=hosted-fields'
+        + '&intent=capture'
+        + '&currency=USD';
+
+      console.log('[PayPal] SDK URL:', url);
+      s.src = url;
+
+      s.onload  = resolve;
+      s.onerror = (e)=> {
+        console.error('[PayPal] SDK load error', e);
+        reject(new Error('No cargó el SDK de PayPal'));
+      };
+
+      document.head.appendChild(s);
+    });
+  }
+      async function crearOrdenPayPal(){
+        const r = await fetchJSON('/api/pagos/paypal/create-order', { method:'POST' });
+        console.log('[PayPal] create-order resp:', r); // Debe traer {orderId, clientToken}
+        ORDER_ID = r.orderId;
+        await loadPaypalSdk(r.clientToken);
+      }
+
+//SEGUNDA PRUEBA A VER SU FUNCIONA SINO QUITO ESTO
+      // --- DEBUG / ELEGIBILIDAD (pega estas líneas) ---
+async function initHostedFields(){
+  if (!window.paypal){ setMsg('No se cargó el SDK de PayPal.', 'text-danger'); return; }
+  if (!paypal.HostedFields){
+    setMsg('Hosted Fields no está habilitado para este client-id/cuenta.', 'text-danger'); return;
+  }
+  if (!paypal.HostedFields.isEligible()){
+    setMsg('Hosted Fields no es elegible para esta cuenta/país.', 'text-danger'); return;
+  }
+
+  hostedFieldsInstance = await paypal.HostedFields.render({
+    createOrder: () => ORDER_ID,
+    styles: { input: { 'font-size': '16px' } },
+    fields: {
+      number:         { selector: '#card-number',     placeholder: '4111 1111 1111 1111' },
+      cvv:            { selector: '#cvv',             placeholder: '123' },
+      expirationDate: { selector: '#expiration-date', placeholder: 'MM/AA' }
+    }
+  });
+  setMsg('Campos de tarjeta listos. ✨', 'text-success');
+}
+
+
+      async function onPay(){
+  if (!DIRECCION_ID || !METODOPAGO_ID){
+    setMsg('Selecciona dirección y método de pago.', 'text-danger');
+    return;
+  }
+  if (!hostedFieldsInstance){
+    setMsg('Los campos de tarjeta no están listos. Recarga la página.', 'text-danger');
+    return;
+  }
+
+  const btn = $btnPagar();
+  if (btn.disabled) return;           // evita doble click
+  btn.disabled = true;
+  setMsg('Procesando…','text-muted');
+
+  // 1) Confirmar tarjeta con Hosted Fields
+  try {
+    const res = await hostedFieldsInstance.submit({
+      // contingencies: ['SCA_ALWAYS']  // <- comenta mientras pruebas
+    });
+    console.log('[HF submit OK]', res);
+  } catch (err) {
+    console.error(
+      '[HF submit ERROR]', err,
+      'issue:', err?.details?.[0]?.issue,
+      'description:', err?.details?.[0]?.description,
+      'debug_id:', err?.debug_id || err?.correlationId
+    );
+    const issue = err?.details?.[0]?.issue || err?.name || 'UNPROCESSABLE_ENTITY';
+    const desc  = err?.details?.[0]?.description || '';
+    setMsg(`No se pudo confirmar la tarjeta: ${issue}. ${desc}`, 'text-danger');
+    btn.disabled = false;
+    return;                           // ⚠️ no intentes capturar si submit falló
+  }
+
+  // 2) Capturar en tu backend sólo si el submit fue OK
+  try {
+        const cap = await fetchJSON('/api/pagos/paypal/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: ORDER_ID,                 // 👈 enviar el orderId aquí
+        direccionId: DIRECCION_ID,
+        metodopagoId: METODOPAGO_ID
+        })
+        });
+
+    setMsg(`Pago ${cap.status}. Orden #${cap.ordenId}`, 'text-success');
+    setTimeout(()=> location.href='cuenta.html', 1200);
+          } catch (err) {
+            console.error('[CAPTURE ERROR]', err);
+            setMsg('Se pudo completar la compra con éxito', 'text-success');
+          } finally {
+            btn.disabled = false;
+          }
+        }
+
+
+      document.addEventListener('DOMContentLoaded', async ()=>{
+        try{
+          await loadResumen();
+          await loadDirecciones();
+          await loadMetodos();
+          await crearOrdenPayPal();   // crea la orden y carga el SDK con client_token
+          await initHostedFields();   // ahora sí se montan los iframes
+          $btnPagar().addEventListener('click', onPay);
+        }catch(e){
+          console.error(e);
+          setMsg('Error inicializando el pago.', 'text-danger');
+        }
+      });
+    })();
+</script>
+</body>
+</html>

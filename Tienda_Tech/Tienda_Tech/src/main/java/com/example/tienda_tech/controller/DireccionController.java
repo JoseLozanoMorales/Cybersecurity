@@ -16,9 +16,14 @@ import java.util.List;
 public class DireccionController {
     private final DireccionService service;
 
+    // GET normal o detallado (con ?view=full)
     @GetMapping
-    public List<DireccionDTO> listar(@PathVariable Integer usuarioId){
-        return service.listar(usuarioId);
+    public List<DireccionDTO> listar(@PathVariable Integer usuarioId,
+                                     @RequestParam(value="view", required=false) String view){
+        if ("full".equalsIgnoreCase(view)) {
+            return service.listarDetallado(usuarioId);   // ← calle/ref/ciudad/provincia
+        }
+        return service.listar(usuarioId);                // ← tu lista JPA de siempre
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)

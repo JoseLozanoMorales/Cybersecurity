@@ -427,3 +427,91 @@ body.tt-no-scroll{ overflow: hidden; }
 @media (max-width: 860px){
   .tt-admin .modal-grid{ grid-template-columns: 1fr; }
 }
+/* ===== FIX específico para el modal de Galería ===== */
+.tt-admin #modalGaleria.modal-backdrop{
+  display:flex;                 /* centra la ventana */
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index: 9999;                /* por si acaso */
+}
+
+.tt-admin #modalGaleria .modal{
+  background: var(--tt-admin-surface);
+  color: var(--tt-admin-text);
+  border: 1px solid var(--tt-admin-border);
+  border-radius: 16px;
+  width: min(920px, 95vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 16px 20px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.25);
+}
+
+/* (opcional) los botones outline dentro del modal */
+.tt-admin #modalGaleria .btn.btn-outline{
+  background: transparent;
+  border: 1px solid var(--tt-admin-border);
+  color: var(--tt-admin-text);
+}
+/* Forzar que el atributo hidden gane SIEMPRE */
+#modalGaleria[hidden]{
+  display: none !important;
+}
+/* Modal de Galería más alto */
+.tt-admin #modalGaleria .modal{
+  max-height: 96vh;   /* antes 90vh */
+  min-height: 60vh;   /* asegura un alto mínimo cómodo */
+}
+/* ===== Galería: estructura del modal ===== */
+.tt-admin #modalGaleria .modal{
+  display: flex;
+  flex-direction: column;
+  min-height: 60vh;      /* alto cómodo */
+  max-height: 96vh;      /* puedes ajustar */
+}
+
+/* El bloque final (donde va la grilla) ocupa todo el alto disponible */
+.tt-admin #modalGaleria .group:last-of-type{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Contenedor de miniaturas ===== */
+#gal_grid{
+  flex: 1;                          /* <- hace que crezca */
+  min-height: 48vh;                 /* asegura área visible */
+  overflow: auto;                   /* scroll interno */
+  display: grid;                    /* grid de tarjetas */
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: .5rem;
+  background: var(--tt-admin-surface-2);
+  border: 1px solid var(--tt-admin-border);
+  border-radius: 8px;
+}
+
+/* ===== Tarjeta de imagen ===== */
+.gal-card{
+  background: #fff;
+  border: 1px solid var(--tt-admin-border);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gal-thumb{ aspect-ratio: 1 / 1; border-radius: 8px; overflow: hidden; background:#f3f4f6; }
+.gal-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.gal-meta{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.gal-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.gal-badge{ font-size:11px; padding:2px 6px; border-radius:999px; background:var(--tt-admin-surface-2); border:1px solid var(--tt-admin-border); }
+.gal-portada{ color:#f59e0b; }      /* estrella */
+.gal-drag{ cursor: grab; opacity:.75; }
+.gal-card.dragging{ opacity:.6; transform: scale(.98); }
+
+/* Detalles visuales menores */
+#gal_counters{ font-size:13px; color: var(--tt-admin-muted); }
+.tt-admin #modalGaleria label{ display:inline-flex; align-items:center; gap:.5rem; }

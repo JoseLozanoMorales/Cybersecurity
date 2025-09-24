@@ -202,6 +202,181 @@ const ROLES_CON_IDLE = new Set(['ADMIN','TRABAJADOR']);
 ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
   window.addEventListener(ev, ()=> { LAST_INTERACTION = Date.now(); }, {passive:true})
 );
+// === Idle watcher (client-side, sin backend) ================================
+
+// Normaliza el rol que llega dentro del objeto user (string, número, etc.)
+function __normalizeRole(r){
+  if (r == null) return '';
+  if (typeof r === 'string') return r.trim().toUpperCase();
+  if (typeof r === 'number') {
+    // Si tus IDs son distintos, ajusta este mapa:
+    const map = {1:'ADMIN', 2:'TRABAJADOR', 3:'CLIENTE'};
+    return (map[r] || '').toUpperCase();
+  }
+  return String(r).toUpperCase();
+}
+
+// IMPORTANT: si tu SessionAuth.sessionStart hace ROLE = user?.rol,
+// asegúrate de guardarlo normalizado:
+(function hardenRoleSetter(){
+  const _sessionStart = window.SessionAuth?.sessionStart;
+  if (_sessionStart && !_sessionStart.__wrapped){
+    window.SessionAuth.sessionStart = function({ access, user }){
+      if (user) user.rol = user.rol ?? user.role ?? user.rol_nombre ?? user.nombre_rol;
+      if (user) user.rol = __normalizeRole(user.rol);
+      return _sessionStart({ access, user });
+    };
+    window.SessionAuth.sessionStart.__wrapped = true;
+  }
+})();
+
+// Roles que deben tener inactividad controlada
+
+// Configura tiempos (en minutos) por rol:
+const IDLE_LIMIT_MIN_BY_ROLE = {
+  ADMIN: 1,        // cierra sesión a los 15 min sin actividad
+  TRABAJADOR: 1
+};
+// Segundos antes del cierre en los que mostramos el aviso:
+const WARNING_SECONDS = 60;
+
+// Timers y estado
+let __idleWarnTimer = null, __idleLogoutTimer = null;
+
+// Timestamp compartido entre pestañas:
+const LAST_TS_KEY = 'tt_lastActivityTs';
+// Señal para forzar logout en todas las pestañas:
+const FORCE_LOGOUT_KEY = 'tt_forceLogout';
+
+// Lee el rol actual desde sessionStorage (lo completa SessionAuth.sessionStart)
+function __getCurrentRole(){
+  try {
+    const u = JSON.parse(sessionStorage.getItem('user') || 'null');
+    return __normalizeRole(u?.rol || u?.role || u?.rol_nombre);
+  } catch { return ''; }
+}
+
+function __idleLimitMs(){
+  const role = __getCurrentRole();
+  const mins = IDLE_LIMIT_MIN_BY_ROLE[role] ?? 0;
+  return mins * 60_000;
+}
+
+function __clearIdleTimers(){
+  if (__idleWarnTimer){ clearTimeout(__idleWarnTimer); __idleWarnTimer = null; }
+  if (__idleLogoutTimer){ clearTimeout(__idleLogoutTimer); __idleLogoutTimer = null; }
+}
+
+// Re-programa el aviso y el cierre según el último timestamp visto
+function __scheduleIdleTimers(){
+  __clearIdleTimers();
+  const limit = __idleLimitMs();
+  if (!limit) return; // rol no controlado
+
+  const now = Date.now();
+  const last = Number(localStorage.getItem(LAST_TS_KEY) || now);
+  const elapsed = Math.max(0, now - last);
+  const remainingMs = Math.max(0, limit - elapsed);
+
+  // Aviso (WARNING_SECONDS antes del cierre)
+  const warnAt = Math.max(0, remainingMs - WARNING_SECONDS*1000);
+  __idleWarnTimer = setTimeout(() => {
+    const now2 = Date.now();
+    const last2 = Number(localStorage.getItem(LAST_TS_KEY) || now2);
+    const remain = Math.ceil((limit - (now2 - last2))/1000);
+    if (remain > 0) {
+      window.hideIdleModal?.();
+      window.showIdleModal?.(Math.max(remain,1));
+    }
+  }, warnAt);
+
+  // Cierre definitivo
+  __idleLogoutTimer = setTimeout(() => {
+    // emite señal para cerrar en todas las pestañas
+    localStorage.setItem(FORCE_LOGOUT_KEY, '1');
+    setTimeout(() => localStorage.removeItem(FORCE_LOGOUT_KEY), 0);
+    window.SessionAuth?.sessionLogout?.();
+  }, remainingMs);
+}
+
+// Marca actividad (se invoca en eventos de usuario y al pulsar “Seguir aquí”)
+function __pingActivity(){
+  try {
+    const ts = Date.now();
+    localStorage.setItem(LAST_TS_KEY, String(ts));
+    window.hideIdleModal?.();
+    __scheduleIdleTimers();
+  } catch {}
+}
+
+// Enganche de eventos de actividad (una vez, global)
+(function wireActivityEventsOnce(){
+  if (window.__idleEventsWired) return; window.__idleEventsWired = true;
+
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+    window.addEventListener(ev, __pingActivity, {passive:true})
+  );
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) __pingActivity();
+  });
+  window.addEventListener('storage', (ev) => {
+    if (ev.key === LAST_TS_KEY) __scheduleIdleTimers();
+    if (ev.key === FORCE_LOGOUT_KEY && ev.newValue === '1'){
+      window.SessionAuth?.sessionLogout?.();
+    }
+  });
+
+  // Si tu modal ya existe y tiene “Seguir aquí”, asegúrate de que dispare ping
+  // (además de cualquier fetch/keepalive que ya tengas)
+  const _ensure = window.ensureIdleModal;
+  if (typeof _ensure === 'function' && !_ensure.__wrapped){
+    window.ensureIdleModal = function(){
+      const el = _ensure();
+      const btnSeguir = el?.querySelector?.('.btn-seguir');
+      if (btnSeguir && !btnSeguir.__wired){
+        const old = btnSeguir.onclick;
+        btnSeguir.onclick = async () => {
+          try {
+            // Si luego activas /auth/keepalive, se ejecutará aquí; si falla, igual reseteamos
+            await (old?.() || Promise.resolve());
+          } catch {}
+          __pingActivity();
+        };
+        btnSeguir.__wired = true;
+      }
+      return el;
+    };
+    window.ensureIdleModal.__wrapped = true;
+  }
+})();
+
+// Arranque del watcher al inicializar la UI de sesión
+(function hookInitAuthUI(){
+  const orig = window.SessionAuth?.initAuthUI;
+  if (!orig || orig.__wrapped) return;
+  window.SessionAuth.initAuthUI = async function(){
+    await orig(); // conserva tu refresh/keepalive si lo activas más adelante
+    const role = __getCurrentRole();
+    if (ROLES_CON_IDLE.has(role)){
+      if (!localStorage.getItem(LAST_TS_KEY)){
+        localStorage.setItem(LAST_TS_KEY, String(Date.now()));
+      }
+      __scheduleIdleTimers();
+    }
+  };
+  window.SessionAuth.initAuthUI.__wrapped = true;
+})();
+
+// Utilidades para probar desde la consola
+window.__idleTest = {
+  ping: __pingActivity,
+  warn: ()=>window.showIdleModal?.(WARNING_SECONDS),
+  forceLogoutAll: ()=>{
+    localStorage.setItem(FORCE_LOGOUT_KEY,'1');
+    setTimeout(()=>localStorage.removeItem(FORCE_LOGOUT_KEY),0);
+  }
+};
+
 //
 const _fetch = window.fetch.bind(window);
 window.fetch = async (url, opts = {}) => {
@@ -241,7 +416,6 @@ async function initAuthUI(){
   }
 }
 
-window.SessionAuth = { sessionStart, sessionLogout, initAuthUI };
 //
 function startKeepalive(){   if (!KEEPALIVE_ENABLED) return;
                              stopKeepalive();

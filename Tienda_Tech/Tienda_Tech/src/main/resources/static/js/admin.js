@@ -1,7 +1,3 @@
-//TOMAR USUARIO PERO NO POR TOKEN :d
-//HOLA gente
-//COMO ANDÁS?
-//ay dio mio
 const fetch = (...args) =>
   (window.authFetch ? window.authFetch(...args) : window.fetch(...args));
 function currentUsername(){
@@ -607,7 +603,13 @@ const CATEGORIES = [
 
 const BRANDS = [
   'Intel','AMD','HP','Samsung','Apple','Sony','Corsair','EVGA',
-  'ASUS','MSI','Kingston','Seagate','Western Digital','Thermalright'
+  'ASUS','MSI','Kingston','Seagate','Western Digital','Logitech',
+  'Razer','Microsoft','SteelSeries','Redragon','Dell','HyperX','Lenovo',
+  'ROCCAT','TECKNET','Cooler Master','BenQ','Kensington','Rapoo',
+  'ENDGAME GEAR','Glorious','PWNAGE','acer','Logitech G','zelotes',
+  'seenda','ELECOM','INPHIC','Lamzu','Mad Catz','DeLUX','Xtrfy',
+  'G-Wolves','EPOMAKER','AULA','memzuoix','DAREU','E-YOOSO','Bloody',
+  'SOLAKAKA','ZIYOU LANG','A4tech'
 ];
 
 // Campos específicos por categoría (nombres alineados al SP v2)
@@ -670,7 +672,16 @@ const CATEGORY_ENDPOINT = {
 const BRAND_ID = {
   'Intel': 1, 'AMD': 2, 'HP': 3, 'Samsung': 4, 'Apple': 5, 'Sony': 6,
   'Corsair': 7, 'EVGA': 8, 'ASUS': 9, 'MSI': 10, 'Kingston': 11,
-  'Seagate': 12, 'Western Digital': 13, 'Thermalright': 14
+  'Seagate': 12, 'Western Digital': 13, 'Logitech': 14,
+  'Razer': 15, 'Microsoft': 16, 'SteelSeries': 17, 'Redragon': 18,
+  'Dell': 19, 'HyperX': 20, 'Lenovo': 21, 'ROCCAT': 22, 'TECKNET': 23,
+  'Cooler Master': 24, 'BenQ': 25, 'Kensington': 26, 'Rapoo': 27,
+  'ENDGAME GEAR': 28, 'Glorious': 29, 'PWNAGE': 30, 'acer': 31,
+  'Logitech G': 32, 'zelotes': 33, 'seenda': 34, 'ELECOM': 35,
+  'INPHIC': 36, 'Lamzu': 37, 'Mad Catz': 38, 'DeLUX': 39, 'Xtrfy': 40,
+  'G-Wolves': 41, 'EPOMAKER': 42, 'AULA': 43, 'memzuoix': 44,
+  'DAREU': 45, 'E-YOOSO': 46, 'Bloody': 47, 'SOLAKAKA': 48,
+  'ZIYOU LANG': 49, 'A4tech': 50
 };
 const DEFAULT_GAMA_ID = 1;
 const DEFAULT_IVA_ID  = 1;
@@ -2813,7 +2824,7 @@ function resetMovimientoModal() {
           </div>
         `;
         // Inserta antes de la tabla de resultados
-        panelHist.insertBefore(listBox, shTable.parentElement);
+        panelHist.insertAdjacentElement('afterbegin', listBox);
       }
 
       const btnCargar = $("#sh_cargar_hist");

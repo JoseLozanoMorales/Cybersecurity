@@ -61,12 +61,16 @@ public class PaypalController {
             return ResponseEntity.status(409).body(Map.of("ok", false, "status", status));
         }
         var out = payments.confirmarOrdenDesdeCarrito(uidHdr, direccionId, metodopagoId);
+
         return ResponseEntity.ok(Map.of(
-                "ok", true, "status", status,
-                "ordenId", out.get("ordenId"),
-                "subtotal", out.get("subtotal"),
-                "impuestos", out.get("impuestos"),
-                "total", out.get("total")
+                "ok", true,
+                "status", status,
+                "ordenId",   out.getOrdenId(),
+                "subtotal",  out.getSubtotal(),
+                "impuestos", out.getImpuestos(),
+                "total",     out.getTotal(),
+                "facturaId", out.getFacturaId(),
+                "numero",    out.getNumero()
         ));
     }
 

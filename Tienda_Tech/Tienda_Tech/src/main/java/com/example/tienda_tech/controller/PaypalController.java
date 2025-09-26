@@ -41,6 +41,7 @@ public class PaypalController {
         return doCapture(uidHdr, body.orderId(), body.direccionId(), body.metodopagoId());
     }
 
+
     // 2) CON path param (por si algún día lo llamas así)
     @PostMapping("/capture/{orderId}")
     public ResponseEntity<?> capturePath(
@@ -52,7 +53,7 @@ public class PaypalController {
     }
 
     private ResponseEntity<?> doCapture(Integer uidHdr, String orderId, Integer direccionId, Integer metodopagoId) throws Exception {
-        if (orderId == null || orderId.isBlank()) {
+        System.out.printf("[CAPTURE] uid=%s, order=%s, dir=%s, mp=%s%n", uidHdr, orderId, direccionId, metodopagoId);        if (orderId == null || orderId.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "Falta orderId"));
         }
         var cap = paypal.captureOrder(orderId);

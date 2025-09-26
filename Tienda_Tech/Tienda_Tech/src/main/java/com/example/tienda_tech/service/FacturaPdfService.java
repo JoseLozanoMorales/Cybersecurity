@@ -3,8 +3,21 @@ package com.example.tienda_tech.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import org.openpdf.text.*;
-import org.openpdf.text.pdf.*;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfTemplate;
+import com.lowagie.text.pdf.PdfWriter;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -33,22 +46,21 @@ public class FacturaPdfService {
 
             // ====== Fuentes + formato ======
             Font brand = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
-            brand.setColor(new Color(22, 119, 255));           // azul "marca"
+            Color brandColor = new Color(22, 119, 255);
+            brand.setColor(brandColor);
+
             Font h6  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
             Font txt = FontFactory.getFont(FontFactory.HELVETICA, 10);
             NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("es","EC"));
 
             // ===== Encabezado: logo + marca pegados =====
-            Color brandColor = new Color(22, 119, 255);
             Image logo = drawComputerLogo(writer, brandColor);
             logo.scaleAbsolute(28, 20); // tamaño del icono
 
-// Párrafo que mezcla imagen + texto en línea (sin huecos)
             Paragraph marca = new Paragraph();
-            marca.setLeading(22f);                          // alto de línea
-            Chunk imgChunk = new Chunk(logo, 0, -5, true);  // pequeño ajuste vertical del icono
-            marca.add(imgChunk);
-            marca.add(new Chunk("  TiendaTech", brand));    // dos espacios delante para separar un poco
+            marca.setLeading(22f);
+            marca.add(new Chunk(logo, 0, -5, true));         // icono alineado
+            marca.add(new Chunk("  TiendaTech", brand));     // dos espacios
 
             PdfPTable head = new PdfPTable(new float[]{6, 4});
             head.setWidthPercentage(100);
@@ -72,7 +84,9 @@ public class FacturaPdfService {
             doc.add(Chunk.NEWLINE);
 
             // ====== Cliente / Entrega ======
-            PdfPTable info = new PdfPTable(new float[]{1,1}); info.setWidthPercentage(100);
+            PdfPTable info = new PdfPTable(new float[]{1,1});
+            info.setWidthPercentage(100);
+
             PdfPCell c1 = new PdfPCell(); c1.setBorder(Rectangle.NO_BORDER);
             c1.addElement(new Paragraph("Cliente", h6));
             c1.addElement(new Paragraph(String.valueOf(e.getOrDefault("nombre","")), txt));
@@ -89,8 +103,10 @@ public class FacturaPdfService {
             doc.add(Chunk.NEWLINE);
 
             // ====== Detalle ======
-            PdfPTable tbl = new PdfPTable(new float[]{3,1,1.2f,1.2f,0.8f,1.2f}); tbl.setWidthPercentage(100);
+            PdfPTable tbl = new PdfPTable(new float[]{3,1,1.2f,1.2f,0.8f,1.2f});
+            tbl.setWidthPercentage(100);
             addHeader(tbl, "Producto","Cant.","Precio","Subtotal","IVA","Total");
+
             for (Map<String,Object> it : items) {
                 tbl.addCell(cell(String.valueOf(it.getOrDefault("nombre_producto","")), txt, Element.ALIGN_LEFT));
                 tbl.addCell(cell(String.valueOf(it.getOrDefault("cantidad",0)), txt, Element.ALIGN_RIGHT));
@@ -103,9 +119,9 @@ public class FacturaPdfService {
 
             doc.add(Chunk.NEWLINE);
 
-            // ====== Totales ======
+            // ====== Totales (compactados a la derecha) ======
             PdfPTable totals = new PdfPTable(new float[]{1,1});
-            totals.setWidthPercentage(40);
+            totals.setWidthPercentage(36);                        // un poco más cerca de los valores
             totals.setHorizontalAlignment(Element.ALIGN_RIGHT);
             totals.addCell(noborder("Subtotal", h6, Element.ALIGN_LEFT));
             totals.addCell(noborder(fmt.format(num(e.get("subtotal"))), h6, Element.ALIGN_RIGHT));
@@ -128,17 +144,16 @@ public class FacturaPdfService {
         PdfTemplate tp = cb.createTemplate(W, H);
 
         tp.setLineWidth(2f);
-        tp.setColorStroke(color);
-
+        tp.setRGBColorStroke(color.getRed(), color.getGreen(), color.getBlue());
         // marco de la pantalla
-        tp.rectangle(2, 12, W-4, H-18);  // x,y,ancho,alto
+        tp.rectangle(2, 12, W-4, H-18);
         tp.stroke();
 
         // soporte y base
-        tp.setColorFill(color);
-        tp.rectangle(W/2f - 3, 8, 6, 6);   // poste
+        tp.setRGBColorFill(color.getRed(), color.getGreen(), color.getBlue());
+        tp.rectangle(W/2f - 3, 8, 6, 6);     // poste
         tp.fill();
-        tp.rectangle(W/2f - 16, 4, 32, 3); // base
+        tp.rectangle(W/2f - 16, 4, 32, 3);   // base
         tp.fill();
 
         return Image.getInstance(tp);

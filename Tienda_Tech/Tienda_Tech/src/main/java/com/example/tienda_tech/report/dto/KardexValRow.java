@@ -13,7 +13,7 @@ public class KardexValRow {
     // Entrada
     private BigDecimal entCant;   // cantidad
     private BigDecimal entPUnit;  // precio unitario
-    private BigDecimal entTotal;  // entCant * entPUnit
+    private BigDecimal entTotal;  // entCant entPUnit
 
     // Salida (PEPS)
     private BigDecimal salCant;   // cantidad

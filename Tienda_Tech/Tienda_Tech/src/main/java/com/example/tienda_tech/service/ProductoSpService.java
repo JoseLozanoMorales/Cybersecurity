@@ -64,7 +64,7 @@ public class ProductoSpService {
         jdbc.update("CALL public.sp_agregar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);
     }
 
-    // Llama al SP de actualizar (tu SP es de 2 parámetros)
+    // Llama al SP de actualizar (el SP es de 2 parámetros)
     private void callSpActualizar(ObjectNode prod, String usuario) {
         if (usuario != null && !usuario.isBlank()) prod.put("usuario", usuario);
         jdbc.update("CALL public.sp_actualizar_producto_v2_json(?::jsonb, ?)", prod.toString(), usuario);

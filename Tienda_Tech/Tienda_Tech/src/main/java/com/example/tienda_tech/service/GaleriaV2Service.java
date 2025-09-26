@@ -54,38 +54,24 @@ public class GaleriaV2Service {
     );
   }
 
-  public int agregar(int productoId,
-                     MultipartFile file,
-                     String descripcion,
-                     Boolean esPortada,
-                     Boolean paraGaleria,
-                     Boolean paraMenu,
-                     Integer posGaleria,
-                     Integer posMenu,
-                     Integer ancho,
-                     Integer alto) {
-    byte[] bytes;
-    try { bytes = file.getBytes(); } catch (Exception e) { throw new RuntimeException("No se pudo leer el archivo", e); }
-    String mime = file.getContentType();
+    public int agregar(Integer productoId, MultipartFile file, String descripcion,
+                       Boolean esPortada, Boolean paraGaleria, Boolean paraMenu,
+                       Integer posGaleria, Integer posMenu, Integer ancho, Integer alto) {
+        try {
+            byte[] bytes = file.getBytes();
+            String mime = file.getContentType();
+            return jdbc.queryForObject(
+                    "SELECT public.sp_galeria_v2_agregar(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    Integer.class,
+                    productoId, bytes, mime, descripcion,
+                    esPortada, paraGaleria, paraMenu,
+                    posGaleria, posMenu, ancho, alto
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error al subir imagen", e);
+        }
+    }
 
-    // SELECT function que retorna el nuevo id
-    Integer id = jdbc.queryForObject(
-      "SELECT public.sp_galeria_v2_agregar(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      Integer.class,
-      productoId,
-      bytes,
-      mime,
-      descripcion,
-      esPortada,
-      paraGaleria,
-      paraMenu,
-      posGaleria,
-      posMenu,
-      ancho,
-      alto
-    );
-    return id;
-  }
 
   public void setPortada(int productoId, int galeriaId) {
     jdbc.update("CALL public.sp_galeria_v2_set_portada(?, ?)", productoId, galeriaId);
@@ -120,38 +106,27 @@ public class GaleriaV2Service {
     );
     }
     // GaleriaV2Service.java
-public int agregarBytes(int productoId,
-                          byte[] bytes,
-                          String mimeType,
-                          String descripcion,
-                          Boolean esPortada,
-                          Boolean paraGaleria,
-                          Boolean paraMenu,
-                          Integer posGaleria,
-                          Integer posMenu,
-                          Integer ancho,
-                          Integer alto) {
+    public int agregarBytes(int productoId,
+                            byte[] bytes,
+                            String mimeType,
+                            String descripcion,
+                            Boolean esPortada,
+                            Boolean paraGaleria,
+                            Boolean paraMenu,
+                            Integer posGaleria,
+                            Integer posMenu,
+                            Integer ancho,
+                            Integer alto) {
 
-    if (bytes == null || bytes.length == 0) {
-      throw new IllegalArgumentException("bytes vacíos");
+        return jdbc.queryForObject(
+                "SELECT public.sp_galeria_v2_agregar(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                Integer.class,
+                productoId, bytes, mimeType, descripcion,
+                esPortada, paraGaleria, paraMenu,
+                posGaleria, posMenu, ancho, alto
+        );
     }
 
-    return jdbc.queryForObject(
-        "SELECT public.sp_galeria_v2_agregar(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        Integer.class,
-        productoId,
-        bytes,
-        mimeType,
-        descripcion,
-        esPortada,
-        paraGaleria,
-        paraMenu,
-        posGaleria,
-        posMenu,
-        ancho,
-        alto
-    );
-  }
 
   // PATCH flags + descripcion (batch)
     public void actualizarFlagsYDescripcion(int galeriaId,

@@ -9,7 +9,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <!-- NO cargamos aquí el SDK de PayPal -->
     <script src="/js/auth-menu.js?v=4" defer></script>
 
     <style>
@@ -444,6 +443,10 @@ async function initHostedFields(){
         });
 
     setMsg(`Pago ${cap.status}. Orden #${cap.ordenId}`, 'text-success');
+
+    if (cap.facturaId) {
+    window.open(`factura.html?fid=${encodeURIComponent(cap.facturaId)}`, '_blank');
+    }
     setTimeout(()=> location.href='cuenta.html', 1200);
           } catch (err) {
             console.error('[CAPTURE ERROR]', err);

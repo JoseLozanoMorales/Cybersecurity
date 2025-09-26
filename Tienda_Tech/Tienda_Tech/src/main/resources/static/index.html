@@ -29,7 +29,7 @@
   </header>
 
   <!-- Overlay -->
-  <div class="overlay" id="overlay" onclick="closeMenu"></div>
+  <div class="overlay" id="overlay" onclick="closeMenu()"></div>
 
   <!-- Menú Hamburguesa -->
   <nav class="hamburger-menu" id="hamburgerMenu">
@@ -254,10 +254,11 @@
         });
       });
 
-      const pcBuilderBtn = document.querySelector('.pc-builder-btn');
-      pcBuilderBtn.addEventListener('click', function() {
-        console.log('PC Builder: Ver más');
-      });
+    const pcBuilderBtn = document.querySelector('.pc-builder-btn');
+    if (pcBuilderBtn) {
+      pcBuilderBtn.addEventListener('click', () => console.log('PC Builder: Ver más'));
+    }
+
     });
   </script>
 
@@ -304,22 +305,22 @@
   })();
   </script>
 <script>
-(async function loadTopVendidosSoloImagen(){
-  const wrap = document.querySelector('.carousel-products');
-  if (!wrap) return;
+// (async function loadTopVendidosSoloImagen(){
+//   const wrap = document.querySelector('.carousel-products');
+//   if (!wrap) return;
 
-  const res = await fetch('/api/productos/mas-vendidos?limite=3', {credentials:'include'});
-  const items = await res.json();
+//   const res = await fetch('/api/productos/mas-vendidos?limite=3', {credentials:'include'});
+//   const items = await res.json();
 
-  wrap.innerHTML = items.map(it => `
-    <a class="product-card" href="Producto.html?id=${it.productoId}" title="${it.nombre}">
-      <img class="product-img"
-           src="${it.urlImagen || '/img/placeholder.png'}"
-           alt="${it.nombre}" loading="lazy"
-           onerror="this.onerror=null; this.src='/img/placeholder.png';">
-    </a>
-  `).join('');
-})();
+//   wrap.innerHTML = items.map(it => `
+//     <a class="product-card" href="Producto.html?id=${it.productoId}" title="${it.nombre}">
+//       <img class="product-img"
+//            src="${it.urlImagen || '/img/placeholder.png'}"
+//            alt="${it.nombre}" loading="lazy"
+//            onerror="this.onerror=null; this.src='/img/placeholder.png';">
+//     </a>
+//   `).join('');
+// })();
 </script>
 
   <script>
@@ -615,71 +616,86 @@ async function submitSurvey(formEl, resultEl, closeModal){
     return;
   }
 
-  // 3) Enviar (UNA sola llamada) y pintar
-  try {
-    const resp = await fetch('/api/sugerencias/full', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        respuestas,
-        topN: TOP_N,
-        encuestaId: ENCUESTA_ID,
-        usuarioFallback: username || null
-      })
-    });
+  // 3) Enviar y pintar
+    try {
+      const payload = {
+        presupuesto : (respuestas.presupuesto === '' || respuestas.presupuesto == null)
+                        ? null : Number(respuestas.presupuesto),
+        preferencias: respuestas,   // mandamos todo lo demás aquí
+        minimos     : {}            // si luego defines mínimos, se rellenan aquí
+      };
 
-    if (!resp.ok) {
-      const txt = await resp.text().catch(()=> '');
-      throw new Error(`Error ${resp.status}: ${txt || 'no se pudo crear la sugerencia'}`);
+      const resp = await fetch('/api/sugerencias/pc-completa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Username': username || ''          // el controller lo toma de este header
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(()=> '');
+        throw new Error(`Error ${resp.status}: ${txt || 'no se pudo crear la sugerencia'}`);
+      }
+
+      const data = await resp.json();              // {sugerenciaId, tipo, presupuestoTotal, totalPrecio, totalComponentes, items[]}
+      renderResultPcCompleta(data, resultEl);      // usa la función de build completa
+    } catch (e) {
+      console.error(e);
+      resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
     }
 
-    const data = await resp.json();     // ✅ ESTA es la respuesta buena
-    renderResult(data, resultEl);       // ✅ pinta con 'data'
-  } catch (e) {
-    console.error(e);
-    resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
-  }
 }
 
 
 
-  function renderResult(data, box){
-    const rec = data?.recomendaciones || {};
-    const rows = []
-      .concat((rec.gpu || []).map(x => ['GPU', x.nombre, x.precio, x.gama, x.enlace]))
-      .concat((rec.cpu || []).map(x => ['CPU', x.nombre, x.precio, x.gama, x.enlace]))
-      .concat((rec.ram || []).map(x => ['RAM', x.nombre, x.precio, x.gama, x.enlace]))
-      .concat((rec.almacenamiento || []).map(x => ['ALMACENAMIENTO', x.nombre, x.precio, x.gama, x.enlace]))
-      .concat((rec.motherboard || []).map(x => ['MOTHERBOARD', x.nombre, x.precio, x.gama, x.enlace]));
+      function renderResultPcCompleta(data, box) {
+      if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+        box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
+        return;
+      }
 
-    if (!rows.length){
-      box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
-      return;
+      const header = `
+        <h4 style="margin:10px 0;">PC sugerida #${data.sugerenciaId} — ${data.tipo}</h4>
+        <p class="tt-muted-row">
+          <b>Presupuesto:</b> ${data.presupuestoTotal ?? '—'}
+          &nbsp;·&nbsp; <b>Total elegido:</b> ${data.totalPrecio ?? '—'}
+          &nbsp;·&nbsp; <b>Componentes:</b> ${data.totalComponentes ?? 0}
+        </p>
+      `;
+
+      const rows = data.items.map(it => `
+        <tr>
+          <td>${it.categoria ?? ''}</td>
+          <td>${it.producto ?? ''}</td>
+          <td>${Number((it.precio ?? it.precio_snap) ?? 0).toFixed(2)}</td>
+          <td>${(it.compatOk === false) ? '⚠️' : ''}</td>
+          <td>${it.motivo ?? ''}</td>
+        </tr>
+      `).join('');
+
+      box.innerHTML = `
+        ${header}
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Compat.</th><th>Motivo</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
     }
 
-    box.innerHTML = `
-      <h4 style="margin:10px 0;">Tus recomendaciones</h4>
-      <div class="data-table">
-        <table>
-          <thead><tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Gama</th></tr></thead>
-          <tbody>
-            ${rows.map(([cat, nom, pre, gam, url]) => `
-              <tr>
-                <td>${cat}</td>
-                <td>${url ? `<a href="${url}" target="_blank" rel="noopener">${nom}</a>` : nom}</td>
-                <td>${Number(pre||0).toFixed(2)}</td>
-                <td>${gam ?? ''}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
 
   // init
-  document.addEventListener('DOMContentLoaded', injectUI);
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', injectUI);
+    } else {
+      injectUI();
+    }
 })();
 
 </script>

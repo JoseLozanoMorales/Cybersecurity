@@ -11,6 +11,7 @@
 </head>
 <body>
   <!-- Header -->
+  <div class="page-container">
   <header class="header">
     <div class="logo">TiendaTech</div>
     <div class="search-container">
@@ -28,6 +29,7 @@
   </nav>
 
   <!-- Main Container -->
+      <main class="content-wrap">
   <div class="container mt-4">
     <!-- Product Information Section -->
     <div class="mb-4">
@@ -51,9 +53,9 @@
             <div class="product-info-item">Nombre del producto</div>
             <div class="product-info-item">Precio</div>
             <div class="product-info-item">Marca</div>
-            <div class="product-info-item" onclick="showCharacteristics()">Características</div>
+              <a id="specLink" class="product-info-item">Características</a>
 
-            <!-- === NUEVO: cantidad + botón Agregar al carrito === -->
+              <!-- === NUEVO: cantidad + botón Agregar al carrito === -->
             <div class="d-flex align-items-center gap-2 mt-3">
               <input id="qtyInput" type="number" min="1" value="1" class="form-control" style="max-width: 110px;">
               <button id="btnAddCart" class="btn btn-primary">
@@ -70,7 +72,7 @@
 
     <!-- Reviews Section -->
     <div class="mb-5">
-      <div class="review-box">
+      <!-- <div class="review-box">
         <div class="review-title">Reseñas</div>
         <div class="review-grid">
           <div class="review-item review-add-btn" onclick="addReview()">
@@ -85,9 +87,10 @@
           <div class="review-item"></div>
           <div class="review-item"></div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
+      </main>
 
   <!-- Footer -->
   <footer class="footer">
@@ -97,7 +100,7 @@
       <a href="Carrito.html">Carrito</a>
     </nav>
   </footer>
-
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
   <script>
@@ -188,145 +191,10 @@
     }
 
 
-    function showCharacteristics() {
-      alert('Mostrar características del producto');
-    }
 
-    function addReview() {
-      alert('Agregar nueva reseña');
-    }
   </script>
 
-  <script>
-    // === Carga del producto + Agregar al carrito ===
-    (function(){
 
-      const btnAdd   = document.getElementById('btnAddCart');
-      const qtyInput = document.getElementById('qtyInput');
-      const okMsg    = document.getElementById('addCartMsg');
-      const errMsg   = document.getElementById('addCartErr');
-
-      function money(n){
-        const x = Number(n);
-        return isFinite(x) ? `$${x.toFixed(2)}` : '$0.00';
-      }
-
-      function hasActiveSessionCart(){
-        const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-        let ok = false;
-        try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
-        return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-      }
-
-      async function tryPost(url, body){
-        return fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body)
-        });
-      }
-
-      async function addToCart(){
-        if(!id){ alert('Falta parámetro id'); return; }
-        const cantidad = Math.max(1, parseInt(qtyInput.value || '1', 10));
-        btnAdd.disabled = true;
-        okMsg.classList.add('d-none');
-        errMsg.classList.add('d-none');
-
-<!--        try {-->
-<!--          if (hasActiveSessionCart()){-->
-<!--            // 1) Intento endpoint REST típico-->
-<!--            let res = await tryPost('/api/carrito/items', { productoId: Number(id), cantidad });-->
-<!--            // 2) Fallback a otro nombre común-->
-<!--            if(!res.ok){-->
-<!--              res = await tryPost('/api/carrito/agregar', { productoId: Number(id), cantidad });-->
-<!--            }-->
-<!--            if(!res.ok) throw new Error('backend_error');-->
-<!--          } else {-->
-<!--            // Carrito en localStorage para invitados-->
-<!--            const key = 'cart';-->
-<!--            const cart = JSON.parse(localStorage.getItem(key) || '[]');-->
-<!--            const found = cart.find(x => String(x.productoId) === String(id));-->
-<!--            if (found) found.cantidad += cantidad;-->
-<!--            else cart.push({ productoId: Number(id), cantidad });-->
-<!--            localStorage.setItem(key, JSON.stringify(cart));-->
-<!--          }-->
-
-        try {
-        if (hasActiveSessionCart()){
-          // Un único POST al endpoint real del backend
-          const res = await tryPost('/api/carrito/items', { productoId: Number(id), cantidad });
-          if (!res.ok) throw new Error('backend_error');
-        } else {
-          // Carrito en localStorage para invitados
-          const key = 'cart';
-          const cart = JSON.parse(localStorage.getItem(key) || '[]');
-          const found = cart.find(x => String(x.productoId) === String(id));
-          if (found) found.cantidad += cantidad;
-          else cart.push({ productoId: Number(id), cantidad });
-          localStorage.setItem(key, JSON.stringify(cart));
-        }
-
-
-          okMsg.classList.remove('d-none');
-          setTimeout(()=> okMsg.classList.add('d-none'), 2500);
-        } catch (e){
-          console.error(e);
-          errMsg.classList.remove('d-none');
-          setTimeout(()=> errMsg.classList.add('d-none'), 3000);
-        } finally {
-          btnAdd.disabled = false;
-        }
-      }
-
-      async function load(){
-        if(!id){ alert('Falta parámetro id'); return; }
-        try{
-          const res = await fetch(`/api/productos/${encodeURIComponent(id)}`, { credentials:'include' });
-          if(!res.ok){ throw new Error('No se pudo cargar el producto'); }
-          const p = await res.json();
-
-          imgBox.style.backgroundSize     = 'cover';
-          imgBox.style.backgroundPosition = 'center';
-          imgBox.innerHTML = '';
-
-          const items = infoBox.querySelectorAll('.product-info-item');
-          if(items[0]) items[0].textContent = p.nombre || '';
-          if(items[1]) items[1].textContent = money(p.precio);
-          if(items[2]) items[2].textContent = p.marca  || '';
-
-          if (Array.isArray(p.galeria) && p.galeria.length > 0){
-            const thumbs = document.createElement('div');
-            thumbs.className = 'd-flex gap-2 mt-3 flex-wrap';
-            p.galeria.forEach(g => {
-              const a = document.createElement('a');
-              a.href  = 'javascript:void(0)';
-              a.onclick = () => {
-                imgBox.style.backgroundImage = `url("/api/galeria/${g.id}/img")`;
-              };
-              const im = document.createElement('img');
-              im.src = `/api/galeria/${g.id}/img`;
-              im.alt = 'miniatura';
-              im.style.width = '60px';
-              im.style.height = '60px';
-              im.style.objectFit = 'cover';
-              im.style.borderRadius = '6px';
-              a.appendChild(im);
-              thumbs.appendChild(a);
-            });
-            infoBox.appendChild(thumbs);
-          }
-        }catch(err){
-          console.error(err);
-          alert('No se pudo cargar la información del producto');
-        }
-      }
-
-      if (btnAdd) btnAdd.addEventListener('click', addToCart);
-      document.addEventListener('DOMContentLoaded', load);
-    })();
-  </script>
   <script>
       // === Carga del producto + Agregar al carrito + Slider ===
       (function(){
@@ -456,6 +324,62 @@
             if(items[1]) items[1].textContent = money(p.precio ?? p.preciounitario);
             if(items[2]) items[2].textContent = p.marca  || '';
 
+            // --- Enlace a "Características"
+        const specLink = document.getElementById('specLink');
+
+        async function resolveSpecsLink(prod) {
+          // 1) intenta con campos que pueda traer /api/productos/{id}
+          let raw = (
+            prod.enlace ??
+            prod.link ??
+            prod.enlace_producto ??
+            prod.enlaceProducto ??
+            prod.url_especificaciones ??
+            prod.url ??
+            prod.href ??
+            prod.caracteristicas_url ??
+            prod.enlace_especificaciones ??
+            prod.enlaceCaracteristicas
+          );
+
+          // 2) si sigue vacío, consulta el endpoint que usa el admin
+          if (!raw) {
+            try {
+              const r2 = await fetch(`/api/sp/productos/${encodeURIComponent(id)}/editar`, { credentials:'include' });
+              if (r2.ok) {
+                const d2 = await r2.json();
+                raw = d2.enlace ?? d2.url ?? null;
+              }
+            } catch {}
+          }
+
+          if (typeof raw === 'string') raw = raw.trim();
+          if (raw && !/^https?:\/\//i.test(raw)) raw = 'https://' + raw.replace(/^\/\//, '');
+          return raw || null;
+        }
+
+        if (specLink) {
+          const url = await resolveSpecsLink(p);
+          if (url) {
+            specLink.href = url;
+            specLink.target = '_blank';
+            specLink.rel = 'noopener';
+            specLink.style.cursor = 'pointer';
+            specLink.classList.remove('disabled');
+          } else {
+            // Sin enlace: no navegamos
+            specLink.removeAttribute('href');
+            specLink.addEventListener('click', (e)=>{
+              e.preventDefault();
+              alert('Este producto no tiene enlace de características.');
+            }, { once:true });
+            specLink.style.opacity = '.7';
+            specLink.style.cursor  = 'not-allowed';
+            specLink.classList.add('disabled');
+          }
+        }
+
+
             // Galería (orden: portada primero; luego por posicion_galeria, luego id)
             gal = Array.isArray(p.galeria) ? [...p.galeria] : [];
             gal.sort((a,b)=>
@@ -481,6 +405,5 @@
         document.addEventListener('DOMContentLoaded', load);
       })();
   </script>
-
 </body>
 </html>

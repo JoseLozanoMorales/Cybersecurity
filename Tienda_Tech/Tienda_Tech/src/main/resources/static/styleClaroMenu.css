@@ -371,10 +371,10 @@ body{
    PRODUCTO / INFO (cuenta/producto)
    =============================== */
 .product-image{
-    width:200px; height:200px; background:#666; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; text-align:center;
-    cursor:pointer; transition:background-color .3s;
+    width:200px; height:200px; background:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; text-align:center;
+    cursor:pointer; transition:background-color .3s; object-fit: contain;
 }
-.product-image:hover{ background:#777; }
+.product-image:hover{ background:#fff; }
 
 .product-info{
     background:#666; border-radius:8px; padding:20px; display:flex; flex-direction:column; justify-content:center; min-height:200px;

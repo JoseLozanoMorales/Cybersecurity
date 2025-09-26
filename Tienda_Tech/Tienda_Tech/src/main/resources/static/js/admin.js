@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!productoId) {
       console.debug('Respuesta creación producto:', { status: res.status, headers: Object.fromEntries(res.headers.entries()), raw });
-      alert('✅ Producto creado, pero no pude leer el ID (no vino en JSON/Location). Revisa Network → Response/Headers.');
+      alert('✅ Producto creado');
       return;
     }
 

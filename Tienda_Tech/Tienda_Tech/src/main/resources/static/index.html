@@ -72,16 +72,13 @@
       </div>
     </section>
 
-    <!-- 3. PC Builder Container
+    <!-- 3. PC Builder Container -->
     <section class="content-container">
-        <div class="pc-builder-container">-->
-            <!-- capas de fondo -->
-            <!--<div class="pcb-bg layer-a"></div>
-            <div class="pcb-bg layer-b"></div>-->
-            <!-- overlay para mantener legible el texto -->
-            <!--<div class="pcb-overlay"></div>-->
-
-            <!-- contenido encima --><!--
+        <div class="pc-builder-container">
+          <div class="pcb-bg layer-a"></div>
+          <div class="pcb-bg layer-b"></div>
+          <div class="pcb-bg layer-c"></div>
+            <!-- contenido encima -->
             <div class="pcb-content">
                 <h2 class="pc-builder-title">Crea tu propia PC</h2>
                 <p class="pc-builder-description">
@@ -89,10 +86,11 @@
                     deseados sin preocuparte<br>
                     por la compatibilidad
                 </p>
-                <button class="pc-builder-btn">Ver más</button>
+              <button type="button" class="pc-builder-btn"
+                      onclick="window.location.href='Armado.html'">Ver más</button>
             </div>
         </div>
-    </section> -->
+    </section>
 
     <!-- 4. Categories Grid Container -->
     <section class="content-container">
@@ -699,5 +697,53 @@ async function submitSurvey(formEl, resultEl, closeModal){
 })();
 
 </script>
+
+  <!-- PC Fotos -->
+  <script>
+    (function pcBuilderSlideshow(){
+      // RUTAS a tus imágenes descargadas (ajusta a tu carpeta real)
+      const IMAGES = [
+        '/assets/menu/img1.jpg',
+        '/assets/menu/img2.jpg',
+        '/assets/menu/img3.jpg'
+      ];
+
+      const INTERVAL_MS = 5000;  // tiempo visible de cada imagen
+      const FADE_MS     = 1000;  // debe coincidir con el CSS (1s)
+
+      const box = document.querySelector('.pc-builder-container');
+      if (!box || !IMAGES.length) return;
+
+      const a = box.querySelector('.pcb-bg.layer-a');
+      let   b = box.querySelector('.pcb-bg.layer-b');
+      let   c = box.querySelector('.pcb-bg.layer-c');
+      if (!a) return;
+      if (!b){ b = document.createElement('div'); b.className='pcb-bg layer-b'; a.after(b); }
+
+      // Preload simple
+      IMAGES.forEach(src => { const i = new Image(); i.src = src; });
+
+      let idx = 0, frontIsA = true;
+
+      const setBg = (el, src) => el.style.backgroundImage = `url("${src}")`;
+      const show  = el => el.classList.add('show');
+      const hide  = el => el.classList.remove('show');
+
+      // estado inicial
+      setBg(a, IMAGES[idx]); show(a);
+      setBg(b, IMAGES[(idx+1) % IMAGES.length]);
+
+      function next(){
+        idx = (idx + 1) % IMAGES.length;
+        const front = frontIsA ? a : b;
+        const back  = frontIsA ? b : a;
+        setBg(back, IMAGES[idx]);
+        show(back); hide(front);
+        setTimeout(() => { frontIsA = !frontIsA; }, FADE_MS);
+      }
+
+      if (IMAGES.length > 1) setInterval(next, INTERVAL_MS);
+    })();
+  </script>
 </body>
 </html>

@@ -15,39 +15,40 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/report")
 @RequiredArgsConstructor
-@CrossOrigin(origins = { "http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080" })
+@CrossOrigin(origins = "http://localhost:3000")
 public class ReportController {
 
     private final ReportService reportService;
 
-    private static LocalDate parseOr(LocalDate fb, String raw){
-        return (raw != null && !raw.isBlank()) ? LocalDate.parse(raw) : fb;
+    // ===================== helpers =====================
+    private static LocalDate parseOr(LocalDate fallback, String raw) {
+        return (raw != null && !raw.isBlank()) ? LocalDate.parse(raw) : fallback;
     }
-
-    /** Cabeceras para descarga/inline y permitir iframe desde el panel y mismo origen. */
-    private static HttpHeaders cd(String fileName, boolean inline){
+    private static HttpHeaders dl(String fileName){
         HttpHeaders h = new HttpHeaders();
-        h.add(HttpHeaders.CONTENT_DISPOSITION, (inline ? "inline" : "attachment") + "; filename=" + fileName);
-        // permitir <iframe> en mismo origen y panel local
-        h.add("X-Frame-Options", "SAMEORIGIN");
-        h.add("Content-Security-Policy",
-                "frame-ancestors 'self' http://localhost:3000 http://127.0.0.1:3000 http://localhost:8080");
-        // exponer Content-Disposition por CORS si se usa fetch
-        h.add("Access-Control-Expose-Headers", "Content-Disposition");
+        h.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
         return h;
     }
 
-    // ===================== GENERAL (rango parametrizable) =====================
-    @GetMapping(value="/admin/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    // ===================================================
+    // 1) TUS ENDPOINTS EXISTENTES (NO TOCADOS)
+    // ===================================================
+
+    // --------------------------------------------------------------------
+    // PDF GENERAL (Resumen + todos los datasets)
+    // Endpoint: /api/report/admin/pdf?desde=yyyy-MM-dd&hasta=yyyy-MM-dd
+    // --------------------------------------------------------------------
+    @GetMapping("/admin/pdf")
     public ResponseEntity<byte[]> adminPdf(
             @RequestParam(required = false) String desde,
-            @RequestParam(required = false) String hasta,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
-    ){
-        LocalDate d2 = parseOr(LocalDate.now(), hasta);
-        LocalDate d1 = parseOr(d2.minusDays(30), desde);
+            @RequestParam(required = false) String hasta
+    ) {
+        LocalDate d2 = (hasta != null && !hasta.isBlank()) ? LocalDate.parse(hasta) : LocalDate.now();
+        LocalDate d1 = (desde != null && !desde.isBlank()) ? LocalDate.parse(desde) : d2.minusDays(30);
 
         AdminSummaryDTO summary = reportService.loadAdminSummary(d1, d2);
+
+        // datasets
         List<UserReportRow>         users          = reportService.loadUsers(d1, d2);
         List<ProductReportRow>      products       = reportService.loadProducts();
         List<OrderReportRow>        orders         = reportService.loadOrders(d1, d2);
@@ -57,86 +58,34 @@ public class ReportController {
         List<CityReportRow>         cities         = reportService.loadCities();
         List<ProvinceReportRow>     provinces      = reportService.loadProvinces();
         List<PaymentMethodRow>      paymentMethods = reportService.loadPaymentMethods();
-        // Si quieres incluir alguna tabla adicional en el “todo en uno”, cárgala aquí.
+        List<KardexRow>             kardex         = reportService.loadKardex(d1, d2);
 
         byte[] pdf = reportService.buildMultiReportPdf(
-                summary, users, products, orders, lowStock,
-                salesByProduct, roles, cities, provinces, paymentMethods,
-                /* kardex simple omitido */ List.of(), d1, d2
+                summary,
+                users, products, orders,
+                lowStock, salesByProduct, roles,
+                cities, provinces, paymentMethods,
+                kardex,
+                d1, d2
         );
+
         return ResponseEntity.ok()
-                .headers(cd("ReporteGeneral-" + d1 + "_a_" + d2 + ".pdf", inline))
                 .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=ReporteGeneral-" + d1 + "_a_" + d2 + ".pdf")
                 .body(pdf);
     }
 
-    // ===================== GENERAL (todo histórico) =====================
-    @GetMapping(value="/general/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> generalAll(@RequestParam(defaultValue = "false") boolean inline){
-        LocalDate d2 = LocalDate.now(), d1 = LocalDate.of(2000,1,1);
-
-        AdminSummaryDTO summary = reportService.loadAdminSummary(d1, d2);
-        List<UserReportRow>     users          = reportService.loadUsers(d1, d2);
-        List<ProductReportRow>  products       = reportService.loadProducts();
-        List<OrderReportRow>    orders         = reportService.loadOrders(d1, d2);
-        List<LowStockRow>       lowStock       = reportService.loadLowStock(5);
-        List<SalesByProductRow> salesByProduct = reportService.loadSalesByProduct(d1, d2);
-        List<RoleReportRow>     roles          = reportService.loadRoles();
-        List<CityReportRow>     cities         = reportService.loadCities();
-        List<ProvinceReportRow> provinces      = reportService.loadProvinces();
-        List<PaymentMethodRow>  payMethods     = reportService.loadPaymentMethods();
-
-        byte[] pdf = reportService.buildMultiReportPdf(
-                summary, users, products, orders, lowStock,
-                salesByProduct, roles, cities, provinces, payMethods,
-                /* kardex simple omitido */ List.of(), d1, d2
-        );
-        return ResponseEntity.ok()
-                .headers(cd("ReporteGeneral-Todos.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    // ===================== GENERAL (por rango) =====================
-    @GetMapping(value="/general/pdf-range", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> generalByDate(
-            @RequestParam(required = false) String desde,
-            @RequestParam(required = false) String hasta,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
-    ){
-        LocalDate d2 = parseOr(LocalDate.now(), hasta);
-        LocalDate d1 = parseOr(d2.minusDays(30), desde);
-
-        AdminSummaryDTO summary = reportService.loadAdminSummary(d1, d2);
-        List<UserReportRow>     users          = reportService.loadUsers(d1, d2);
-        List<ProductReportRow>  products       = reportService.loadProducts();
-        List<OrderReportRow>    orders         = reportService.loadOrders(d1, d2);
-        List<LowStockRow>       lowStock       = reportService.loadLowStock(5);
-        List<SalesByProductRow> salesByProduct = reportService.loadSalesByProduct(d1, d2);
-        List<RoleReportRow>     roles          = reportService.loadRoles();
-        List<CityReportRow>     cities         = reportService.loadCities();
-        List<ProvinceReportRow> provinces      = reportService.loadProvinces();
-        List<PaymentMethodRow>  payMethods     = reportService.loadPaymentMethods();
-
-        byte[] pdf = reportService.buildMultiReportPdf(
-                summary, users, products, orders, lowStock,
-                salesByProduct, roles, cities, provinces, payMethods,
-                /* kardex simple omitido */ List.of(), d1, d2
-        );
-        return ResponseEntity.ok()
-                .headers(cd("ReporteGeneral-"+d1+"_a_"+d2+".pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    // ===================== KARDEX VALORIZADO (PEPS) =====================
-    @GetMapping(value="/kardex/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    // --------------------------------------------------------------------
+    // PDF KARDEX VALORIZADO (opcional: por producto)
+    // Endpoint: /api/report/kardex/pdf?desde=yyyy-MM-dd&hasta=yyyy-MM-dd&productoId=123
+    // --------------------------------------------------------------------
+    @GetMapping("/kardex/pdf")
     public ResponseEntity<byte[]> kardexPdf(
             @RequestParam(required = false) String desde,
             @RequestParam(required = false) String hasta,
-            @RequestParam(required = false) Integer productoId,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
-    ){
+            @RequestParam(required = false) Integer productoId
+    ) {
         LocalDate d1 = (desde != null && !desde.isBlank()) ? LocalDate.parse(desde) : LocalDate.of(2000,1,1);
         LocalDate d2 = (hasta != null && !hasta.isBlank()) ? LocalDate.parse(hasta) : LocalDate.now();
 
@@ -145,98 +94,152 @@ public class ReportController {
                 "Kardex Valorizado - Prod " + (productoId != null ? productoId : "Todos"),
                 rows
         );
+
         return ResponseEntity.ok()
-                .headers(cd("KardexValorizado-"+d1+"_a_"+d2+(productoId!=null?("-P"+productoId):"")+".pdf", inline))
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=KardexValorizado-" + d1 + "_a_" + d2 +
+                                (productoId != null ? ("-P" + productoId) : "") + ".pdf")
+                .body(pdf);
+    }
+
+    // ===================================================
+    // 2) NUEVOS ENDPOINTS PARA EL PANEL DE REPORTES
+    // ===================================================
+
+    // —— General (TODOS los datos)
+    @GetMapping("/general/pdf")
+    public ResponseEntity<byte[]> generalAll(){
+        LocalDate d2 = LocalDate.now();
+        LocalDate d1 = LocalDate.of(2000,1,1);
+
+        AdminSummaryDTO summary = reportService.loadAdminSummary(d1, d2);
+        List<UserReportRow>     users          = reportService.loadUsers(d1, d2);
+        List<ProductReportRow>  products       = reportService.loadProducts();
+        List<OrderReportRow>    orders         = reportService.loadOrders(d1, d2);
+        List<LowStockRow>       lowStock       = reportService.loadLowStock(5);
+        List<SalesByProductRow> salesByProduct = reportService.loadSalesByProduct(d1, d2);
+        List<RoleReportRow>     roles          = reportService.loadRoles();
+        List<CityReportRow>     cities         = reportService.loadCities();
+        List<ProvinceReportRow> provinces      = reportService.loadProvinces();
+        List<PaymentMethodRow>  payMethods     = reportService.loadPaymentMethods();
+        List<KardexRow>         kardex         = reportService.loadKardex(d1, d2);
+
+        byte[] pdf = reportService.buildMultiReportPdf(
+                summary, users, products, orders, lowStock,
+                salesByProduct, roles, cities, provinces, payMethods,
+                kardex, d1, d2
+        );
+        return ResponseEntity.ok()
+                .headers(dl("ReporteGeneral-Todos.pdf"))
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
 
-    // ===================== INDIVIDUALES =====================
-    @GetMapping(value="/usuarios/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> usersPdf(@RequestParam(defaultValue = "false") boolean inline){
+    // —— General (por rango)
+    @GetMapping("/general/pdf-range")
+    public ResponseEntity<byte[]> generalByDate(
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta
+    ){
+        LocalDate d2 = parseOr(LocalDate.now(), hasta);
+        LocalDate d1 = parseOr(d2.minusDays(30), desde);
+
+        AdminSummaryDTO summary = reportService.loadAdminSummary(d1, d2);
+        List<UserReportRow>     users          = reportService.loadUsers(d1, d2);
+        List<ProductReportRow>  products       = reportService.loadProducts();
+        List<OrderReportRow>    orders         = reportService.loadOrders(d1, d2);
+        List<LowStockRow>       lowStock       = reportService.loadLowStock(5);
+        List<SalesByProductRow> salesByProduct = reportService.loadSalesByProduct(d1, d2);
+        List<RoleReportRow>     roles          = reportService.loadRoles();
+        List<CityReportRow>     cities         = reportService.loadCities();
+        List<ProvinceReportRow> provinces      = reportService.loadProvinces();
+        List<PaymentMethodRow>  payMethods     = reportService.loadPaymentMethods();
+        List<KardexRow>         kardex         = reportService.loadKardex(d1, d2);
+
+        byte[] pdf = reportService.buildMultiReportPdf(
+                summary, users, products, orders, lowStock,
+                salesByProduct, roles, cities, provinces, payMethods,
+                kardex, d1, d2
+        );
+        return ResponseEntity.ok()
+                .headers(dl("ReporteGeneral-"+d1+"_a_"+d2+".pdf"))
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    // —— Individuales (cada uno en su propio PDF)
+    @GetMapping("/usuarios/pdf")
+    public ResponseEntity<byte[]> usersPdf(){
         LocalDate d1 = LocalDate.of(2000,1,1), d2 = LocalDate.now();
         List<UserReportRow> data = reportService.loadUsers(d1, d2);
         byte[] pdf = ReportPdfUtil.buildUsersPdf("Reporte de Usuarios", data);
-        return ResponseEntity.ok().headers(cd("Usuarios.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Usuarios.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/productos/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> productsPdf(@RequestParam(defaultValue = "false") boolean inline){
+    @GetMapping("/productos/pdf")
+    public ResponseEntity<byte[]> productsPdf(){
         List<ProductReportRow> data = reportService.loadProducts();
         byte[] pdf = ReportPdfUtil.buildProductsPdf("Reporte de Productos", data);
-        return ResponseEntity.ok().headers(cd("Productos.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Productos.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/ordenes/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping("/ordenes/pdf")
     public ResponseEntity<byte[]> ordersPdf(
             @RequestParam(required = false) String desde,
-            @RequestParam(required = false) String hasta,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
+            @RequestParam(required = false) String hasta
     ){
         LocalDate d2 = parseOr(LocalDate.now(), hasta);
         LocalDate d1 = parseOr(d2.minusDays(30), desde);
         List<OrderReportRow> data = reportService.loadOrders(d1, d2);
         byte[] pdf = ReportPdfUtil.buildOrdersPdf("Reporte de Órdenes ("+d1+" a "+d2+")", data);
-        return ResponseEntity.ok().headers(cd("Ordenes-"+d1+"_a_"+d2+".pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Ordenes-"+d1+"_a_"+d2+".pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/stock-bajo/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> lowStockPdf(
-            @RequestParam(defaultValue = "5") int umbral,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
-    ){
+    @GetMapping("/stock-bajo/pdf")
+    public ResponseEntity<byte[]> lowStockPdf(@RequestParam(defaultValue = "5") int umbral){
         List<LowStockRow> data = reportService.loadLowStock(umbral);
         byte[] pdf = ReportPdfUtil.buildLowStockPdf("Stock Bajo (≤ "+umbral+")", data);
-        return ResponseEntity.ok().headers(cd("StockBajo-Umbral"+umbral+".pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("StockBajo-Umbral"+umbral+".pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/ventas-producto/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping("/ventas-producto/pdf")
     public ResponseEntity<byte[]> salesByProductPdf(
             @RequestParam(required = false) String desde,
-            @RequestParam(required = false) String hasta,
-            @RequestParam(required = false, defaultValue = "false") boolean inline
+            @RequestParam(required = false) String hasta
     ){
         LocalDate d2 = parseOr(LocalDate.now(), hasta);
         LocalDate d1 = parseOr(d2.minusDays(30), desde);
         List<SalesByProductRow> data = reportService.loadSalesByProduct(d1, d2);
         byte[] pdf = ReportPdfUtil.buildSalesByProductPdf("Ventas por Producto ("+d1+" a "+d2+")", data);
-        return ResponseEntity.ok().headers(cd("VentasPorProducto-"+d1+"_a_"+d2+".pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("VentasPorProducto-"+d1+"_a_"+d2+".pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/roles/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> rolesPdf(@RequestParam(defaultValue = "false") boolean inline){
+    @GetMapping("/roles/pdf")
+    public ResponseEntity<byte[]> rolesPdf(){
         List<RoleReportRow> data = reportService.loadRoles();
         byte[] pdf = ReportPdfUtil.buildRolesPdf("Roles y #Usuarios", data);
-        return ResponseEntity.ok().headers(cd("Roles.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Roles.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/ciudades/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> citiesPdf(@RequestParam(defaultValue = "false") boolean inline){
+    @GetMapping("/ciudades/pdf")
+    public ResponseEntity<byte[]> citiesPdf(){
         List<CityReportRow> data = reportService.loadCities();
         byte[] pdf = ReportPdfUtil.buildCitiesPdf("Ciudades", data);
-        return ResponseEntity.ok().headers(cd("Ciudades.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Ciudades.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/provincias/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> provincesPdf(@RequestParam(defaultValue = "false") boolean inline){
+    @GetMapping("/provincias/pdf")
+    public ResponseEntity<byte[]> provincesPdf(){
         List<ProvinceReportRow> data = reportService.loadProvinces();
         byte[] pdf = ReportPdfUtil.buildProvincesPdf("Provincias", data);
-        return ResponseEntity.ok().headers(cd("Provincias.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("Provincias.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 
-    @GetMapping(value="/metodos-pago/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> paymentMethodsPdf(@RequestParam(defaultValue = "false") boolean inline){
+    @GetMapping("/metodos-pago/pdf")
+    public ResponseEntity<byte[]> paymentMethodsPdf(){
         List<PaymentMethodRow> data = reportService.loadPaymentMethods();
         byte[] pdf = ReportPdfUtil.buildPaymentMethodsPdf("Métodos de Pago", data);
-        return ResponseEntity.ok().headers(cd("MetodosPago.pdf", inline))
-                .contentType(MediaType.APPLICATION_PDF).body(pdf);
+        return ResponseEntity.ok().headers(dl("MetodosPago.pdf")).contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 }

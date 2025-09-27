@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armador de computadoras - TiendaTech</title>
+    <style>
+        /* ==========================================================================
+           TiendaTech – MODO CLARO
+           ========================================================================== */
+        :root{
+            /* Base */
+            --bg-page:          #f5f5f5;
+            --text:             #333;
+
+            /* Header / Nav */
+            --hdr-bg:           #6c6c6c;
+            --hdr-text:         #000;
+            --hdr-shadow:       rgba(0,0,0,.10);
+
+            /* Search */
+            --search-bg:        #ffffff;
+            --search-text:      #1f2937;
+
+            /* Footer */
+            --footer-bg:        #6c757d;
+            --footer-text:      #fff;
+        }
+
+        /* ===========================
+           RESET + BASE
+           =========================== */
+        html, body { height:100%; margin:0; padding:0; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body{
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-page);
+            color: var(--text);
+        }
+
+        /* Sticky footer layout */
+        .page-container { min-height:100%; display:flex; flex-direction:column; }
+        .content-wrap   { flex:1; }
+
+        /* ======================
+           HEADER (igual que original)
+           ====================== */
+        .header{
+            background: var(--hdr-bg);
+            padding: 1rem 2rem;
+            display:flex; justify-content:space-between; align-items:center;
+            box-shadow: var(--hdr-shadow);
+        }
+        .logo{ color: var(--hdr-text); font-size:1.5rem; font-weight:bold; }
+        .search-container{ flex-grow:1; max-width:500px; margin:0 2rem; }
+        .search-bar{
+            width:100%; padding:.75rem 1rem; border:none; border-radius:25px;
+            font-size:1rem; background: var(--search-bg); color: var(--search-text);
+        }
+        .menu-toggle{
+            background:none; border:none; color: var(--hdr-text);
+            font-size:1.5rem; cursor:pointer; padding:.5rem;
+        }
+
+        /* =======================
+           FOOTER (igual que original)
+           ======================= */
+        .footer{
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding:20px;
+            text-align:center;
+            margin-top:auto;
+        }
+        .footer-nav{
+            display:flex; justify-content:center; gap:30px; margin-bottom:15px; flex-wrap:wrap;
+        }
+        .footer-nav a{
+            color: var(--footer-text); text-decoration:none; padding:5px 0;
+            border-bottom:5px solid transparent; transition:border-color .3s;
+        }
+        .footer-nav a:hover, .footer-nav a.active{ border-bottom-color:#fff; }
+
+        /* ======================
+           PC BUILDER CONTENT (exacto a la imagen)
+           ====================== */
+        .main-content {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Título principal */
+        .page-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        /* Sección de categorías de componentes */
+        .components-section {
+            background: #c8c8c8;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .component-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .component-icon {
+            width: 60px;
+            height: 60px;
+            background: #888;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .component-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Sección de productos seleccionados */
+        .selected-section {
+            background: #c8c8c8;
+            border-radius: 15px;
+            padding: 2rem;
+        }
+
+        .selected-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .selected-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            justify-content: center;
+            background: transparent;
+            padding: 0;
+        }
+
+        .info-btn .info-text {
+            background: white;
+            color: #333;
+            padding: 0.3rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #ddd;
+        }
+
+        .component-icon { width:60px; height:60px; border-radius:8px; object-fit:contain; display:block; background:#c8c8c8; }
+
+        .cart-btn {
+            background: #1E88E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 28px;
+        }
+
+        .cart-btn:hover {
+            background: #1976D2;
+        }
+
+        .selected-icon {
+            width: 50px;
+            height: 35px;
+            background: #888;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            font-size: 16px;
+            color: #333;
+            position: relative;
+        }
+
+        /* Patitas del chip */
+        .selected-icon::before,
+        .selected-icon::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 8px;
+            background: #333;
+        }
+
+        .selected-icon::before {
+            left: -3px;
+            top: 5px;
+            box-shadow: 0 4px 0 #333, 0 8px 0 #333, 0 12px 0 #333, 0 16px 0 #333;
+        }
+
+        .selected-icon::after {
+            right: -3px;
+            top: 5px;
+            box-shadow: 0 4px 0 #333, 0 8px 0 #333, 0 12px 0 #333, 0 16px 0 #333;
+        }
+
+        .product-name {
+            font-size: 0.75rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Segunda fila de productos seleccionados */
+        .selected-grid-second {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header{ padding:10px 15px; }
+            .search-container{ margin:0 15px; }
+            .main-content{ padding:15px; }
+            .footer-nav{ gap:20px; }
+
+            .components-grid{
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+            .selected-grid,
+            .selected-grid-second{
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .footer-nav{ flex-direction:column; gap:10px; }
+            .components-grid{
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .selected-grid,
+            .selected-grid-second{
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">TiendaTech</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Buscar...">
+        </div>
+        <button class="menu-toggle">☰</button>
+    </header>
+
+    <div class="content-wrap">
+        <main class="main-content">
+            <h1 class="page-title">Armador de computadoras</h1>
+
+            <!-- Sección "Arma tu computador" -->
+            <div class="components-section">
+                <h2 class="section-title">Arma tu computador</h2>
+                <div class="components-grid">
+                    <div class="component-item">
+                        <div class="component-icon">🖥</div>
+                        <div class="component-name">Procesadores</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">🎮</div>
+                        <div class="component-name">Tarjetas gráficas</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">💾</div>
+                        <div class="component-name">Memoria RAM</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">❄</div>
+                        <div class="component-name">Refrigeración</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">📦</div>
+                        <div class="component-name">Cubiertas</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">⚡</div>
+                        <div class="component-name">Placas madre</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">🔌</div>
+                        <div class="component-name">Fuente de poder</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">💿</div>
+                        <div class="component-name">Almacenamiento</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">🖥</div>
+                        <div class="component-name">Monitores</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">🔊</div>
+                        <div class="component-name">Audio</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">⌨</div>
+                        <div class="component-name">Teclados</div>
+                    </div>
+                    <div class="component-item">
+                        <div class="component-icon">🖱</div>
+                        <div class="component-name">Ratones</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de productos seleccionados -->
+            <div class="selected-section">
+                <!-- Primera fila -->
+                <div class="selected-grid">
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                </div>
+
+                <!-- Segunda fila -->
+                <div class="selected-grid-second">
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                    <div class="selected-item">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
+                        <div class="buttons-container">
+                            <button class="info-btn">
+                                <span class="info-text">Info</span>
+                            </button>
+                            <button class="cart-btn">🛒</button>
+                        </div>
+                        <div class="product-name">Nombre del producto</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <nav class="footer-nav">
+            <a href="#" class="active">Inicio</a>
+            <a href="#">Cuenta</a>
+            <a href="#">Carrito</a>
+            <a href="#">Categorías</a>
+            <a href="#">Contáctenos</a>
+        </nav>
+        <div>TiendaTech</div>
+    </footer>
+</div>
+</body>
+</html>

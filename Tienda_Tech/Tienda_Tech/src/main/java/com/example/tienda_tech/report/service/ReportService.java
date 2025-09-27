@@ -21,7 +21,7 @@ public interface ReportService {
     List<ProvinceReportRow>   loadProvinces();
     List<PaymentMethodRow>    loadPaymentMethods();
 
-    /** Kardex valorizado PEPS por producto (null = todos) y rango (pueden ser null). */
+    // Kardex valorizado
     List<KardexValRow> loadKardexValorizado(LocalDate desde, LocalDate hasta, Integer productoId);
 
     // ===== PDFs =====
@@ -41,6 +41,5 @@ public interface ReportService {
                                LocalDate desde,
                                LocalDate hasta);
 
-    /** PDF con tabla tipo Excel para el Kardex valorizado PEPS. */
     byte[] buildKardexValorizadoPdf(String titulo, List<KardexValRow> rows);
 }

@@ -29,21 +29,22 @@
     <div class="logo">TiendaTech<br><small>Panel Admin</small></div>
     <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
     <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
-
+      <div class="nav-item" onclick="showSection('suggestions', this)">Sugerencias</div>
       <div class="nav-item" onclick="showSection('users', this)">Gestión de Usuarios</div>
-    <div class="nav-item" onclick="showSection('inventory', this)">Movimiento de Inventario</div>
-    <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
-    <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
-    <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
-    <div class="nav-item" onclick="logout()">Cerrar sesión</div>
+      <div class="nav-item" onclick="showSection('auditoria', this)">Auditoria</div>
+        <div class="nav-item" onclick="showSection('inventory', this)">Movimiento de Inventario</div>
+      <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
+      <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
+      <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
+      <div class="nav-item" onclick="logout()">Cerrar sesión</div>
 
-  </div>
+    </div>
 
-  <div class="main-content">
-    <div class="admin-header">
-      <h1>Panel de Administración</h1>
-      <div class="user-info">👤 Administrador: Admin</div>
-      <!-- Modo oscuro -->
+    <div class="main-content">
+      <div class="admin-header">
+        <h1>Panel de Administración</h1>
+        <div class="user-info">👤 Administrador: Admin</div>
+        <!-- Modo oscuro -->
       <button id="themeToggle"
               type="button"
               class="btn btn-secondary btn--sm"
@@ -254,6 +255,15 @@
           </div>
       </div>
 
+      <!-- Auditoría -->
+      <div id="auditoria" class="admin-section">
+          <div class="section-title">🧾 Auditoría</div>
+          <p class="tt-muted-row" style="margin-top:-.25rem">
+              Revisa cambios en productos y movimientos de inventario. Usa el botón para abrir el visor.
+          </p>
+          <button class="btn btn-primary" id="au_open">Abrir auditoría</button>
+      </div>
+
 
       <!-- Usuarios -->
   <div id="users" class="admin-section">
@@ -329,6 +339,7 @@
       </table>
     </div>
   </div>
+
 
     <!-- Movimiento de Inventario -->
     <div id="inventory" class="admin-section">
@@ -442,68 +453,27 @@
       </div>
     </div>
 
-      <!-- Reportes (UN selector + UN botón) -->
-      <div id="reports" class="admin-section">
-          <div class="section-title">📊 Reportes del Sistema</div>
-
-          <div class="action-card" style="margin-bottom:1rem;">
-              <h3>🎛️ Filtros y acciones</h3>
-
-              <div class="form-group">
-                  <label>Selecciona el reporte</label>
-                  <select id="rep-select" class="form-control" style="max-width:420px">
-                      <option value="general">📥 Reporte General (todo en un PDF)</option>
-                      <option value="usuarios">👥 Usuarios</option>
-                      <option value="productos">📦 Productos</option>
-                      <option value="ordenes">🧾 Órdenes</option>
-                      <option value="stock-bajo">⚠️ Stock Bajo</option>
-                      <option value="ventas-producto">📈 Ventas por Producto</option>
-                      <option value="roles">🧩 Roles</option>
-                      <option value="ciudades">🏙️ Ciudades</option>
-                      <option value="provincias">🗺️ Provincias</option>
-                      <option value="metodos-pago">💳 Métodos de Pago</option>
-                      <option value="kardex">📒 Kardex Valorizado</option>
-                  </select>
-                  <small class="muted">Descarga o visualiza inline sin cambiar el backend.</small>
-              </div>
-
-              <div class="form-inline" style="margin:.5rem 0 0">
-                  <label class="inline tiny"><input type="radio" name="rep-modo" value="todo" checked> Sin límite de fechas</label>
-                  <label class="inline tiny"><input type="radio" name="rep-modo" value="rango"> Por rango de fechas</label>
-                  <input type="date" id="rep-desde" class="form-control" style="width:120px" disabled>
-                  <input type="date" id="rep-hasta" class="form-control" style="width:120px" disabled>
-                  <span class="muted tiny">Se filtra por <b>orden.fecha</b> donde aplica.</span>
-              </div>
-
-              <div style="margin-top:1rem; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
-                  <a href="#" id="rep-descargar" class="btn btn-download">
-                      <span class="btn-download__icon">⬇️</span>
-                      <span class="btn-download__text">Descargar PDF</span>
-                  </a>
-
-                  <a href="#" id="rep-ver" class="btn btn-download" style="background:linear-gradient(135deg,#10b981,#3b82f6)">
-                      <span class="btn-download__icon">👁️</span>
-                      <span class="btn-download__text">Ver en la página</span>
-                  </a>
-
-                  <small class="btn-download__hint">“Ver” usa <code>?inline=true</code> en el mismo endpoint.</small>
-              </div>
-          </div>
-
-          <!-- Visor inline -->
-          <div class="action-card" id="rep-viewer-card" style="display:none; padding:0;">
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee;">
-                  <strong id="rep-viewer-title">Visor de PDF</strong>
-                  <button class="btn btn-danger btn--sm" id="rep-cerrar-visor">Cerrar visor</button>
-              </div>
-              <div style="height:70vh;">
-                  <iframe id="rep-iframe" title="report-preview" src="about:blank"
-                          style="width:100%; height:100%; border:0;"></iframe>
-              </div>
-          </div>
+    <!-- Reportes -->
+    <div id="reports" class="admin-section">
+      <div class="section-title">📊 Reportes del Sistema</div>
+      <div class="action-grid">
+        <div class="action-card">
+          <h3>📈 Estadísticas Generales</h3>
+          <p>🛍️ Total Productos: <strong>156</strong></p>
+          <p>👥 Total Usuarios: <strong>1,245</strong></p>
+          <p>🚫 Usuarios Bloqueados: <strong>23</strong></p>
+          <p>💰 Ventas del Mes: <strong>$45,678</strong></p>
+        </div>
+        <div class="action-card">
+          <h3>📅 Reportes por Fecha</h3>
+          <div class="form-group"><label>Fecha Inicio</label><input type="date" class="form-control"></div>
+          <div class="form-group"><label>Fecha Fin</label><input type="date" class="form-control"></div>
+          <button class="btn btn-primary">Generar Reporte</button>
+        </div>
       </div>
+    </div>
 
-      <!-- Configuración -->
+    <!-- Configuración -->
     <div id="settings" class="admin-section">
       <div class="section-title">⚙️ Configuración del Sistema</div>
       <div class="action-grid">
@@ -720,6 +690,93 @@
       </div>
     </div>
   </div>
+
+
+
+  <!-- ===== Modal Auditoría ===== -->
+  <div id="au_backdrop" class="tt-backdrop" hidden>
+      <div class="ventana-centrada ventana-horizontal ventana-xl" role="dialog" aria-modal="true" aria-labelledby="au_title">
+          <div class="ventana-header">
+              <h2 id="au_title">🧾 Auditoría</h2>
+              <button class="cerrar" type="button" id="au_close" aria-label="Cerrar">×</button>
+          </div>
+
+          <!-- Filtros -->
+          <div class="picker-toolbar" style="display:grid;grid-template-columns:.9fr 1.1fr .8fr .8fr .8fr auto;gap:.5rem;align-items:center">
+              <select id="au_tabla" class="form-control" title="Tabla">
+                  <option value="productos">Productos</option>
+                  <option value="usuarios">Usuarios</option>
+              </select>
+
+              <select id="au_usuario" class="form-control" title="Usuario">
+                  <option value="">Todos los usuarios</option>
+              </select>
+
+              <input id="au_producto_id" class="form-control" inputmode="numeric" placeholder="Producto ID">
+              <input id="au_fini" type="date" class="form-control" title="Desde fecha">
+              <input id="au_ffin" type="date" class="form-control" title="Hasta fecha">
+
+              <button class="btn btn-primary" id="au_buscar">Buscar</button>
+          </div>
+
+          <!-- Tabla: Productos -->
+          <div id="au_tbl_prod_wrap" class="data-table">
+              <table>
+                  <thead>
+                  <tr>
+                      <th>Fecha/Hora</th>
+                      <th>Usuario</th>
+                      <th>Tipo</th>
+                      <th>ProdID</th>
+                      <th>Nombre (antes)</th>
+                      <th>Nombre (después)</th>
+                      <th>Precio (antes)</th>
+                      <th>Precio (después)</th>
+                      <th>Stock (antes)</th>
+                      <th>Stock (después)</th>
+                      <th>IVA (antes)</th>
+                      <th>IVA (después)</th>
+                      <th>Habilitado (antes)</th>
+                      <th>Habilitado (después)</th>
+                  </tr>
+                  </thead>
+                  <tbody id="au_tb_prod">
+                  <tr><td colspan="14" class="tt-muted-row">Sin datos…</td></tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <!-- Tabla: Movimientos -->
+          <div id="au_tbl_mov_wrap" class="data-table" hidden>
+              <table>
+                  <thead>
+                  <tr>
+                      <th>Fecha</th>
+                      <th>Usuario</th>
+                      <th>Tipo</th>
+                      <th>ProdID</th>
+                      <th>Subtipo</th>
+                      <th>Cantidad</th>
+                      <th>Costo Unit.</th>
+                      <th>Costo Total</th>
+                      <th>Ref.</th>
+                      <th>Obs.</th>
+                  </tr>
+                  </thead>
+                  <tbody id="au_tb_mov">
+                  <tr><td colspan="10" class="tt-muted-row">Sin datos…</td></tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <div class="picker-pager" style="display:flex;gap:.5rem;align-items:center;">
+              <span id="au_info" class="muted">—</span>
+              <div style="flex:1"></div>
+              <button class="btn btn-outline btn--sm" id="au_hist_user" disabled>Ver usuarios</button>
+          </div>
+      </div>
+  </div>
+
   <!-- ===== Modal Editar Producto ===== -->
   <div id="ep_backdrop" class="tt-backdrop" hidden>
     <div class="ventana-centrada ventana-horizontal" role="dialog" aria-modal="true" aria-labelledby="ep_title">
@@ -819,86 +876,703 @@
       </div>
     </div>
   </div>
-  <!-- ===== Reportes: lógica con un solo selector + un botón ===== -->
+
 
   <script>
-      document.addEventListener('DOMContentLoaded', () => {
-          const sel     = document.getElementById('rep-select');
-          const radios  = Array.from(document.querySelectorAll('input[name="rep-modo"]'));
-          const iDesde  = document.getElementById('rep-desde');
-          const iHasta  = document.getElementById('rep-hasta');
-          const btnDl   = document.getElementById('rep-descargar');
-          const btnView = document.getElementById('rep-ver');
+      (function () {
+          if (!document.body.classList.contains('tt-admin')) return; // ← solo en Admin
+          const stored = Number(localStorage.getItem('tt_idle_ms') || 0);
+          const IDLE_MS = 60 * 1000;   // 1 min
+          if (IDLE_MS <= 0) return;
 
-          const card    = document.getElementById('rep-viewer-card');
-          const iframe  = document.getElementById('rep-iframe');
-          const ttl     = document.getElementById('rep-viewer-title');
-          const btnClose= document.getElementById('rep-cerrar-visor');
+          const REDIRECT = "/index.html";
+          let last = Date.now(), t;
 
-          const API_ORIGIN = window.location.origin; // http://localhost:8080
+          function schedule(){ clearTimeout(t); t = setTimeout(triggerLogout, IDLE_MS); }
+          function reset(ev){ if (!ev || ev.isTrusted) { last = Date.now(); schedule(); } }
 
-          const ENDPOINTS = {
-              general:          '/api/report/admin/pdf',
-              usuarios:         '/api/report/usuarios/pdf',
-              productos:        '/api/report/productos/pdf',
-              ordenes:          '/api/report/ordenes/pdf',
-              'stock-bajo':     '/api/report/stock-bajo/pdf',
-              'ventas-producto':'/api/report/ventas-producto/pdf',
-              roles:            '/api/report/roles/pdf',
-              ciudades:         '/api/report/ciudades/pdf',
-              provincias:       '/api/report/provincias/pdf',
-              'metodos-pago':   '/api/report/metodos-pago/pdf',
-              kardex:           '/api/report/kardex/pdf'
+          async function serverLogout(){ try{ await fetch('/api/logout',{method:'POST',credentials:'include'});}catch{} }
+          function clearClientState(){ localStorage.removeItem('tt_user'); localStorage.removeItem('tt_idle_ms'); }
+
+          function triggerLogout(){
+              if (Date.now() - last < IDLE_MS - 50) { schedule(); return; } // hubo actividad real
+
+              sessionStorage.removeItem('user');
+              localStorage.removeItem('user');
+              sessionStorage.removeItem('token');
+              localStorage.removeItem('token');
+
+              clearClientState();
+              serverLogout();                 // no esperamos
+              location.href = REDIRECT;       // vuelves a login/público
+          }
+
+          ["pointerdown","keydown","wheel","touchstart","mousemove"]
+              .forEach(ev => window.addEventListener(ev, reset, { passive:true }));
+          window.addEventListener('beforeunload', () => clearTimeout(t));
+
+          schedule();
+      })();
+  </script>
+
+  <script>
+      (() => {
+          // ===== Helpers básicos =====
+          const $  = (sel, p=document) => p.querySelector(sel);
+          const $$ = (sel, p=document) => Array.from(p.querySelectorAll(sel));
+          const B  = $('#au_backdrop');
+
+          const E = {
+              open:    $('#au_open'),
+              close:   $('#au_close'),
+              buscar:  $('#au_buscar'),
+              tabla:   $('#au_tabla'),
+              usuario: $('#au_usuario'),
+              prodId:  $('#au_producto_id'),
+              fini:    $('#au_fini'),
+              ffin:    $('#au_ffin'),
+              info:    $('#au_info'),
+              btnHist: $('#au_hist_user'),
+              prodWrap: $('#au_tbl_prod_wrap'),
+              movWrap:  $('#au_tbl_mov_wrap'),
+              tbProd:   $('#au_tb_prod'),
+              tbMov:    $('#au_tb_mov'),
           };
 
-          const hoy = new Date();
-          const dfltHasta = hoy.toISOString().slice(0,10);
-          const dfltDesde = new Date(hoy.getTime() - 30*24*60*60*1000).toISOString().slice(0,10);
-          if (!iDesde.value) iDesde.value = dfltDesde;
-          if (!iHasta.value) iHasta.value = dfltHasta;
+          const state = { usuariosCargados: false };
 
-          function refreshFechas() {
-              const byRange = (radios.find(r => r.checked) || {}).value === 'rango';
-              iDesde.disabled = !byRange;
-              iHasta.disabled = !byRange;
+          function show(el){ el.hidden = false; }
+          function hide(el){ el.hidden = true; }
+
+          // ===== Utilidades de formato =====
+          function fmtMoney(v){
+              if (v == null || v === '') return '';
+              const n = Number(v);
+              return Number.isFinite(n) ? n.toFixed(2) : String(v);
           }
-          radios.forEach(r => r.addEventListener('change', refreshFechas));
-          refreshFechas();
+          function fmtDate(s){
+              if (!s) return '';
+              return String(s).replace('T',' ').replace('Z','');
+          }
+          function boolTxt(v){ return v === true ? 'Sí' : (v === false ? 'No' : ''); }
+          function safe(v){ return (v == null) ? '' : v; }
+          function esc(s){ return String(s).replace(/[<>&"]/g, m=>({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m])); }
 
-          function buildUrl({ inline } = { inline:false }) {
-              const key = sel.value || 'general';
-              const base = ENDPOINTS[key] || ENDPOINTS.general;
-              const url = new URL(base, API_ORIGIN);
-
-              const modo = (radios.find(r => r.checked) || {}).value;
-              if (modo === 'rango') {
-                  if (iDesde.value) url.searchParams.set('desde', iDesde.value);
-                  if (iHasta.value) url.searchParams.set('hasta', iHasta.value);
+          // ===== API helper =====
+          async function api(path, params = {}) {
+              const url = new URL(path, location.origin);
+              for (const [k,v] of Object.entries(params)) {
+                  if (v !== '' && v != null) url.searchParams.set(k, v);
               }
-              if (inline) url.searchParams.set('inline', 'true');
-              return url.toString();
+              const r = await fetch(url, { credentials: 'include' });
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return await r.json();
           }
 
-          btnDl.addEventListener('click', (e) => {
-              e.preventDefault();
-              window.location.href = buildUrl({ inline:false });
+          // ===== Apertura / cierre =====
+          function setDefaultDates(){
+              const hoy = new Date();
+              const end = hoy.toISOString().slice(0,10);
+              const start = new Date(hoy.getTime() - 6*86400000).toISOString().slice(0,10);
+              if (!E.fini.value) E.fini.value = start;
+              if (!E.ffin.value) E.ffin.value = end;
+          }
+
+          async function openModalAud(){
+              setDefaultDates();
+              if (!state.usuariosCargados) await loadUsuarios();
+              switchTable(); // asegura visibilidad + limpia tabla opuesta
+              syncHistButton();
+              E.info.textContent = '—';
+              show(B);
+              // Autobuscar al abrir
+              buscarAuditoria().catch(()=>{});
+          }
+          function closeModalAud(){ hide(B); }
+
+          // ===== UI: tabla visible y limpieza =====
+          function switchTable(){
+              const t = E.tabla?.value;
+
+              if (t === 'productos') {
+                  if (E.usuario) E.usuario.value = '';
+
+                  // Mostrar tabla de productos y ocultar las demás
+                  if (E.prodWrap) E.prodWrap.hidden = false;
+                  if (E.movWrap)  E.movWrap.hidden  = true;   // no usamos "movimientos" si el select tiene "usuarios"
+                  if (E.tbMov)    E.tbMov.innerHTML = `<tr><td colspan="10" class="tt-muted-row">Sin datos…</td></tr>`;
+              } else {
+                  // Cuando NO es "productos" (ej: "usuarios"), ocultamos productos
+                  if (E.prodWrap) E.prodWrap.hidden = true;
+                  if (E.movWrap)  E.movWrap.hidden  = true;   // la vista de usuarios la maneja su propio script
+                  if (E.tbProd)   E.tbProd.innerHTML = `<tr><td colspan="14" class="tt-muted-row">Sin datos…</td></tr>`;
+              }
+
+              E.info.textContent = '—';
+          }
+
+          // ===== Cargar usuarios =====
+          async function loadUsuarios(){
+              try {
+                  const data = await api('/api/auditorias/usuarios');
+                  const opts = ['<option value="">Todos los usuarios</option>']
+                      .concat((Array.isArray(data) ? data : []).map(u => {
+                          const val = (typeof u === 'string') ? u : (u?.usuario ?? '');
+                          return `<option>${esc(val)}</option>`;
+                      }));
+                  E.usuario.innerHTML = opts.join('');
+                  state.usuariosCargados = true;
+              } catch (e) {
+                  console.warn('No se pudieron cargar usuarios', e);
+              }
+          }
+
+          // ===== Buscar =====
+          async function buscarAuditoria(){
+              const params = {
+                  usuario: E.usuario.value || '',
+                  productoId: E.prodId.value || '',
+                  desde: E.fini.value || '',
+                  hasta: E.ffin.value || '',
+              };
+
+              E.buscar.disabled = true;
+              E.info.textContent = 'Buscando…';
+              const t = E.tabla.value;
+
+              // Spinner / estado
+              if (t === 'productos') {
+                  E.tbProd.innerHTML = `<tr><td colspan="9" class="tt-muted-row">Cargando…</td></tr>`;
+              } else {
+                  E.tbMov.innerHTML = `<tr><td colspan="10" class="tt-muted-row">Cargando…</td></tr>`;
+              }
+
+              try {
+                  if (t === 'productos') {
+                      const rows = await api('/api/auditorias/productos', params);
+                      renderProductos(rows || []);
+                      E.info.textContent = `${rows?.length ?? 0} cambios de productos.`;
+                  } else {
+                      const rows = await api('/api/auditorias/movimientos', params);
+                      renderMovimientos(rows || []);
+                      E.info.textContent = `${rows?.length ?? 0} movimientos auditados.`;
+                  }
+              } catch (e) {
+                  console.error(e);
+                  if (t === 'productos') {
+                      E.tbProd.innerHTML = `<tr><td colspan="9" class="tt-muted-row">Error al cargar.</td></tr>`;
+                  } else {
+                      E.tbMov.innerHTML = `<tr><td colspan="10" class="tt-muted-row">Error al cargar.</td></tr>`;
+                  }
+                  E.info.textContent = 'Error al cargar.';
+              } finally {
+                  E.buscar.disabled = false;
+                  syncHistButton();
+              }
+          }
+
+          // ===== Render: producto_auditoria (columnas separadas antes/después) =====
+          function renderProductos(rows){
+              if (!rows.length) {
+                  E.tbProd.innerHTML = `<tr><td colspan="14" class="tt-muted-row">Sin datos…</td></tr>`;
+                  return;
+              }
+
+              // Helper: decide qué va en antes/después según el tipo
+              const split = (tipo, before, after) => {
+                  const t = String(tipo ?? '').trim().toUpperCase();
+                  if (t === 'I') return [null, after];   // Inserción: antes vacío
+                  if (t === 'D') return [before, null];  // (Opcional) Eliminación: después vacío
+                  return [before, after];                // Update u otros
+              };
+
+              const html = rows.map(r => {
+                  const fh   = fmtDate(r.fechahorareg ?? r.fechaHoraReg ?? r.fh);
+                  const usr  = r.usuario ?? '';
+                  const tipo = (r.tipo ?? '').toString().toUpperCase();
+                  const pid  = r.producto_id ?? r.productoId ?? '';
+
+                  // Valores crudos
+                  const nomA0 = r.nombre ?? '';
+                  const nomD0 = r.nombre_despues ?? r.nombreDespues ?? '';
+
+                  const prA0  = r.preciounitario ?? r.precioUnitario;
+                  const prD0  = r.preciounitario_despues ?? r.precioUnitarioDespues;
+
+                  const stA0  = r.stock;
+                  const stD0  = r.stock_despues ?? r.stockDespues;
+
+                  const ivaA0 = r.iva_id ?? r.ivaId;
+                  const ivaD0 = r.iva_id_despues ?? r.ivaIdDespues;
+
+                  const hbA0  = r.habilitado;
+                  const hbD0  = r.habilitado_despues ?? r.habilitadoDespues;
+
+                  // Aplicar split según tipo
+                  const [nomA, nomD] = split(tipo, nomA0, nomD0);
+                  const [prA,  prD ] = split(tipo, prA0,  prD0);
+                  const [stA,  stD ] = split(tipo, stA0,  stD0);
+                  const [ivaA, ivaD] = split(tipo, ivaA0, ivaD0);
+                  const [hbA,  hbD ] = split(tipo, hbA0,  hbD0);
+
+                  // Formatos finales
+                  const prAfmt = (prA == null ? '' : fmtMoney(prA));
+                  const prDfmt = (prD == null ? '' : fmtMoney(prD));
+                  const stAfmt = (stA == null ? '' : stA);
+                  const stDfmt = (stD == null ? '' : stD);
+                  const ivaAfmt= (ivaA== null ? '' : ivaA);
+                  const ivaDfmt= (ivaD== null ? '' : ivaD);
+                  const hbAfmt = (hbA == null ? '' : boolTxt(hbA));
+                  const hbDfmt = (hbD == null ? '' : boolTxt(hbD));
+
+                  return `
+      <tr>
+        <td>${esc(fh)}</td>
+        <td>${esc(usr)}</td>
+        <td>${esc(tipo)}</td>
+        <td>${esc(pid)}</td>
+
+        <td title="${esc(nomA ?? '')}">${esc(nomA ?? '')}</td>
+        <td title="${esc(nomD ?? '')}"><strong>${esc(nomD ?? '')}</strong></td>
+
+        <td>${prAfmt}</td>
+        <td><strong>${prDfmt}</strong></td>
+
+        <td>${esc(stAfmt)}</td>
+        <td><strong>${esc(stDfmt)}</strong></td>
+
+        <td>${esc(ivaAfmt)}</td>
+        <td><strong>${esc(ivaDfmt)}</strong></td>
+
+        <td>${hbAfmt}</td>
+        <td><strong>${hbDfmt}</strong></td>
+      </tr>`;
+              }).join('');
+
+              E.tbProd.innerHTML = html;
+          }
+
+          // ===== Render: movimiento_inventario_auditoria =====
+          function renderMovimientos(rows){
+              if (!rows.length) {
+                  E.tbMov.innerHTML = `<tr><td colspan="10" class="tt-muted-row">Sin datos…</td></tr>`;
+                  return;
+              }
+              const html = rows.map(r => {
+                  const f   = fmtDate(r.fecha);
+                  const u   = r.usuario ?? '';
+                  const t   = r.tipo ?? '';
+                  const pid = r.producto_id ?? r.productoId ?? '';
+                  const sub = r.subtipo_id ?? r.subtipoId ?? '';
+                  const c   = safe(r.cantidad);
+                  const cu  = fmtMoney(r.costo_unitario ?? r.costoUnitario);
+                  const ct  = fmtMoney(r.costo_total ?? r.costoTotal);
+                  const ref = r.referencia ?? '';
+                  const obs = r.observacion ?? '';
+                  return `
+        <tr>
+          <td>${esc(f)}</td>
+          <td>${esc(u)}</td>
+          <td>${esc(t)}</td>
+          <td>${esc(pid)}</td>
+          <td>${esc(sub)}</td>
+          <td>${esc(c)}</td>
+          <td>${cu}</td>
+          <td>${ct}</td>
+          <td title="${esc(ref)}">${esc(ref)}</td>
+          <td title="${esc(obs)}">${esc(obs)}</td>
+        </tr>`;
+              }).join('');
+              E.tbMov.innerHTML = html;
+          }
+
+          // ===== Historial por usuario (otro HTML) =====
+          function syncHistButton(){ E.btnHist.disabled = (E.usuario.value === ''); }
+          function verHistorialUsuario(){
+              const u = E.usuario.value;
+              if (!u) return;
+              const q = new URLSearchParams({
+                  u,
+                  desde: E.fini.value || '',
+                  hasta: E.ffin.value || ''
+              });
+              // guarda también en storage si necesitas leerlo allá
+              sessionStorage.setItem('tt_audit_user', u);
+              location.href = `/auditoria-usuario.html?${q.toString()}`;
+          }
+
+          // ===== Eventos =====
+          E.open?.addEventListener('click', openModalAud);
+          E.close?.addEventListener('click', closeModalAud);
+
+          E.tabla?.addEventListener('change', () => {
+              switchTable();
+              if (E.tabla.value === 'productos') buscarAuditoria(); // limpia y recarga productos
           });
 
-          btnView.addEventListener('click', (e) => {
-              e.preventDefault();
-              iframe.src = buildUrl({ inline:true });
-              ttl.textContent = 'Visor de PDF — ' + (sel.options[sel.selectedIndex]?.text || '');
-              card.style.display = '';
-              card.scrollIntoView({ behavior:'smooth', block:'start' });
+          E.usuario?.addEventListener('change', syncHistButton);
+          E.buscar?.addEventListener('click', buscarAuditoria);
+          E.btnHist?.addEventListener('click', verHistorialUsuario);
+
+          // Enter en filtros => buscar
+          [E.usuario, E.prodId, E.fini, E.ffin].forEach(ctrl => {
+              ctrl?.addEventListener('keydown', e => { if (e.key === 'Enter') buscarAuditoria(); });
           });
 
-          btnClose.addEventListener('click', () => {
-              iframe.src = 'about:blank';
-              card.style.display = 'none';
+          // Cerrar con click fuera o ESC
+          B.addEventListener('click', (ev) => { if (ev.target === B) closeModalAud(); });
+          window.addEventListener('keydown', (ev) => { if (!B.hidden && ev.key === 'Escape') closeModalAud(); });
+      })();
+  </script>
+
+  <script>
+      (() => {
+          // ===== utilitarios =====
+          const $ = (s,p=document)=>p.querySelector(s);
+          const esc = s => String(s ?? '').replace(/[<>&"]/g, m=>({ '<':'&lt;','>':'&gt;','&':'&amp;'}[m]));
+          const fmtDate = s => s ? String(s).replace('T',' ').replace('Z','') : '';
+
+          // refs comunes del modal
+          const B  = $('#au_backdrop');
+          const E = {
+              tabla:   $('#au_tabla'),
+              usuario: $('#au_usuario'),
+              fini:    $('#au_fini'),
+              ffin:    $('#au_ffin'),
+              buscar:  $('#au_buscar'),
+              info:    $('#au_info'),
+              // los existentes:
+              prodWrap: $('#au_tbl_prod_wrap'),
+              movWrap:  $('#au_tbl_mov_wrap'),
+          };
+
+          // === crea contenedor/tabla para USUARIOS si no existe ===
+          function ensureUserTable() {
+              if ($('#au_tbl_user_wrap')) return;
+
+              const wrap = document.createElement('div');
+              wrap.id = 'au_tbl_user_wrap';
+              wrap.className = 'data-table';
+              wrap.hidden = true;
+              wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha/Hora</th>
+            <th>Usuario</th>
+            <th>IP</th>
+            <th>Host</th>
+            <th>Sesión</th>
+          </tr>
+        </thead>
+        <tbody id="au_tb_user">
+          <tr><td colspan="5" class="tt-muted-row">Sin datos…</td></tr>
+        </tbody>
+      </table>
+    `;
+              // Insertar justo donde están los otros
+              E.movWrap.after(wrap);
+          }
+
+          function userWrap()  { return $('#au_tbl_user_wrap'); }
+          function userTBody() { return $('#au_tb_user'); }
+
+          async function api(path, params = {}) {
+              const url = new URL(path, location.origin);
+              Object.entries(params).forEach(([k,v]) => { if (v!=null && v!=='') url.searchParams.set(k,v); });
+              const r = await fetch(url, { credentials: 'include' });
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+          }
+
+          function setDefaultDates(){
+              if (!E.fini || !E.ffin) return;
+              const hoy = new Date();
+              const end = hoy.toISOString().slice(0,10);
+              const start = new Date(hoy.getTime() - 6*86400000).toISOString().slice(0,10);
+              if (!E.fini.value) E.fini.value = start;
+              if (!E.ffin.value) E.ffin.value = end;
+          }
+
+          async function loadUsuarios(){
+              try {
+                  const list = await api('/api/auditoria/usuariosL');
+                  const opts = ['<option value="">Todos los usuarios</option>']
+                      .concat((list||[]).map(u => `<option>${esc(u)}</option>`));
+                  E.usuario.innerHTML = opts.join('');
+              } catch {}
+          }
+
+          function switchTable(){
+              if (!E.tabla) return;
+              const t = E.tabla.value;
+              const UW = userWrap();
+
+              // visibilidad
+              if (t === 'usuarios') {
+                  E.prodWrap.hidden = true;
+                  E.movWrap.hidden  = true;
+                  UW.hidden = false;
+                  E.info.textContent = '—';
+              } else {
+                  // deja que tu script original controle productos/movimientos
+                  UW.hidden = true;
+              }
+          }
+
+          async function buscarUsuarios(){
+              const tb = userTBody();
+              if (!tb) return;
+
+              E.buscar.disabled = true;
+              E.info.textContent = 'Buscando…';
+              tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Cargando…</td></tr>`;
+              try {
+                  const rows = await api('/api/auditoria/logins', {
+                      usuario: E.usuario?.value || '',
+                      desde:   E.fini?.value    || '',
+                      hasta:   E.ffin?.value    || ''
+                  });
+                  renderUsuarios(rows || []);
+                  E.info.textContent = `${rows?.length ?? 0} logins.`;
+              } catch (e) {
+                  tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Error al cargar.</td></tr>`;
+                  E.info.textContent = 'Error al cargar.';
+                  console.error(e);
+              } finally {
+                  E.buscar.disabled = false;
+              }
+          }
+
+          function renderUsuarios(rows){
+              const tb = userTBody();
+              if (!rows.length) {
+                  tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Sin datos…</td></tr>`;
+                  return;
+              }
+              tb.innerHTML = rows.map(r => `
+      <tr>
+        <td>${esc(fmtDate(r.fechaLogin))}</td>
+        <td>${esc(r.usuario)}</td>
+        <td>${esc(r.ip)}</td>
+        <td title="${esc(r.host)}">${esc(r.host)}</td>
+        <td>${esc(r.idSesion)}</td>
+      </tr>
+    `).join('');
+          }
+
+          // ====== boot ======
+          document.addEventListener('DOMContentLoaded', () => {
+              ensureUserTable();
+
+              // cuando cambie "Tabla" => mostrar usuarios si corresponde
+              E.tabla?.addEventListener('change', () => {
+                  switchTable();
+                  if (E.tabla.value === 'usuarios') buscarUsuarios();
+              });
+
+              // botón Buscar: si está en "usuarios", buscamos
+              E.buscar?.addEventListener('click', () => {
+                  if (E.tabla?.value === 'usuarios') buscarUsuarios();
+              });
+
+              // al abrir el modal: cargamos usuarios (una vez) y auto-buscamos si la pestaña es usuarios
+              $('#au_open')?.addEventListener('click', async () => {
+                  setDefaultDates();
+                  // si aún no tiene opciones (solo la de "Todos…"), carga
+                  if (E.usuario && E.usuario.options.length <= 1) await loadUsuarios();
+                  switchTable();
+                  if (E.tabla?.value === 'usuarios') buscarUsuarios();
+              });
           });
-      });
+      })();
+  </script>
+
+  <script>
+      (() => {
+          // ===== Helpers =====
+          const $  = (s, p=document) => p.querySelector(s);
+          const esc = s => String(s ?? '').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
+          const fmtDate = s => s ? String(s).replace('T',' ').replace('Z','') : '';
+          async function api(path, params = {}) {
+              const url = new URL(path, location.origin);
+              Object.entries(params).forEach(([k,v]) => { if (v != null && v !== '') url.searchParams.set(k, v); });
+              const r = await fetch(url, { credentials: 'include' });
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+          }
+
+          // ===== Refs del modal Auditoría =====
+          const MODAL = $('#au_backdrop');
+          const E = {
+              tabla:   $('#au_tabla'),
+              usuario: $('#au_usuario'),
+              fini:    $('#au_fini'),
+              ffin:    $('#au_ffin'),
+              buscar:  $('#au_buscar'),
+              info:    $('#au_info'),
+              prodId:  $('#au_producto_id'),
+              prodWrap: $('#au_tbl_prod_wrap'),
+              movWrap:  $('#au_tbl_mov_wrap')
+          };
+
+          const state = { usuariosCargados: false };
+
+          // ===== Crear tabla de "Usuarios" si no existe =====
+          function ensureUserTable() {
+              if ($('#au_tbl_user_wrap')) return;
+              const wrap = document.createElement('div');
+              wrap.id = 'au_tbl_user_wrap';
+              wrap.className = 'data-table';
+              wrap.hidden = true;
+              wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha/Hora</th>
+            <th>Usuario</th>
+            <th>IP</th>
+            <th>Host</th>
+            <th>Sesión</th>
+          </tr>
+        </thead>
+        <tbody id="au_tb_user">
+          <tr><td colspan="5" class="tt-muted-row">Sin datos…</td></tr>
+        </tbody>
+      </table>`;
+              (E.movWrap || E.prodWrap).after(wrap);
+          }
+          const userWrap  = () => $('#au_tbl_user_wrap');
+          const userTBody = () => $('#au_tb_user');
+
+          // ===== Fechas por defecto =====
+          function setDefaultDates(){
+              if (!E.fini || !E.ffin) return;
+              const hoy = new Date();
+              const end = hoy.toISOString().slice(0,10);
+              const start = new Date(hoy.getTime() - 6*86400000).toISOString().slice(0,10);
+              if (!E.fini.value) E.fini.value = start;
+              if (!E.ffin.value) E.ffin.value = end;
+          }
+
+          // ===== Carga de usuarios para la pestaña "Usuarios" =====
+          async function loadUsuarios() {
+              try {
+                  const list = await api('/api/auditoria/usuariosL');
+                  const opts = ['<option value="">Todos los usuarios</option>']
+                      .concat((list || []).map(u => `<option>${esc(u)}</option>`));
+                  E.usuario.innerHTML = opts.join('');
+                  state.usuariosCargados = true;
+              } catch (e) {
+                  console.warn('No se pudieron cargar usuarios', e);
+              }
+          }
+
+          // ===== Mostrar/ocultar secciones según pestaña =====
+          function showUserView() {
+              if (E.prodWrap) E.prodWrap.hidden = true;
+              if (E.movWrap)  E.movWrap.hidden  = true;
+              if (E.prodId)   E.prodId.style.display = 'none'; // ocultar Producto ID en Usuarios
+              userWrap().hidden = false;
+              E.info.textContent = '—';
+          }
+          function showProdView() {
+              if (userWrap()) userWrap().hidden = true;
+              if (E.prodWrap) E.prodWrap.hidden = false;
+              if (E.movWrap)  E.movWrap.hidden  = true;
+              if (E.prodId)   E.prodId.style.display = '';     // mostrar en Productos
+          }
+          function switchTable() {
+              const t = E.tabla?.value;
+              if (t === 'usuarios') {
+                  showUserView();
+                  if (!state.usuariosCargados) loadUsuarios();
+              } else {
+                  showProdView(); // deja que tu script de productos maneje la búsqueda
+              }
+          }
+
+          // ===== Buscar y render de USUARIOS =====
+          async function buscarUsuarios(){
+              const tb = userTBody();
+              if (!tb || E.tabla?.value !== 'usuarios') return;
+
+              E.buscar.disabled = true;
+              E.info.textContent = 'Buscando…';
+              tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Cargando…</td></tr>`;
+
+              try {
+                  const rows = await api('/api/auditoria/logins', {
+                      usuario: E.usuario?.value || '',
+                      desde:   E.fini?.value    || '',
+                      hasta:   E.ffin?.value    || ''
+                  });
+                  renderUsuarios(rows || []);
+                  E.info.textContent = `${rows?.length ?? 0} logins.`;
+              } catch (e) {
+                  tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Error al cargar.</td></tr>`;
+                  E.info.textContent = 'Error al cargar.';
+                  console.error(e);
+              } finally {
+                  E.buscar.disabled = false;
+              }
+          }
+
+          function renderUsuarios(rows){
+              const tb = userTBody();
+              if (!rows.length) {
+                  tb.innerHTML = `<tr><td colspan="5" class="tt-muted-row">Sin datos…</td></tr>`;
+                  return;
+              }
+              tb.innerHTML = rows.map(r => `
+      <tr>
+        <td>${esc(fmtDate(r.fechaLogin))}</td>
+        <td>${esc(r.usuario)}</td>
+        <td>${esc(r.ip)}</td>
+        <td title="${esc(r.host)}">${esc(r.host)}</td>
+        <td>${esc(r.idSesion)}</td>
+      </tr>`).join('');
+          }
+
+          // ===== Boot =====
+          document.addEventListener('DOMContentLoaded', () => {
+              if (!MODAL) return;
+
+              ensureUserTable();
+              setDefaultDates();
+
+              // Cambiar pestaña
+              E.tabla?.addEventListener('change', () => {
+                  switchTable();
+                  if (E.tabla.value === 'usuarios') buscarUsuarios();
+              });
+
+              // Botón Buscar: solo actúa en pestaña Usuarios
+              E.buscar?.addEventListener('click', () => {
+                  if (E.tabla?.value === 'usuarios') buscarUsuarios();
+              });
+
+              // Abrir modal: prepara vista y precarga si corresponde
+              $('#au_open')?.addEventListener('click', async () => {
+                  setDefaultDates();
+                  switchTable();
+                  if (E.tabla?.value === 'usuarios') {
+                      if (!state.usuariosCargados) await loadUsuarios();
+                      buscarUsuarios();
+                  }
+              });
+
+              // Enter en filtros => buscar (solo cuando pestaña = usuarios)
+              [E.usuario, E.fini, E.ffin].forEach(ctrl => {
+                  ctrl?.addEventListener('keydown', e => {
+                      if (e.key === 'Enter' && E.tabla?.value === 'usuarios') buscarUsuarios();
+                  });
+              });
+          });
+      })();
   </script>
 
 
 </body>
 </html>
+

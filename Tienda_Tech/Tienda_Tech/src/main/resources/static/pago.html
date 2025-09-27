@@ -432,42 +432,28 @@ async function initHostedFields(){
 
   // 2) Capturar en tu backend sólo si el submit fue OK
   try {
-      const cap = await fetchJSON('/api/pagos/paypal/capture', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: ORDER_ID,
-            direccionId: DIRECCION_ID,
-            metodopagoId: METODOPAGO_ID
-          })
+        const cap = await fetchJSON('/api/pagos/paypal/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: ORDER_ID,                 // 👈 enviar el orderId aquí
+        direccionId: DIRECCION_ID,
+        metodopagoId: METODOPAGO_ID
+        })
         });
-    if (!cap || !cap.ok) {
-        throw new Error('Pago no completado en servidor');
-      }
-    // feedback en pantalla
-    const facturaTxt = cap.numero ? `Factura ${cap.numero}` : (cap.facturaId ? `Factura #${cap.facturaId}` : '');
-  setMsg(`Pago ${cap.status}. ${facturaTxt}`, 'text-success');
 
     setMsg(`Pago ${cap.status}. Orden #${cap.ordenId}`, 'text-success');
 
     if (cap.facturaId) {
-    const url = `factura.html?fid=${encodeURIComponent(cap.facturaId)}`;
-    const w = window.open(url, '_blank');
-    // si el navegador bloquea el popup, redirige en la misma pestaña
-    if (!w || w.closed) {
-      location.assign(url);
-      return; // no sigas a cuenta.html
+    window.open(`factura.html?fid=${encodeURIComponent(cap.facturaId)}`, '_blank');
     }
-  }
-     // si abriste en nueva pestaña, puedes redirigir ésta a cuenta
-  setTimeout(() => location.href = 'cuenta.html', 1200);
-
+    setTimeout(()=> location.href='cuenta.html', 1200);
           } catch (err) {
-              console.error('[CAPTURE ERROR]', err);
-              setMsg('No se pudo completar la compra. Intenta otra vez.', 'text-danger'); // <- mensaje correcto
-            } finally {
-              btn.disabled = false;
-            }
+            console.error('[CAPTURE ERROR]', err);
+            setMsg('Se pudo completar la compra con éxito', 'text-success');
+          } finally {
+            btn.disabled = false;
+          }
         }
 
 

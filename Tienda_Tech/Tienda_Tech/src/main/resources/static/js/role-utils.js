@@ -2,6 +2,7 @@
 (function (global) {
   function normalize(s) { return (s ?? '').toString().trim().toLowerCase(); }
 
+  // deduce el nombre del rol
   function resolveRoleName(u) {
     // nombres comunes de campos para el rol (cubrimos varios casos del proyecto)
     const byName = normalize(
@@ -22,6 +23,7 @@
     return u?.nombre ?? u?.name ?? u?.username ?? u?.correo ?? 'Usuario';
   }
 
+  //recuperar el usuario logueado desde sessionStorage
   function ensureLoggedIn() {
     try {
       const raw = sessionStorage.getItem('user');

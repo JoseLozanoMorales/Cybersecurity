@@ -515,3 +515,36 @@ body.tt-no-scroll{ overflow: hidden; }
 /* Detalles visuales menores */
 #gal_counters{ font-size:13px; color: var(--tt-admin-muted); }
 .tt-admin #modalGaleria label{ display:inline-flex; align-items:center; gap:.5rem; }
+
+
+
+
+/* SOLO para la tabla de Auditoría (Productos) */
+#au_tbl_prod_wrap{
+    /* fuerza a que exista barra inferior */
+    overflow-x: scroll !important;
+    overflow-y: auto;
+    max-height: calc(90vh - 220px);  /* ajusta si tu header/filtros miden distinto */
+    padding-bottom: 6px;              /* deja espacio para que no la tape el borde */
+    scrollbar-gutter: stable both-edges;
+}
+
+/* La tabla debe ser más ancha que el contenedor para que haya scroll X */
+#au_tbl_prod_wrap > table{
+    width: auto !important;    /* no se “estire” a 100% */
+    min-width: 2200px;         /* súbelo a 2400/2600 si quieres más ancho */
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+/* Cabecera fija cuando haces scroll */
+#au_tbl_prod_wrap thead th{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* (Opcional) estiliza el scrollbar en navegadores WebKit */
+#au_tbl_prod_wrap::-webkit-scrollbar{ height: 12px; }
+#au_tbl_prod_wrap::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.35); border-radius: 8px; }
+#au_tbl_prod_wrap::-webkit-scrollbar-track{ background: rgba(0,0,0,.1); border-radius: 8px; }

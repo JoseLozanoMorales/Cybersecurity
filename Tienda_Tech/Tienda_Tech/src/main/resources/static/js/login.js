@@ -1,12 +1,15 @@
 // /js/login.js
-const USE_MOCK = false; // pon true para probar sin backend
+const USE_MOCK = false;
 
 (function () {
+  // Lee usuario guardado en sesión/local
   function getSessionUser() {
     const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
     try { return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
   function isLoggedIn() { return !!getSessionUser(); }
+
+  // guarda usuario y token
   function setLoggedUser(u, token) {
     sessionStorage.setItem('user', JSON.stringify(u));
     if (token) localStorage.setItem('token', token);
@@ -86,6 +89,7 @@ const USE_MOCK = false; // pon true para probar sin backend
         // si tienes un helper global
         window.SessionAuth?.sessionStart?.({ access: token, user });
 
+        // redirigir según rol
         redirectByRole(user);
       } catch (err) {
         console.error(err);

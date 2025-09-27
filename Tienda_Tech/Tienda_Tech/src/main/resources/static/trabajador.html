@@ -38,10 +38,10 @@
 
     <!-- Cuenta -->
     <div id="account" class="admin-section">
-        <div class="section-title">👤 Mi Cuenta</div>
+        <div class="section-title"> Mi Cuenta</div>
 
         <div class="action-card">
-            <h3>🪪 Datos personales</h3>
+            <h3> Datos personales</h3>
 
             <div class="account-grid">
                 <img id="acc_avatar" src="/assets/avatars/defaults/user.png"
@@ -159,11 +159,11 @@
         <h2 class="section-title">Reportes</h2>
         <div class="action-grid">
             <div class="action-card">
-                <h3>📈 Estadísticas Generales</h3>
-                <p>🛍️ Total Productos: <strong>156</strong></p>
-                <p>👥 Total Usuarios: <strong>1,245</strong></p>
-                <p>🚫 Usuarios Bloqueados: <strong>23</strong></p>
-                <p>💰 Ventas del Mes: <strong>$45,678</strong></p>
+                <h3> Estadísticas Generales</h3>
+                <p> Total Productos: <strong>156</strong></p>
+                <p> Total Usuarios: <strong>1,245</strong></p>
+                <p> Usuarios Bloqueados: <strong>23</strong></p>
+                <p> Ventas del Mes: <strong>$45,678</strong></p>
             </div>
 
             <div class="action-card">
@@ -351,6 +351,41 @@
         window.addEventListener('DOMContentLoaded', () => window.SessionAuth?.initAuthUI?.());
         document.querySelectorAll('[data-logout]')
           .forEach(b => b.addEventListener('click', () => window.SessionAuth?.sessionLogout?.()));
+    </script>
+
+    <script>
+        /* Auto-logout por inactividad: 3 minutos */
+        (function () {
+            const IDLE_MS   = 3 * 60 * 1000;          // 3 min
+            const REDIRECT  = "/index.html";          // cambia si tu login es otra ruta
+            let timer;
+
+            async function autoLogout() {
+                try {
+                    // Si ya tienes una función global logout(), úsala
+                    if (typeof logout === "function") {
+                        await logout();
+                    } else {
+                        // fallback: cerrar sesión en el backend
+                        await fetch("/api/logout", { method: "POST", credentials: "include" });
+                    }
+                } catch (_) { /* ignora errores de red */ }
+                // y redirigir al login/página pública
+                location.href = REDIRECT;
+            }
+
+            function resetTimer() {
+                clearTimeout(timer);
+                timer = setTimeout(autoLogout, IDLE_MS);
+            }
+
+            // Eventos que cuentan como “actividad” del usuario
+            ["click","mousemove","keydown","scroll","touchstart","focus"].forEach(ev =>
+                window.addEventListener(ev, resetTimer, { passive: true })
+            );
+
+            resetTimer();
+        })();
     </script>
 </div>
 </body>

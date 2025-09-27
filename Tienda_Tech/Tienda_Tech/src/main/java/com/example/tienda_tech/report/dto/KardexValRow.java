@@ -1,27 +1,40 @@
 package com.example.tienda_tech.report.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * Fila del Kardex Valorizado.
+ * Los nombres de los campos están pensados para que existan setters
+ * exactamente: setMov, setCantidad, setPrecio, setSaldoCant, setSaldoTotal.
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class KardexValRow {
-    // Base
-    private LocalDateTime fecha;
-    private String detalle;
 
-    // Entrada
-    private BigDecimal entCant;   // cantidad
-    private BigDecimal entPUnit;  // precio unitario
-    private BigDecimal entTotal;  // entCant entPUnit
+    private LocalDate fecha;
+    private Integer   productoId;
+    private String    producto;
 
-    // Salida (PEPS)
-    private BigDecimal salCant;   // cantidad
-    private BigDecimal salPUnit;  // precio unitario PEPS aplicado
-    private BigDecimal salTotal;  // salCant * salPUnit
+    /** "ENTRADA" o "SALIDA" */
+    private String    mov;
 
-    // Saldo
-    private BigDecimal sldCant;   // cantidad restante
-    private BigDecimal sldPUnit;  // costo unitario mostrado
-    private BigDecimal sldTotal;  // sldCant * sldPUnit
+    /** Cantidad del movimiento (positiva para ENTRADA, positiva para SALIDA) */
+    private Integer   cantidad;
+
+    /** Precio/costo unitario usado en el movimiento */
+    private BigDecimal precio;
+
+    /** Saldo de unidades después del movimiento */
+    private Integer   saldoCant;
+
+    /** Valor total del saldo después del movimiento (ej. costo promedio * saldoCant) */
+    private BigDecimal saldoTotal;
 }

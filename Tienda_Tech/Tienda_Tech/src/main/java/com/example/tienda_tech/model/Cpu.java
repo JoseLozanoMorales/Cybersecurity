@@ -16,7 +16,7 @@ public class Cpu {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "producto_id", nullable = false)
+    @Column(name = "producto_id")
     private Integer productoId;
 
     @Column(name = "nombre", length = 150, nullable = false)
@@ -31,8 +31,8 @@ public class Cpu {
     @Column(name = "fecha")
     private LocalDate fecha;
 
-    @Column(name = "stock", nullable = false)
-    private Short stock;
+    @Column(name = "stock")
+    private Short stock; // smallint
 
     @Column(name = "marca_id", nullable = false)
     private Integer marcaId;
@@ -47,17 +47,18 @@ public class Cpu {
     private BigDecimal costo;
 
     @Column(name = "habilitado", nullable = false)
-    private Boolean habilitado;
+    private Boolean habilitado = Boolean.TRUE;
 
     @Column(name = "categoria_id")
     private Integer categoriaId;
 
     @Column(name = "valor_inventario", precision = 18, scale = 2, nullable = false)
-    private BigDecimal valorInventario;
+    private BigDecimal valorInventario = BigDecimal.ZERO;
 
     @Column(name = "sockets", length = 10)
     private String sockets;
 
     @Column(name = "generacion")
     private Short generacion;
+
 }

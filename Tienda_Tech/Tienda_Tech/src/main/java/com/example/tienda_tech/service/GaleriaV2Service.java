@@ -2,6 +2,8 @@
 package com.example.tienda_tech.service;
 
 import com.example.tienda_tech.dto.GaleriaV2Dtos.GaleriaItemDto;
+import com.example.tienda_tech.dto.galeria.GaleriaDTO;
+import com.example.tienda_tech.model.GaleriaProductoV2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -146,4 +151,5 @@ public class GaleriaV2Service {
         );
 
     }
+
 }

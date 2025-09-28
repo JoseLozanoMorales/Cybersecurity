@@ -33,12 +33,6 @@
         html, body { height:100%; margin:0; padding:0; }
         * { margin:0; padding:0; box-sizing:border-box; }
 
-        body{
-            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-page);
-            color: var(--text);
-        }
-
         /* Sticky footer layout */
         .page-container { min-height:100%; display:flex; flex-direction:column; }
         .content-wrap   { flex:1; }
@@ -52,35 +46,11 @@
             display:flex; justify-content:space-between; align-items:center;
             box-shadow: var(--hdr-shadow);
         }
-        .logo{ color: var(--hdr-text); font-size:1.5rem; font-weight:bold; }
-        .search-container{ flex-grow:1; max-width:500px; margin:0 2rem; }
-        .search-bar{
-            width:100%; padding:.75rem 1rem; border:none; border-radius:25px;
-            font-size:1rem; background: var(--search-bg); color: var(--search-text);
-        }
+
         .menu-toggle{
             background:none; border:none; color: var(--hdr-text);
             font-size:1.5rem; cursor:pointer; padding:.5rem;
         }
-
-        /* =======================
-           FOOTER (igual que original)
-           ======================= */
-        .footer{
-            background: var(--footer-bg);
-            color: var(--footer-text);
-            padding:20px;
-            text-align:center;
-            margin-top:auto;
-        }
-        .footer-nav{
-            display:flex; justify-content:center; gap:30px; margin-bottom:15px; flex-wrap:wrap;
-        }
-        .footer-nav a{
-            color: var(--footer-text); text-decoration:none; padding:5px 0;
-            border-bottom:5px solid transparent; transition:border-color .3s;
-        }
-        .footer-nav a:hover, .footer-nav a.active{ border-bottom-color:#fff; }
 
         /* ======================
            PC BUILDER CONTENT (exacto a la imagen)
@@ -97,7 +67,6 @@
             font-size: 1.8rem;
             font-weight: bold;
             margin-bottom: 2rem;
-            color: #333;
         }
 
         /* Sección de categorías de componentes */
@@ -113,7 +82,7 @@
             font-size: 1.4rem;
             font-weight: bold;
             margin-bottom: 1.5rem;
-            color: #333;
+
         }
 
         .components-grid {
@@ -147,7 +116,6 @@
         .component-name {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #333;
         }
 
         /* Sección de productos seleccionados */
@@ -190,7 +158,6 @@
 
         .info-btn .info-text {
             background: white;
-            color: #333;
             padding: 0.3rem 0.5rem;
             border-radius: 8px;
             font-size: 0.75rem;
@@ -198,7 +165,7 @@
             border: 1px solid #ddd;
         }
 
-        .component-icon { width:60px; height:60px; border-radius:8px; object-fit:contain; display:block; background:#c8c8c8; }
+        .component-icon { width:50px; height:50px; border-radius:8px; object-fit:contain; display:block; background:#c8c8c8; }
 
         .cart-btn {
             background: #1E88E5;
@@ -220,19 +187,7 @@
             background: #1976D2;
         }
 
-        .selected-icon {
-            width: 50px;
-            height: 35px;
-            background: #888;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.5rem;
-            font-size: 16px;
-            color: #333;
-            position: relative;
-        }
+
 
         /* Patitas del chip */
         .selected-icon::before,
@@ -256,11 +211,7 @@
             box-shadow: 0 4px 0 #333, 0 8px 0 #333, 0 12px 0 #333, 0 16px 0 #333;
         }
 
-        .product-name {
-            font-size: 0.75rem;
-            color: #333;
-            font-weight: 500;
-        }
+
 
         /* Segunda fila de productos seleccionados */
         .selected-grid-second {
@@ -295,6 +246,12 @@
             .selected-grid-second{
                 grid-template-columns: repeat(2, 1fr);
             }
+        }
+
+        /* Tamaño de los iconos de la sección "Arma tu computador" */
+        .components-section .component-icon{
+            font-size: 50px;  /* antes 24px (aumenta el emoji) */
+            display:flex; align-items:center; justify-content:center; /* asegura centrado */
         }
     </style>
 
@@ -341,53 +298,54 @@
             <!-- Sección "Arma tu computador" -->
             <div class="components-section">
                 <h2 class="section-title">Arma tu computador</h2>
+                <!-- Reemplaza cada .component-item agregando data-cat -->
                 <div class="components-grid">
-                    <div class="component-item">
-                        <div class="component-icon">🖥</div>
+                    <div class="component-item" data-cat="cpu">
+                        <img src="/assets/Iconos/chit.png" class="component-icon">
                         <div class="component-name">Procesadores</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">🎮</div>
+                    <div class="component-item" data-cat="gpu">
+                        <img src="/assets/Iconos/TarjetaGrafica.png" class="component-icon">
                         <div class="component-name">Tarjetas gráficas</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">💾</div>
+                    <div class="component-item" data-cat="ram">
+                        <img src="/assets/Iconos/Ram.png" class="component-icon">
                         <div class="component-name">Memoria RAM</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">❄</div>
+                    <div class="component-item" data-cat="cooling">
+                        <img src="/assets/Iconos/Ventilador.png" class="component-icon">
                         <div class="component-name">Refrigeración</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">📦</div>
+                    <div class="component-item" data-cat="case">
+                        <img src="/assets/Iconos/Case.png" class="component-icon">
                         <div class="component-name">Cubiertas</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">⚡</div>
+                    <div class="component-item" data-cat="mobo">
+                        <img src="/assets/Iconos/Motherboard.png" class="component-icon">
                         <div class="component-name">Placas madre</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">🔌</div>
+                    <div class="component-item" data-cat="psu">
+                        <img src="/assets/Iconos/FuenteDePoder.png" class="component-icon">
                         <div class="component-name">Fuente de poder</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">💿</div>
+                    <div class="component-item" data-cat="storage">
+                        <img src="/assets/Iconos/Almacenamiento.png" class="component-icon">
                         <div class="component-name">Almacenamiento</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">🖥</div>
+                    <div class="component-item" data-cat="monitor">
+                        <img src="/assets/Iconos/Monitor.png" class="component-icon">
                         <div class="component-name">Monitores</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">🔊</div>
+                    <div class="component-item" data-cat="audio">
+                        <img src="/assets/Iconos/Audio.png" class="component-icon">
                         <div class="component-name">Audio</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">⌨</div>
+                    <div class="component-item" data-cat="keyboard">
+                        <img src="/assets/Iconos/Teclado.png" class="component-icon">
                         <div class="component-name">Teclados</div>
                     </div>
-                    <div class="component-item">
-                        <div class="component-icon">🖱</div>
+                    <div class="component-item" data-cat="mouse">
+                        <img src="/assets/Iconos/Mouse.png" class="component-icon">
                         <div class="component-name">Ratones</div>
                     </div>
                 </div>
@@ -395,133 +353,8 @@
 
             <!-- Sección de productos seleccionados -->
             <div class="selected-section">
-                <!-- Primera fila -->
-                <div class="selected-grid">
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                </div>
-
-                <!-- Segunda fila -->
-                <div class="selected-grid-second">
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                    <div class="selected-item">
-                        <img src="/assets/Iconos/chit.png" class="component-icon">
-                        <div class="buttons-container">
-                            <button class="info-btn">
-                                <span class="info-text">Info</span>
-                            </button>
-                            <button class="cart-btn">🛒</button>
-                        </div>
-                        <div class="product-name">Nombre del producto</div>
-                    </div>
-                </div>
+                <div class="selected-grid"></div>
+                <div class="selected-grid-second"></div>
             </div>
         </main>
     </div>
@@ -577,6 +410,108 @@
         }
 
     });
+</script>
+
+<script>
+    (()=>{
+
+        // Ajusta estos IDs a los de tu tabla categoria
+        const CAT_TO_ID = {
+            cpu:1, gpu:2, ram:3, cooling:4, case:5, mobo:6,
+            psu:7, storage:8, monitor:9, audio:10, keyboard:11, mouse:12
+        };
+
+        const API = {
+            byCat:   id => `/api/productos/por-categoria?categoriaId=${id}`,
+            detail:  id => `/api/productos/${id}`,
+            img:     galId => `/api/galeria_v2/img/${galId}`
+        };
+
+        const grid1 = document.querySelector('.selected-grid');
+        const grid2 = document.querySelector('.selected-grid-second');
+
+        // Click en las categorías de la parte superior
+        document.querySelectorAll('.components-grid .component-item').forEach(el=>{
+            el.addEventListener('click', async ()=>{
+                const cat   = el.dataset.cat;
+                const catId = CAT_TO_ID[cat];
+                if(!catId){ console.warn('Falta mapeo para', cat); return; }
+                try{
+                    const res   = await fetch(API.byCat(catId), { credentials:'include' });
+                    const items = await res.json();
+                    renderProducts(items.slice(0,12));
+                }catch(err){
+                    console.error('Error cargando productos', err);
+                }
+            });
+        });
+
+        function renderProducts(list){
+            const nodes = list.map(p=>{
+                const id     = p.id ?? p.productoId;
+                const imgId  = p.imagen_id ?? p.imagenId;
+                const nombre = p.nombre ?? 'Producto';
+                const precio = p.precio ?? 0;
+                const src    = imgId ? API.img(imgId) : '/assets/Iconos/chit.png';
+
+                return `
+      <div class="selected-item" data-id="${id}">
+        <img src="${src}" class="component-icon" alt="${esc(nombre)}">
+        <div class="buttons-container">
+          <button class="info-btn" data-action="info"><span class="info-text">Info</span></button>
+          <button class="cart-btn" data-action="cart">🛒</button>
+        </div>
+        <div class="product-name">${esc(nombre)}</div>
+        <div class="product-price">${fmtUSD(precio)}</div>
+      </div>`;
+            });
+
+            while(nodes.length < 12) nodes.push(`<div class="selected-item"></div>`);
+
+            grid1.innerHTML = nodes.slice(0,6).join('');
+            grid2.innerHTML = nodes.slice(6,12).join('');
+            wireButtons();
+        }
+
+        function wireButtons(){
+            // Info
+            document.querySelectorAll('.selected-item .info-btn').forEach(btn=>{
+                btn.onclick = async ()=>{
+                    const id = btn.closest('.selected-item')?.dataset.id;
+                    if(!id) return;
+                    const res = await fetch(API.detail(id), { credentials:'include' });
+                    const d   = await res.json();
+
+                    // Trata de encontrar portada en la galería del detalle
+                    const gal = d.galeria || d.gal || [];
+                    const portada = gal.find(g => (g.es_portada ?? g.esPortada) === true);
+                    const imgId   = portada?.galeria_id ?? portada?.galeriaId ?? d.imagen_id ?? d.imagenId;
+
+                    alert(`${d.nombre}\nMarca: ${d.marca}\nPrecio: ${fmtUSD(d.precio)}${imgId ? '\n(Con imagen)' : ''}`);
+                    // Si quieres un modal bonito, aquí puedes abrirlo y usar API.img(imgId)
+                };
+            });
+
+            // Carrito (stub)
+            document.querySelectorAll('.selected-item .cart-btn').forEach(btn=>{
+                btn.onclick = ()=>{
+                    const id = btn.closest('.selected-item')?.dataset.id;
+                    console.log('Añadir al carrito:', id);
+                    // TODO: llama a tu endpoint de carrito
+                };
+            });
+        }
+
+        // Helpers
+        function fmtUSD(n){
+            try{ return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(n); }
+            catch{ return `$${n}`; }
+        }
+        function esc(s){
+            return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+    })();
 </script>
 
 <script>

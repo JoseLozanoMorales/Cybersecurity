@@ -55,11 +55,11 @@ public class FacturaPdfService {
 
             // ===== Encabezado: logo + marca pegados =====
             Image logo = drawComputerLogo(writer, brandColor);
-            logo.scaleAbsolute(28, 20); // tamaño del icono
+            logo.scaleAbsolute(42, 30); // tamaño del icono
 
             Paragraph marca = new Paragraph();
-            marca.setLeading(22f);
-            marca.add(new Chunk(logo, 0, -5, true));         // icono alineado
+            marca.setLeading(28f);
+            marca.add(new Chunk(logo, 0, -7, true)); // pequeño ajuste de línea base
             marca.add(new Chunk("  TiendaTech", brand));     // dos espacios
 
             PdfPTable head = new PdfPTable(new float[]{6, 4});
@@ -72,12 +72,16 @@ public class FacturaPdfService {
             PdfPCell invCell = new PdfPCell();
             invCell.setBorder(Rectangle.NO_BORDER);
             invCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
+// NUEVO: RUC arriba de "Factura"
+            invCell.addElement(new Paragraph("RUC: 1291234565001", h6));
+
             invCell.addElement(new Paragraph(
                     "Factura " + (e.getOrDefault("numero", "#"+id)),
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
+
             invCell.addElement(new Paragraph(
                     "Fecha: " + String.valueOf(e.getOrDefault("fechaemision","")), txt));
-
             head.addCell(marcaCell);
             head.addCell(invCell);
             doc.add(head);

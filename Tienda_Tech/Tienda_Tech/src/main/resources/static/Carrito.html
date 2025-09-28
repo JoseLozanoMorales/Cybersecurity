@@ -55,9 +55,6 @@
                         <i class="bi bi-cart-x"></i>
                         <h4>Tu carrito está vacío</h4>
                         <p>¡Explora nuestros productos y encuentra algo que te guste!</p>
-                        <button class="continue-shopping-btn" onclick="continueShopping()">
-                            Continuar comprando
-                        </button>
                     </div>
                 </div>
 
@@ -359,6 +356,12 @@
             setTheme(localStorage.getItem(STORAGE_KEY)||'light');
         });
     })();
+</script>
+
+<script>
+    function continueShopping() {
+      location.href = 'index.html';
+    }
 </script>
 </body>
 </html>

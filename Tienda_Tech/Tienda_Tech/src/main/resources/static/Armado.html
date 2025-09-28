@@ -253,6 +253,11 @@
             font-size: 50px;  /* antes 24px (aumenta el emoji) */
             display:flex; align-items:center; justify-content:center; /* asegura centrado */
         }
+
+        .selected-section .component-icon{
+            font-size: 50px;  /* antes 24px (aumenta el emoji) */
+            display:flex; align-items:center; justify-content:center; /* asegura centrado */
+        }
     </style>
 
     <!-- <link rel="stylesheet" href="style2.css"> -->
@@ -332,22 +337,11 @@
                         <img src="/assets/Iconos/Almacenamiento.png" class="component-icon">
                         <div class="component-name">Almacenamiento</div>
                     </div>
-                    <div class="component-item" data-cat="monitor">
-                        <img src="/assets/Iconos/Monitor.png" class="component-icon">
-                        <div class="component-name">Monitores</div>
+                    <div class="component-item" data-cat="periferico">
+                        <img src="/assets/Iconos/Perifericos.png" class="component-icon">
+                        <div class="component-name">Perifericos</div>
                     </div>
-                    <div class="component-item" data-cat="audio">
-                        <img src="/assets/Iconos/Audio.png" class="component-icon">
-                        <div class="component-name">Audio</div>
-                    </div>
-                    <div class="component-item" data-cat="keyboard">
-                        <img src="/assets/Iconos/Teclado.png" class="component-icon">
-                        <div class="component-name">Teclados</div>
-                    </div>
-                    <div class="component-item" data-cat="mouse">
-                        <img src="/assets/Iconos/Mouse.png" class="component-icon">
-                        <div class="component-name">Ratones</div>
-                    </div>
+
                 </div>
             </div>
 
@@ -415,104 +409,99 @@
 <script>
     (()=>{
 
-        // Ajusta estos IDs a los de tu tabla categoria
+        // Ajusta estos IDs a los reales de tu tabla categoria
         const CAT_TO_ID = {
-            cpu:1, gpu:2, ram:3, cooling:4, case:5, mobo:6,
-            psu:7, storage:8, monitor:9, audio:10, keyboard:11, mouse:12
+            storage:1, cpu:2, cooling:3, case:4, psu:5, gpu:6, ram:7,
+            mobo:8, periferico:9
         };
 
         const API = {
-            byCat:   id => `/api/productos/por-categoria?categoriaId=${id}`,
-            detail:  id => `/api/productos/${id}`,
-            img:     galId => `/api/galeria_v2/img/${galId}`
+            byCat:  id => `/api/busqueda/categoria/${id}`,           // ← BusquedaController
+            img:    galId => `/api/galeria_v2/img/${galId}`,         // ← GaleriaV2Controller
+            detailUrl: id => `informacion_producto.html?id=${encodeURIComponent(id)}&from=builder`
         };
 
         const grid1 = document.querySelector('.selected-grid');
         const grid2 = document.querySelector('.selected-grid-second');
 
-        // Click en las categorías de la parte superior
+        // Activa click/teclado en categorías (tus items son <div>)
         document.querySelectorAll('.components-grid .component-item').forEach(el=>{
-            el.addEventListener('click', async ()=>{
-                const cat   = el.dataset.cat;
-                const catId = CAT_TO_ID[cat];
-                if(!catId){ console.warn('Falta mapeo para', cat); return; }
-                try{
-                    const res   = await fetch(API.byCat(catId), { credentials:'include' });
-                    const items = await res.json();
-                    renderProducts(items.slice(0,12));
-                }catch(err){
-                    console.error('Error cargando productos', err);
-                }
+            el.setAttribute('tabindex','0');
+            el.setAttribute('role','button');
+            el.addEventListener('click', ()=> loadCat(el.dataset.cat));
+            el.addEventListener('keydown', ev=>{
+                if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); el.click(); }
             });
         });
 
-        function renderProducts(list){
-            const nodes = list.map(p=>{
-                const id     = p.id ?? p.productoId;
-                const imgId  = p.imagen_id ?? p.imagenId;
-                const nombre = p.nombre ?? 'Producto';
-                const precio = p.precio ?? 0;
-                const src    = imgId ? API.img(imgId) : '/assets/Iconos/chit.png';
-
-                return `
-      <div class="selected-item" data-id="${id}">
-        <img src="${src}" class="component-icon" alt="${esc(nombre)}">
-        <div class="buttons-container">
-          <button class="info-btn" data-action="info"><span class="info-text">Info</span></button>
-          <button class="cart-btn" data-action="cart">🛒</button>
-        </div>
-        <div class="product-name">${esc(nombre)}</div>
-        <div class="product-price">${fmtUSD(precio)}</div>
-      </div>`;
-            });
-
-            while(nodes.length < 12) nodes.push(`<div class="selected-item"></div>`);
-
-            grid1.innerHTML = nodes.slice(0,6).join('');
-            grid2.innerHTML = nodes.slice(6,12).join('');
-            wireButtons();
+        async function loadCat(catKey){
+            const catId = CAT_TO_ID[catKey];
+            if(!catId){ console.warn('Falta mapeo para', catKey); return; }
+            try{
+                const r = await fetch(API.byCat(catId), { credentials:'include' });
+                if(!r.ok) throw new Error(r.status);
+                const data = await r.json();
+                render(Array.isArray(data) ? data.slice(0,12) : []);
+            }catch(e){
+                console.error('Error cargando productos:', e);
+                render([]);
+            }
         }
 
-        function wireButtons(){
-            // Info
-            document.querySelectorAll('.selected-item .info-btn').forEach(btn=>{
-                btn.onclick = async ()=>{
-                    const id = btn.closest('.selected-item')?.dataset.id;
-                    if(!id) return;
-                    const res = await fetch(API.detail(id), { credentials:'include' });
-                    const d   = await res.json();
+        function render(list){
+            const nodes = list.map(p=>{
+                const id     = p.id ?? p.productoId;
+                const nombre = p.nombre ?? 'Producto';
+                const precio = Number(p.precio ?? p.preciounitario ?? 0);
+                const marca  = p.marca ?? '';
+                const imgId  = p.imagenId ?? p.imagen_id ?? p.portadaId ?? p.portada_id;
+                const src    = imgId ? API.img(imgId) : '/img/placeholder.png';
 
-                    // Trata de encontrar portada en la galería del detalle
-                    const gal = d.galeria || d.gal || [];
-                    const portada = gal.find(g => (g.es_portada ?? g.esPortada) === true);
-                    const imgId   = portada?.galeria_id ?? portada?.galeriaId ?? d.imagen_id ?? d.imagenId;
-
-                    alert(`${d.nombre}\nMarca: ${d.marca}\nPrecio: ${fmtUSD(d.precio)}${imgId ? '\n(Con imagen)' : ''}`);
-                    // Si quieres un modal bonito, aquí puedes abrirlo y usar API.img(imgId)
-                };
+                return `
+        <div class="selected-item" data-id="${id}" title="${esc(nombre)}">
+          <img src="${src}" class="component-icon" alt="${esc(nombre)}"
+               onerror="this.onerror=null;this.src='/img/placeholder.png'">
+          <div class="buttons-container">
+            <button class="info-btn" data-action="info"><span class="info-text">Info</span></button>
+            <button class="cart-btn" data-action="cart" title="Agregar al carrito">🛒</button>
+          </div>
+          <div class="product-name">${esc(nombre)}</div>
+          <div class="product-price">${money(precio)}</div>
+          <div class="product-brand" style="font-size:.8rem;color:#333">${esc(marca)}</div>
+        </div>`;
             });
 
-            // Carrito (stub)
-            document.querySelectorAll('.selected-item .cart-btn').forEach(btn=>{
-                btn.onclick = ()=>{
-                    const id = btn.closest('.selected-item')?.dataset.id;
+            while (nodes.length < 12) nodes.push('<div class="selected-item"></div>');
+            grid1.innerHTML = nodes.slice(0,6).join('');
+            grid2.innerHTML = nodes.slice(6).join('');
+
+            // Wire de acciones
+            [...grid1.querySelectorAll('.selected-item'), ...grid2.querySelectorAll('.selected-item')].forEach(card=>{
+                const id = card.dataset.id; if(!id) return;
+                const go = ()=> location.href = API.detailUrl(id);
+
+                card.querySelector('img')?.addEventListener('click', go);
+                card.querySelector('.product-name')?.addEventListener('click', go);
+                card.querySelector('[data-action="info"]')?.addEventListener('click', ev=>{ ev.stopPropagation(); go(); });
+
+                card.querySelector('[data-action="cart"]')?.addEventListener('click', ev=>{
+                    ev.stopPropagation();
                     console.log('Añadir al carrito:', id);
-                    // TODO: llama a tu endpoint de carrito
-                };
+                    // TODO: POST /api/carrito/items { productoId:Number(id), cantidad:1 }
+                });
             });
         }
 
         // Helpers
-        function fmtUSD(n){
-            try{ return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(n); }
-            catch{ return `$${n}`; }
-        }
-        function esc(s){
-            return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-        }
+        function money(n){ try{ return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(n); }catch{ return `$${n}`; } }
+        function esc(s){ return String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+        // (Opcional) carga una categoría por defecto:
+        // loadCat('cpu');
 
     })();
 </script>
+
 
 <script>
     (function(){

@@ -508,259 +508,361 @@
       });
     })();
   </script>
-<script>
-    // ===== Modal de Encuesta (clientes logueados) =====
-(() => {
-  const LOGIN_URL = '/Login.html';
-  const ENCUESTA_ID = 1;
-  const TOP_N = 3;
+  <script>
+      // ====== Subir nivel: estado global + helpers ======
+      let lastBasePayload = null;      // payload original del POST
+      let lastOriginalData = null;     // respuesta original del backend
+      let nivelUpActive = false;     // ¿estamos viendo el nivel superior?
+      let nivelBoost = 1.20;      // +20% de presupuesto
 
-  const $ = (s, r=document)=>r.querySelector(s);
-  const el = (tag, attrs={}) => Object.assign(document.createElement(tag), attrs);
+      async function postSugerencia(payload) {
+          const resp = await fetch('/api/sugerencias/generar', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json', 'X-Username': payload.usuario || ''},
+              credentials: 'include',
+              body: JSON.stringify(payload)
+          });
+          const text = await resp.text().catch(() => '');
+          if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+          const data = JSON.parse(text || '{}');
 
-  function isLogged(){
-    try {
-      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-      if (raw) { JSON.parse(raw); return true; }
-    } catch {}
-    return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-  }
-
-  function getUserFromStorage(){
-    try {
-      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  }
-
-  // UI bootstrap: botón + modal
-function injectUI(){
-  // 🔁 Usamos los elementos existentes en el DOM (no creamos nada)
-  const btn     = document.getElementById('openSurveyBtn');
-  const overlay = document.getElementById('ttSurveyOverlay');
-  const modal   = document.getElementById('ttSurveyModal');
-  const form    = document.getElementById('ttSurveyForm');
-  const result  = document.getElementById('ttSurveyResult');
-  const close   = modal.querySelector('.tt-modal-close');
-
-  const open = () => {
-    if (!isLogged()) {
-      const next = encodeURIComponent(location.pathname);
-      location.href = `/Login.html?next=${next}`;
-      return;
-    }
-    // mostrar modal
-    overlay.removeAttribute('hidden');
-    modal.removeAttribute('hidden');
-    overlay.style.display = 'block';
-    modal.style.display   = 'flex';
-    result.innerHTML = '';
-    loadSurvey(form);
-  };
-
-  const closeAll = () => {
-    overlay.style.display = 'none';
-    modal.style.display   = 'none';
-    overlay.setAttribute('hidden', '');
-    modal.setAttribute('hidden', '');
-    form.innerHTML = '';
-    result.innerHTML = '';
-  };
-
-  btn.addEventListener('click', open);
-  overlay.addEventListener('click', closeAll);
-  close.addEventListener('click', closeAll);
-
-  // submit
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await submitSurvey(form, result, closeAll);
-  });
-}
-
-
-  async function loadSurvey(formEl){
-    formEl.innerHTML = '<div class="field"><em>Cargando encuesta…</em></div>';
-    try {
-      const enc = await fetch('/api/encuesta', {credentials:'include'}).then(r=>r.json());
-      formEl.innerHTML = '';
-      (enc.preguntas || []).sort((a,b)=>(a.orden??0)-(b.orden??0)).forEach(p=>{
-        if (p.habilitado === false) return;
-        const field = el('div', { className:'field' });
-        const label = el('label', { htmlFor:`f_${p.key}`, textContent: p.texto || p.key });
-        field.appendChild(label);
-
-        if (Array.isArray(p.opciones) && p.opciones.length){
-          // SELECT por opciones
-          const sel = el('select', { id:`f_${p.key}`, name: p.key });
-          sel.appendChild(el('option', { value:'', textContent:'-- Selecciona --' }));
-          p.opciones
-            .filter(o => o.habilitado !== false)
-            .sort((a,b)=>(a.orden??0)-(b.orden??0))
-            .forEach(o => sel.appendChild(el('option', { value:o.valor, textContent:o.texto || o.valor })));
-          field.appendChild(sel);
-        } else {
-          // Heurística simple por key
-          const k = String(p.key || '').toLowerCase();
-          if (k.includes('presupuesto') || k.includes('anio') || k.includes('años') || k === 'horizonte_anios'){
-            field.appendChild(el('input', { type:'number', id:`f_${p.key}`, name:p.key, min:'0', step:'1', placeholder:'Ingresa un número' }));
-          } else if (k.includes('ray_tracing') || k.includes('rt') || k.startsWith('bool_')){
-            const wrap = el('div', { className:'field inline' });
-            const chk = el('input', { type:'checkbox', id:`f_${p.key}`, name:p.key });
-            wrap.append(chk, el('label', { htmlFor:`f_${p.key}`, textContent:'Sí' }));
-            field.appendChild(wrap);
-          } else {
-            field.appendChild(el('input', { type:'text', id:`f_${p.key}`, name:p.key, placeholder:'Tu respuesta…' }));
+          if (Array.isArray(data.warnings) && data.warnings.some(w => w.code === 'LOW_BUDGET')) {
+              window.showToast && showToast('Presupuesto muy bajo');
           }
-        }
-        formEl.appendChild(field);
-      });
-
-      if (!formEl.querySelector('#ttSurveySubmit')) {
-        const actions = el('div', { className:'tt-modal-actions' });
-        const btn = el('button', { id:'ttSurveySubmit', type:'submit', className:'btn btn-primary', textContent:'Enviar' });
-        actions.appendChild(btn);
-        formEl.appendChild(actions);
+          return data;
       }
 
-    } catch (e){
-      formEl.innerHTML = `<div class="field"><span style="color:#e66">No se pudo cargar la encuesta.</span></div>`;
-      console.warn(e);
-    }
-  }
+      async function generarSugerencia(respuestas, resultEl) {
+          // usuario desde storage
+          const getUserFromStorage = () => {
+              try {
+                  const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
+                  for (const k of keys) {
+                      const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+                      if (raw) return JSON.parse(raw);
+                  }
+              } catch (_) {
+              }
+              return null;
+          };
+          const user = getUserFromStorage();
+          if (!user) {
+              const next = encodeURIComponent(location.pathname);
+              location.href = `/Login.html?next=${next}`;
+              return;
+          }
+          const userId = user.usuario_id ?? user.id ?? user.userId ?? null;
+          const username = user.usuario ?? user.username ?? user.nombreUsuario ?? null;
 
-  function collectAnswers(formEl){
-    const data = {};
-    formEl.querySelectorAll('input,select,textarea').forEach(inp=>{
-      const name = inp.name || inp.id;
-      if (!name) return;
-      if (inp.type === 'checkbox') {
-        data[name] = inp.checked ? 'true' : 'false'; // el backend ya acepta strings "true"/"false"
-      } else if (inp.type === 'number') {
-        data[name] = inp.value === '' ? null : Number(inp.value);
-      } else {
-        data[name] = inp.value;
-      }
-    });
-    return data;
-  }
+          // payload base
+          const payload = {
+              usuario: username,
+              usuario_id: userId,
+              presupuesto: (respuestas.presupuesto === '' || respuestas.presupuesto == null)
+                  ? null : Number(respuestas.presupuesto),
+              preferencias: respuestas,
+              minimos: {}
+          };
 
-async function submitSurvey(formEl, resultEl, closeModal){
-  // 1) Usuario desde storage
-  const getUserFromStorage = () => {
-    try {
-      const keys = ['user','usuario','usuarioLogueado','currentUser'];
-      for (const k of keys) {
-        const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
-        if (raw) return JSON.parse(raw);
-      }
-    } catch (_) {}
-    return null;
-  };
+          // guardar estado para togglear luego
+          lastBasePayload = JSON.parse(JSON.stringify(payload));
+          nivelUpActive = false;
 
-  const user = getUserFromStorage();
-  if (!user) {
-    const next = encodeURIComponent(location.pathname);
-    location.href = `/Login.html?next=${next}`;
-    return;
-  }
-
-  const userId   = user.usuario_id ?? user.id ?? user.userId ?? null;
-  const username = user.usuario    ?? user.username ?? user.nombreUsuario ?? null;
-
-  // 2) Respuestas
-  const respuestas = collectAnswers(formEl);
-  if (userId)   respuestas.usuario_id = userId;
-  if (username) respuestas.usuario    = username;
-
-  if ('presupuesto' in respuestas && (respuestas.presupuesto == null || respuestas.presupuesto === '')) {
-    alert('Por favor ingresa tu presupuesto.');
-    return;
-  }
-
-  // 3) Enviar y pintar
-    try {
-      const payload = {
-        presupuesto : (respuestas.presupuesto === '' || respuestas.presupuesto == null)
-                        ? null : Number(respuestas.presupuesto),
-        preferencias: respuestas,   // mandamos todo lo demás aquí
-        minimos     : {}            // si luego defines mínimos, se rellenan aquí
-      };
-
-      const resp = await fetch('/api/sugerencias/pc-completa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Username': username || ''          // el controller lo toma de este header
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      if (!resp.ok) {
-        const txt = await resp.text().catch(()=> '');
-        throw new Error(`Error ${resp.status}: ${txt || 'no se pudo crear la sugerencia'}`);
+          const data = await postSugerencia(payload);
+          lastOriginalData = data;
+          renderConBotonNivel(data, resultEl);
       }
 
-      const data = await resp.json();              // {sugerenciaId, tipo, presupuestoTotal, totalPrecio, totalComponentes, items[]}
-      renderResultPcCompleta(data, resultEl);      // usa la función de build completa
-    } catch (e) {
-      console.error(e);
-      resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
-    }
+      async function onToggleNivel() {
+          const resultEl = document.getElementById('ttSurveyResult') || document.body;
+          try {
+              if (!nivelUpActive) {
+                  // subir nivel -> mismo payload con presupuesto aumentado
+                  const boosted = JSON.parse(JSON.stringify(lastBasePayload || {}));
+                  const basePres = lastBasePayload?.presupuesto ?? null;
+                  const fallback = lastOriginalData?.totalPrecio ?? 0;
+                  const base = (typeof basePres === 'number' && basePres > 0) ? basePres : fallback;
 
-}
+                  boosted.presupuesto = Math.max(1, Math.round(base * nivelBoost));
+                  const data = await postSugerencia(boosted);
 
-
-
-      function renderResultPcCompleta(data, box) {
-      if (!data || !Array.isArray(data.items) || data.items.length === 0) {
-        box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
-        return;
+                  nivelUpActive = true;
+                  renderConBotonNivel(data, resultEl);
+                  window.showToast && showToast(`Subiendo nivel (+${Math.round((nivelBoost - 1) * 100)}% presupuesto)`);
+              } else {
+                  // volver a resultados originales (sin re-llamar)
+                  nivelUpActive = false;
+                  renderConBotonNivel(lastOriginalData, resultEl);
+              }
+          } catch (e) {
+              console.error(e);
+              resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
+          }
       }
 
-      const header = `
-        <h4 style="margin:10px 0;">PC sugerida #${data.sugerenciaId} — ${data.tipo}</h4>
-        <p class="tt-muted-row">
-          <b>Presupuesto:</b> ${data.presupuestoTotal ?? '—'}
-          &nbsp;·&nbsp; <b>Total elegido:</b> ${data.totalPrecio ?? '—'}
-          &nbsp;·&nbsp; <b>Componentes:</b> ${data.totalComponentes ?? 0}
-        </p>
-      `;
+      function renderConBotonNivel(data, resultEl) {
+          renderResultPcCompleta(data, resultEl); // pinta la tabla
+          const actions = document.getElementById('nivel-actions');
+          if (!actions) return;
 
-      const rows = data.items.map(it => `
-        <tr>
-          <td>${it.categoria ?? ''}</td>
-          <td>${it.producto ?? ''}</td>
-          <td>${Number((it.precio ?? it.precio_snap) ?? 0).toFixed(2)}</td>
-          <td>${(it.compatOk === false) ? '⚠️' : ''}</td>
-          <td>${it.motivo ?? ''}</td>
-        </tr>
-      `).join('');
+          actions.innerHTML = '';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = nivelUpActive ? 'Volver' : 'Subir nivel';
+          btn.style.cssText = `
+      padding:.35rem .6rem; border:1px solid #4c8; border-radius:.4rem;
+      background:#182; color:#fff; cursor:pointer; font-size:.9rem;
+    `;
+          btn.onclick = onToggleNivel;
+          actions.appendChild(btn);
+      }
+  </script>
 
-      box.innerHTML = `
-        ${header}
-        <div class="data-table">
-          <table>
-            <thead>
-              <tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Compat.</th><th>Motivo</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      `;
-    }
+  <script>
+      // ===== Modal de Encuesta (clientes logueados) =====
+      (() => {
+          const LOGIN_URL = '/Login.html';
+          const ENCUESTA_ID = 1;
+          const TOP_N = 3;
+
+          const $ = (s, r = document) => r.querySelector(s);
+          const el = (tag, attrs = {}) => Object.assign(document.createElement(tag), attrs);
+
+          function isLogged() {
+              try {
+                  const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                  if (raw) {
+                      JSON.parse(raw);
+                      return true;
+                  }
+              } catch {
+              }
+              return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+          }
+
+          function getUserFromStorage() {
+              try {
+                  const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                  return raw ? JSON.parse(raw) : null;
+              } catch {
+                  return null;
+              }
+          }
+
+          // UI bootstrap: botón + modal
+          function injectUI() {
+              // 🔁 Usamos los elementos existentes en el DOM (no creamos nada)
+              const btn = document.getElementById('openSurveyBtn');
+              const overlay = document.getElementById('ttSurveyOverlay');
+              const modal = document.getElementById('ttSurveyModal');
+              const form = document.getElementById('ttSurveyForm');
+              const result = document.getElementById('ttSurveyResult');
+              const close = modal.querySelector('.tt-modal-close');
+
+              const open = () => {
+                  if (!isLogged()) {
+                      const next = encodeURIComponent(location.pathname);
+                      location.href = `/Login.html?next=${next}`;
+                      return;
+                  }
+                  // mostrar modal
+                  overlay.removeAttribute('hidden');
+                  modal.removeAttribute('hidden');
+                  overlay.style.display = 'block';
+                  modal.style.display = 'flex';
+                  result.innerHTML = '';
+                  loadSurvey(form);
+              };
+
+              const closeAll = () => {
+                  overlay.style.display = 'none';
+                  modal.style.display = 'none';
+                  overlay.setAttribute('hidden', '');
+                  modal.setAttribute('hidden', '');
+                  form.innerHTML = '';
+                  result.innerHTML = '';
+              };
+
+              btn.addEventListener('click', open);
+              overlay.addEventListener('click', closeAll);
+              close.addEventListener('click', closeAll);
+
+              // submit
+              form.addEventListener('submit', async (e) => {
+                  e.preventDefault();
+                  await submitSurvey(form, result, closeAll);
+              });
+          }
 
 
-  // init
-  if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', injectUI);
-    } else {
-      injectUI();
-    }
-})();
+          async function loadSurvey(formEl) {
+              formEl.innerHTML = '<div class="field"><em>Cargando encuesta…</em></div>';
+              try {
+                  const enc = await fetch('/api/encuesta', {credentials: 'include'}).then(r => r.json());
+                  formEl.innerHTML = '';
+                  (enc.preguntas || []).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).forEach(p => {
+                      if (p.habilitado === false) return;
+                      const field = el('div', {className: 'field'});
+                      const label = el('label', {htmlFor: `f_${p.key}`, textContent: p.texto || p.key});
+                      field.appendChild(label);
 
-</script>
+                      if (Array.isArray(p.opciones) && p.opciones.length) {
+                          // SELECT por opciones
+                          const sel = el('select', {id: `f_${p.key}`, name: p.key});
+                          sel.appendChild(el('option', {value: '', textContent: '-- Selecciona --'}));
+                          p.opciones
+                              .filter(o => o.habilitado !== false)
+                              .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+                              .forEach(o => sel.appendChild(el('option', {
+                                  value: o.valor,
+                                  textContent: o.texto || o.valor
+                              })));
+                          field.appendChild(sel);
+                      } else {
+                          // Heurística simple por key
+                          const k = String(p.key || '').toLowerCase();
+                          if (k.includes('presupuesto') || k.includes('anio') || k.includes('años') || k === 'horizonte_anios') {
+                              field.appendChild(el('input', {
+                                  type: 'number',
+                                  id: `f_${p.key}`,
+                                  name: p.key,
+                                  min: '0',
+                                  step: '1',
+                                  placeholder: 'Ingresa un número'
+                              }));
+                          } else if (k.includes('ray_tracing') || k.includes('rt') || k.startsWith('bool_')) {
+                              const wrap = el('div', {className: 'field inline'});
+                              const chk = el('input', {type: 'checkbox', id: `f_${p.key}`, name: p.key});
+                              wrap.append(chk, el('label', {htmlFor: `f_${p.key}`, textContent: 'Sí'}));
+                              field.appendChild(wrap);
+                          } else {
+                              field.appendChild(el('input', {
+                                  type: 'text',
+                                  id: `f_${p.key}`,
+                                  name: p.key,
+                                  placeholder: 'Tu respuesta…'
+                              }));
+                          }
+                      }
+                      formEl.appendChild(field);
+                  });
+
+                  if (!formEl.querySelector('#ttSurveySubmit')) {
+                      const actions = el('div', {className: 'tt-modal-actions'});
+                      const btn = el('button', {
+                          id: 'ttSurveySubmit',
+                          type: 'submit',
+                          className: 'btn btn-primary',
+                          textContent: 'Enviar'
+                      });
+                      actions.appendChild(btn);
+                      formEl.appendChild(actions);
+                  }
+
+              } catch (e) {
+                  formEl.innerHTML = `<div class="field"><span style="color:#e66">No se pudo cargar la encuesta.</span></div>`;
+                  console.warn(e);
+              }
+          }
+
+          function collectAnswers(formEl) {
+              const data = {};
+              formEl.querySelectorAll('input,select,textarea').forEach(inp => {
+                  const name = inp.name || inp.id;
+                  if (!name) return;
+                  if (inp.type === 'checkbox') {
+                      data[name] = inp.checked ? 'true' : 'false'; // el backend ya acepta strings "true"/"false"
+                  } else if (inp.type === 'number') {
+                      data[name] = inp.value === '' ? null : Number(inp.value);
+                  } else {
+                      data[name] = inp.value;
+                  }
+              });
+              return data;
+          }
+
+          async function submitSurvey(formEl, resultEl, closeModal) {
+              const user = (() => {
+                  try {
+                      const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
+                      for (const k of keys) {
+                          const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+                          if (raw) return JSON.parse(raw);
+                      }
+                  } catch (_) {
+                  }
+                  return null;
+              })();
+
+              if (!user) {
+                  const next = encodeURIComponent(location.pathname);
+                  location.href = `/Login.html?next=${next}`;
+                  return;
+              }
+
+              const respuestas = collectAnswers(formEl);
+              if ('presupuesto' in respuestas && (respuestas.presupuesto == null || respuestas.presupuesto === '')) {
+                  alert('Por favor ingresa tu presupuesto.');
+                  return;
+              }
+
+              // llama a la nueva función (guarda estado + pinta y agrega botón)
+              await generarSugerencia(respuestas, resultEl);
+          }
+
+
+          function renderResultPcCompleta(data, box) {
+              if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+                  box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
+                  return;
+              }
+
+              const rows = data.items.map(it => `
+      <tr>
+        <td>${it.categoria ?? ''}</td>
+        <td>${it.producto ?? ''}</td>
+        <td>${Number((it.precio ?? it.precio_snap) ?? 0).toFixed(2)}</td>
+        <td>${(it.compatOk === false) ? '⚠️' : ''}</td>
+        <td>${it.motivo ?? ''}</td>
+      </tr>
+    `).join('');
+
+              const header = `
+      <h4 style="margin:10px 0;">PC sugerida #${data.sugerenciaId} — ${data.tipo}</h4>
+      <p class="tt-muted-row">
+        <b>Presupuesto:</b> ${data.presupuestoTotal ?? data.presupuesto ?? '—'}
+        &nbsp;·&nbsp; <b>Total elegido:</b> ${data.totalPrecio ?? '—'}
+        &nbsp;·&nbsp; <b>Componentes:</b> ${data.totalComponentes ?? 0}
+      </p>
+      <div id="nivel-actions" style="display:flex;justify-content:flex-end;margin:.25rem 0;"></div>
+    `;
+
+              box.innerHTML = `
+      ${header}
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr><th>Categoría</th><th>Producto</th><th>Precio</th><th>Compat.</th><th>Motivo</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+          }
+
+          /* ¡EXponerla al ámbito global! */
+          window.renderResultPcCompleta = renderResultPcCompleta;
+
+
+          // init
+          if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', injectUI);
+          } else {
+              injectUI();
+          }
+      })();
+
+  </script>
 
   <!-- PC Fotos -->
   <script>

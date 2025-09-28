@@ -442,12 +442,15 @@ async function initHostedFields(){
         })
         });
 
-    setMsg(`Pago ${cap.status}. Orden #${cap.ordenId}`, 'text-success');
+                setMsg(`Pago ${cap.status}. Orden #${cap.ordenId}`, 'text-success');
 
-    if (cap.facturaId) {
-    window.open(`factura.html?fid=${encodeURIComponent(cap.facturaId)}`, '_blank');
-    }
-    setTimeout(()=> location.href='cuenta.html', 1200);
+            if (cap.facturaId) {
+              // Redirige a la factura en la MISMA pestaña
+              location.href = `factura.html?fid=${encodeURIComponent(cap.facturaId)}`;
+            } else {
+              // Si por alguna razón no viene la factura, podrías dejar cuenta.html como plan B
+              location.href = 'cuenta.html';
+            }
           } catch (err) {
             console.error('[CAPTURE ERROR]', err);
             setMsg('Se pudo completar la compra con éxito', 'text-success');

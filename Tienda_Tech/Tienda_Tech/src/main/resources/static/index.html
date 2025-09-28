@@ -11,6 +11,68 @@
 
   <script src="/js/auth-menu.js?v=4" defer></script>
 </head>
+<style>
+    /* Contenedor slider */
+    .tt-slider{ margin:28px auto; width:min(1200px,95vw); }
+    .tt-slider__inner{
+      background:linear-gradient(135deg,
+        var(--slider-grad-a, #7ae28b),
+        var(--slider-grad-b, #6fdc94)
+      );
+    }
+
+    @media (max-width:640px){ .tt-slider__inner{ height:300px; } }
+
+    .tt-slider__viewport { overflow: hidden; height: 100%; }
+
+    /* Track + slides */
+    .tt-slider__track{
+      display:flex; gap:0; height:100%;
+      list-style:none; padding:0; margin:0;
+      transition:transform .35s ease;
+    }
+    .tt-slider__slide{ flex:0 0 100%; height:100%; }
+
+    /* Card “full-bleed” */
+    .tt-card{ position:relative; background:transparent; padding:0; height:100%; box-shadow:none; }
+    .tt-card__imgwrap{ height:100%; width:100%; border-radius:14px; overflow:hidden; display:block; background:transparent; }
+    .tt-card__imgwrap img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* Overlay de texto */
+    .tt-card__info{
+      position:absolute; left:18px; right:18px; bottom:18px;
+      padding:10px 12px; border-radius:10px;
+      background:linear-gradient( to top, rgba(0,0,0,.55), rgba(0,0,0,.15) );
+      color:#fff;
+    }
+    .tt-card__title{ color:#fff; font-weight:600; }
+    .tt-card__price{ color:#e6ffb3; font-weight:700; }
+
+    /* Botones */
+    .tt-slider__nav{
+      position:absolute; top:50%; transform:translateY(-50%);
+      width:40px; height:40px; border-radius:999px; border:0; cursor:pointer;
+      background:rgba(255,255,255,.85); box-shadow:0 2px 12px rgba(0,0,0,.18);
+      font-size:22px; line-height:40px; text-align:center;
+    }
+    .tt-slider__nav--prev{ left:10px; }
+    .tt-slider__nav--next{ right:10px; }
+    .tt-slider__nav:disabled{ opacity:.5; cursor:not-allowed; }
+
+    /* Dots */
+    .tt-slider__dots{ display:flex; justify-content:center; gap:6px; padding:10px 0 2px; }
+    .tt-slider__dot{ width:8px; height:8px; border-radius:999px; background:rgba(0,0,0,.25); }
+    .tt-slider__dot.is-active{ background:#0f172a; }
+
+    /* dark-friendly, si usas modo oscuro */
+    @media (prefers-color-scheme: dark) {
+      .tt-slider__nav{ background:rgba(30,41,59,.9); color:#e6edf5; }
+      .tt-slider__dot{ background:rgba(255,255,255,.35); }
+      .tt-slider__dot.is-active{ background:#e6edf5; }
+    }
+</style>
+
+
 <body>
   <!-- Header -->
   <header class="header">
@@ -43,16 +105,18 @@
   <!-- Contenido Principal -->
   <main class="main-content">
     <!-- 1. Slider Container -->
-    <section class="content-container">
-      <div class="slider-container">
-        <button class="slider-nav left">‹</button>
-        <div class="slider-content">
-          <div class="slider-title">SLIDER</div>
-          <div class="slider-subtitle">Productos nuevos</div>
-        </div>
-        <button class="slider-nav right">›</button>
-      </div>
-    </section>
+      <section class="tt-slider" id="slider-nuevos" aria-label="Productos nuevos">
+          <div class="tt-slider__inner">
+              <button class="tt-slider__nav tt-slider__nav--prev" aria-label="Anterior">‹</button>
+              <div class="tt-slider__viewport">
+                  <ul class="tt-slider__track" id="ttSliderTrack">
+                      <!-- Slides se inyectan por JS -->
+                  </ul>
+              </div>
+              <button class="tt-slider__nav tt-slider__nav--next" aria-label="Siguiente">›</button>
+          </div>
+          <div class="tt-slider__dots" id="ttSliderDots" aria-hidden="true"></div>
+      </section>
 
     <!-- 2. Carrusel Container -->
     <section class="content-container">
@@ -234,11 +298,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      const sliderLeft = document.querySelector('.slider-nav.left');
-      const sliderRight = document.querySelector('.slider-nav.right');
+    const sliderLeft  = document.querySelector('.slider-nav.left');
+    const sliderRight = document.querySelector('.slider-nav.right');
+    sliderLeft  && sliderLeft.addEventListener('click',  ()=> console.log('Slider: Anterior'));
+    sliderRight && sliderRight.addEventListener('click', ()=> console.log('Slider: Siguiente'));
 
-      sliderLeft.addEventListener('click', function() { console.log('Slider: Anterior'); });
-      sliderRight.addEventListener('click', function() { console.log('Slider: Siguiente'); });
 
       const carouselLeft = document.querySelector('.carousel-nav.left');
       const carouselRight = document.querySelector('.carousel-nav.right');
@@ -745,5 +809,133 @@ async function submitSurvey(formEl, resultEl, closeModal){
       if (IMAGES.length > 1) setInterval(next, INTERVAL_MS);
     })();
   </script>
+  <script>
+      (function(){
+        const RECENTES_API = '/api/productos/recientes-menu';
+        const IMG_URL      = id => `/api/galeria/${id}/contenido`;
+        const PRODUCT_URL  = pid => `/informacion_producto.html?id=${pid}`;
+
+        const _fetch = (window.authFetch || window.fetch).bind(window);
+
+        const $section = document.getElementById('slider-nuevos');
+        const $track   = document.getElementById('ttSliderTrack');
+        const $dots    = document.getElementById('ttSliderDots');
+        const $prev    = $section?.querySelector('.tt-slider__nav--prev');
+        const $next    = $section?.querySelector('.tt-slider__nav--next');
+
+        if (!$section || !$track || !$dots || !$prev || !$next) return;
+
+        const fmtPrecio = n => {
+          try { return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(n); }
+          catch { return `$${Number(n||0).toFixed(2)}`; }
+        };
+        const gidOf = it => it?.galeriaId ?? it?.galeria_id ?? it?.galeria?.id ?? null;
+
+        function buildSlide(item){
+          const gid = gidOf(item);          // ya definido arriba
+          const li  = document.createElement('li');
+          li.className = 'tt-slider__slide';
+          li.innerHTML = `
+            <article class="tt-card">
+              <a class="tt-card__imgwrap" href="${PRODUCT_URL(item.productoId)}" aria-label="${item.nombre ?? 'Producto'}">
+                <img loading="lazy" decoding="async"
+                     src="${IMG_URL(gid)}"
+                     alt="${item.nombre ?? 'Producto'}">
+              </a>
+              <div class="tt-card__info">
+                <div class="tt-card__title" title="${item.nombre ?? ''}">${item.nombre ?? ''}</div>
+                <div class="tt-card__price">${fmtPrecio(item.precio)}</div>
+              </div>
+            </article>`;
+          return li;
+        }
+
+
+
+        // Estado del slider (1 por vista)
+        let page = 0, pages = 1;
+
+        function computeLayout(){
+          const total = $track.children.length;
+          pages = Math.max(1, total);   // 1 slide = 1 página
+          page  = Math.min(page, pages - 1);
+          update();
+        }
+
+        function update(){
+          const viewport = $section.querySelector('.tt-slider__viewport');
+          const width = viewport.clientWidth || 0;       // usar ancho del viewport
+          $track.style.transform = `translateX(${-page * width}px)`;
+
+          $prev.disabled = (page === 0);
+          $next.disabled = (page >= pages - 1);
+
+          // Dots
+          $dots.innerHTML = '';
+          for (let i=0;i<pages;i++){
+            const d = document.createElement('span');
+            d.className = 'tt-slider__dot' + (i===page ? ' is-active' : '');
+            d.addEventListener('click', ()=>{ page = i; update(); });
+            $dots.appendChild(d);
+          }
+        }
+
+        $prev.addEventListener('click', ()=>{ if (page>0)       { page--; update(); } });
+        $next.addEventListener('click', ()=>{ if (page<pages-1) { page++; update(); } });
+        window.addEventListener('resize', computeLayout);
+
+        async function init(){
+          try{
+            const res = await _fetch(RECENTES_API, { headers:{ 'Accept':'application/json' } });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const items = await res.json();
+
+            // Candidatos que traen id de galería
+            const candidates = (items || [])
+              .map(it => ({ it, gid: gidOf(it) }))
+              .filter(x => !!x.gid);
+
+            // Verifica imagen sin descargarla (HEAD). Si tu backend no implementa HEAD,
+            // deja el fallback GET que ves abajo.
+            const checks = await Promise.all(candidates.map(async x => {
+              try {
+                let r = await _fetch(IMG_URL(x.gid), { method:'HEAD', credentials:'include' });
+                if (r.status === 405) { // fallback si HEAD no está soportado
+                  r = await _fetch(IMG_URL(x.gid), { method:'GET', credentials:'include' });
+                }
+                return r.ok ? x.it : null;     // OK = 200
+              } catch { return null; }
+            }));
+
+            const okItems = checks.filter(Boolean);
+
+            // Render SOLO los que tienen imagen servible
+            $track.innerHTML = '';
+            okItems.forEach(it => $track.appendChild(buildSlide(it)));
+
+            if ($track.children.length === 0){
+              $track.innerHTML =
+                '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Sin productos recientes</span></div></div></li>';
+            }
+
+            computeLayout();
+          }catch(err){
+            console.error('Slider recientes error:', err);
+            $track.innerHTML =
+              '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Error cargando recientes</span></div></div></li>';
+            computeLayout();
+          }
+        }
+
+
+        // iniciar
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+      })();
+  </script>
+
 </body>
 </html>

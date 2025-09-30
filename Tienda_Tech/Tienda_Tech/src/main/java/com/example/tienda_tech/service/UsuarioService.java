@@ -10,6 +10,7 @@ import com.example.tienda_tech.model.Usuario;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.tienda_tech.dto.ClienteUpdateRequest;
@@ -23,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+
+import static com.example.tienda_tech.util.UserResolver.resolveUserId;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +44,7 @@ public class UsuarioService {
 
     public com.example.tienda_tech.model.Usuario getById(Integer id) {
         return usuarioRepository.findById(id)
-            .orElseThrow(() -> new com.example.tienda_tech.exception.NotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new com.example.tienda_tech.exception.NotFoundException("Usuario no encontrado"));
         // Si no tienes NotFoundException, usa:
         // .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
@@ -49,15 +52,15 @@ public class UsuarioService {
 
 
     public Usuario login(String usuario, String contraseniaPlain) {
-    var opt = usuarioRepository.findByUsuario(usuario);
-    if (opt.isEmpty()) throw new IllegalArgumentException("Credenciales inválidas");
+        var opt = usuarioRepository.findByUsuario(usuario);
+        if (opt.isEmpty()) throw new IllegalArgumentException("Credenciales inválidas");
 
-    Usuario u = opt.get();
-    String hash = u.getContrasenia(); // la columna actualmente se llama así
-    if (hash == null || !passwordEncoder.matches(contraseniaPlain, hash)) {
-        throw new IllegalArgumentException("Credenciales inválidas");
-    }
-    return u;
+        Usuario u = opt.get();
+        String hash = u.getContrasenia(); // la columna actualmente se llama así
+        if (hash == null || !passwordEncoder.matches(contraseniaPlain, hash)) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+        return u;
     }
 
 
@@ -70,12 +73,12 @@ public class UsuarioService {
         String hash = passwordEncoder.encode(raw);            // <<--- HASH AQUÍ
 
         usuarioRepository.registrarClienteSP(
-            dto.getNombre(),
-            dto.getCedula(),
-            dto.getCorreo(),
-            dto.getTelefono(),
-            dto.getUsuario(),
-            hash                              // <<--- ENVIAR HASH
+                dto.getNombre(),
+                dto.getCedula(),
+                dto.getCorreo(),
+                dto.getTelefono(),
+                dto.getUsuario(),
+                hash                              // <<--- ENVIAR HASH
         );
     }
 
@@ -110,7 +113,7 @@ public class UsuarioService {
         }
 
         usuarioRepository.actualizarClienteSP(
-            usuarioId, nombre, cedula, correo, telefono, usuario, contrasenia
+                usuarioId, nombre, cedula, correo, telefono, usuario, contrasenia
         );
     }
 
@@ -248,4 +251,58 @@ public class UsuarioService {
         return (s == null || s.isBlank()) ? null : s.trim();
     }
 
+
+    @org.springframework.transaction.annotation.Transactional
+    public void cambiarPasswordSesion(HttpServletRequest req, String actual, String nueva) {
+        if (nueva == null || nueva.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 8 caracteres");
+        }
+
+        Integer userId = resolveUserId(req); // mismo helper que ya usas en tu UsuarioController
+        Usuario u = getById(userId);
+
+        String hashActual = u.getContrasenia();
+        if (hashActual == null || !passwordEncoder.matches(actual, hashActual)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual no es correcta");
+        }
+        if (passwordEncoder.matches(nueva, hashActual)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña no puede ser igual a la actual");
+        }
+
+        String nuevoHash = passwordEncoder.encode(nueva);
+        // === TU SP por correo ===
+        usuarioRepository.actualizarContraseniaPorCorreoCall(u.getCorreo(), nuevoHash);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void cambiarPasswordConToken(String token, String actual, String nueva) {
+        if (token == null || token.isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token requerido");
+        if (actual == null || actual.isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ingresa tu contraseña actual");
+        if (nueva == null || nueva.length() < 8)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 8 caracteres");
+
+        // 1) Obtener correo desde el token (sin invalidar aún)
+        String correo = otpService.peekTokenCambioPassword(token);
+        if (correo == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido o expirado");
+
+        // 2) Traer usuario y validar "actual"
+        Usuario u = usuarioRepository.findByCorreoIgnoreCase(correo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        String hashActual = u.getContrasenia();
+        if (hashActual == null || !passwordEncoder.matches(actual, hashActual))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual no es correcta");
+        if (passwordEncoder.matches(nueva, hashActual))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña no puede ser igual a la actual");
+
+        // 3) Guardar nueva (tu SP)
+        String nuevoHash = passwordEncoder.encode(nueva);
+        usuarioRepository.actualizarContraseniaPorCorreoCall(correo, nuevoHash);
+
+        // 4) Invalidar el token SOLO si todo salió ok
+        otpService.invalidateTokenCambioPassword(token);
+    }
 }

@@ -1,147 +1,87 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TiendaTech</title>
-  <!-- <link rel="stylesheet" href="style2.css"> -->
-  <link id="themeStylesheet" rel="stylesheet"
-  href="styleClaroMenu.css" data-light="styleClaroMenu.css"
-  data-dark="styleOscuroMenu.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TiendaTech</title>
+    <!-- <link rel="stylesheet" href="style2.css"> -->
+    <link id="themeStylesheet" rel="stylesheet"
+          href="styleClaroMenu.css" data-light="styleClaroMenu.css"
+          data-dark="styleOscuroMenu.css"/>
 
-  <script src="/js/auth-menu.js?v=4" defer></script>
+    <script src="/js/auth-menu.js?v=4" defer></script>
 </head>
-<style>
-    /* Contenedor slider */
-    .tt-slider{ margin:28px auto; width:min(1200px,95vw); }
-    .tt-slider__inner{
-      background:linear-gradient(135deg,
-        var(--slider-grad-a, #7ae28b),
-        var(--slider-grad-b, #6fdc94)
-      );
-    }
-
-    @media (max-width:640px){ .tt-slider__inner{ height:300px; } }
-
-    .tt-slider__viewport { overflow: hidden; height: 100%; }
-
-    /* Track + slides */
-    .tt-slider__track{
-      display:flex; gap:0; height:100%;
-      list-style:none; padding:0; margin:0;
-      transition:transform .35s ease;
-    }
-    .tt-slider__slide{ flex:0 0 100%; height:100%; }
-
-    /* Card “full-bleed” */
-    .tt-card{ position:relative; background:transparent; padding:0; height:100%; box-shadow:none; }
-    .tt-card__imgwrap{ height:100%; width:100%; border-radius:14px; overflow:hidden; display:block; background:transparent; }
-    .tt-card__imgwrap img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-    /* Overlay de texto */
-    .tt-card__info{
-      position:absolute; left:18px; right:18px; bottom:18px;
-      padding:10px 12px; border-radius:10px;
-      background:linear-gradient( to top, rgba(0,0,0,.55), rgba(0,0,0,.15) );
-      color:#fff;
-    }
-    .tt-card__title{ color:#fff; font-weight:600; }
-    .tt-card__price{ color:#e6ffb3; font-weight:700; }
-
-    /* Botones */
-    .tt-slider__nav{
-      position:absolute; top:50%; transform:translateY(-50%);
-      width:40px; height:40px; border-radius:999px; border:0; cursor:pointer;
-      background:rgba(255,255,255,.85); box-shadow:0 2px 12px rgba(0,0,0,.18);
-      font-size:22px; line-height:40px; text-align:center;
-    }
-    .tt-slider__nav--prev{ left:10px; }
-    .tt-slider__nav--next{ right:10px; }
-    .tt-slider__nav:disabled{ opacity:.5; cursor:not-allowed; }
-
-    /* Dots */
-    .tt-slider__dots{ display:flex; justify-content:center; gap:6px; padding:10px 0 2px; }
-    .tt-slider__dot{ width:8px; height:8px; border-radius:999px; background:rgba(0,0,0,.25); }
-    .tt-slider__dot.is-active{ background:#0f172a; }
-
-    /* dark-friendly, si usas modo oscuro */
-    @media (prefers-color-scheme: dark) {
-      .tt-slider__nav{ background:rgba(30,41,59,.9); color:#e6edf5; }
-      .tt-slider__dot{ background:rgba(255,255,255,.35); }
-      .tt-slider__dot.is-active{ background:#e6edf5; }
-    }
-</style>
-
 
 <body>
-  <!-- Header -->
-  <header class="header">
+<!-- Header -->
+<header class="header">
     <div class="logo">TiendaTech</div>
     <div class="search-container">
-      <input type="text" class="search-bar" placeholder="Buscar...">
+        <input type="text" class="search-bar" placeholder="Buscar...">
     </div>
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
     <!-- Modo oscuro -->
     <button id="themeToggle" class="theme-toggle"
             type="button" aria-pressed="false">
-      <span class="ico">🌙</span><span class="txt">Oscuro</span>
+        <span class="ico">🌙</span><span class="txt">Oscuro</span>
     </button>
     <button id="openSurveyBtn" class="btn btn-primary ttq-btn" type="button">Recomiéndame una PC</button>
 
-    </header>
+</header>
 
-    <!-- Overlay -->
-  <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
 
-  <!-- Menú Hamburguesa -->
-  <nav class="hamburger-menu" id="hamburgerMenu">
+<!-- Menú Hamburguesa -->
+<nav class="hamburger-menu" id="hamburgerMenu">
     <button class="menu-close" onclick="closeMenu()">✕</button>
-    <a href="index.html"   class="menu-item">Inicio</a>
-    <a href="cuenta.html"  class="menu-item requires-auth">Cuenta</a>
+    <a href="index.html" class="menu-item">Inicio</a>
+    <a href="cuenta.html" class="menu-item requires-auth">Cuenta</a>
     <a href="Carrito.html" class="menu-item requires-auth">Carrito</a>
-    <a href="#"            class="menu-item">Cerrar sesión</a>
-  </nav>
+    <a href="#" class="menu-item">Cerrar sesión</a>
+</nav>
 
-  <!-- Contenido Principal -->
-  <main class="main-content">
+<!-- Contenido Principal -->
+<main class="main-content">
     <!-- 1. Slider Container -->
-      <section class="tt-slider" id="slider-nuevos" aria-label="Productos nuevos">
-          <div class="tt-slider__inner">
-              <button class="tt-slider__nav tt-slider__nav--prev" aria-label="Anterior">‹</button>
-              <div class="tt-slider__viewport">
-                  <ul class="tt-slider__track" id="ttSliderTrack">
-                      <!-- Slides se inyectan por JS -->
-                  </ul>
-              </div>
-              <button class="tt-slider__nav tt-slider__nav--next" aria-label="Siguiente">›</button>
-          </div>
-          <div class="tt-slider__dots" id="ttSliderDots" aria-hidden="true"></div>
-      </section>
+    <section class="tt-slider" id="slider-nuevos" aria-label="Productos nuevos">
+        <div class="tt-slider__inner">
+            <button class="tt-slider__nav tt-slider__nav--prev" aria-label="Anterior">‹</button>
+            <div class="tt-slider__viewport">
+                <ul class="tt-slider__track" id="ttSliderTrack">
+                    <!-- Slides se inyectan por JS -->
+                </ul>
+            </div>
+            <button class="tt-slider__nav tt-slider__nav--prev" aria-label="Anterior">‹</button>
+            <button class="tt-slider__nav tt-slider__nav--next" aria-label="Siguiente">›</button>
+        </div>
+        <div class="tt-slider__dots" id="ttSliderDots" aria-hidden="true"></div>
+    </section>
 
     <!-- 2. Carrusel Container -->
-    <section class="content-container">
-      <div class="carousel-container">
-        <h2 class="carousel-title">Los más vendidos</h2>
-        <div class="carousel-wrapper">
-          <button class="carousel-nav left">‹</button>
-          <div class="carousel-products">
-            <div class="product-card">Producto 1</div>
-            <div class="product-card">Producto 2</div>
-            <div class="product-card">Producto 3</div>
-            <div class="product-card">Producto 4</div>
-            <div class="product-card">Producto 5</div>
-          </div>
-          <button class="carousel-nav right">›</button>
-        </div>
-      </div>
-    </section>
+    <!--    <section class="content-container">-->
+    <!--      <div class="carousel-container">-->
+    <!--        <h2 class="carousel-title">Los más vendidos</h2>-->
+    <!--        <div class="carousel-wrapper">-->
+    <!--          <button class="carousel-nav left">‹</button>-->
+    <!--          <div class="carousel-products">-->
+    <!--            <div class="product-card">Producto 1</div>-->
+    <!--            <div class="product-card">Producto 2</div>-->
+    <!--            <div class="product-card">Producto 3</div>-->
+    <!--            <div class="product-card">Producto 4</div>-->
+    <!--            <div class="product-card">Producto 5</div>-->
+    <!--          </div>-->
+    <!--          <button class="carousel-nav right">›</button>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </section>-->
 
     <!-- 3. PC Builder Container -->
     <section class="content-container">
         <div class="pc-builder-container">
-          <div class="pcb-bg layer-a"></div>
-          <div class="pcb-bg layer-b"></div>
-          <div class="pcb-bg layer-c"></div>
+            <div class="pcb-bg layer-a"></div>
+            <div class="pcb-bg layer-b"></div>
+            <div class="pcb-bg layer-c"></div>
             <!-- contenido encima -->
             <div class="pcb-content">
                 <h2 class="pc-builder-title">Crea tu propia PC</h2>
@@ -150,139 +90,140 @@
                     deseados sin preocuparte<br>
                     por la compatibilidad
                 </p>
-              <button type="button" class="pc-builder-btn"
-                      onclick="window.location.href='Armado.html'">Ver más</button>
+                <button type="button" class="pc-builder-btn"
+                        onclick="window.location.href='Armado.html'">Ver más
+                </button>
             </div>
         </div>
     </section>
 
     <!-- 4. Categories Grid Container -->
     <section class="content-container">
-      <div class="categories-container">
-        <h2 class="categories-title">Todas las categorías</h2>
-        <div class="categories-grid" id="categoriesGrid">
-          <div class="category-card">Motherboards</div>
-          <div class="category-card">Almacenamiento</div>
-          <div class="category-card">Tarjetas de video</div>
-          <div class="category-card">Celulares</div>
-          <div class="category-card">Teclados</div>
-          <div class="category-card">Procesadores</div>
-          <div class="category-card">Memorias RAM</div>
-          <div class="category-card">Fuentes de poder</div>
-          <div class="category-card">Laptops</div>
-          <div class="category-card">Ratones</div>
+        <div class="categories-container">
+            <h2 class="categories-title">Todas las categorías</h2>
+            <div class="categories-grid" id="categoriesGrid">
+                <div class="category-card">Motherboards</div>
+                <div class="category-card">Almacenamiento</div>
+                <div class="category-card">Tarjetas de video</div>
+                <div class="category-card">Celulares</div>
+                <div class="category-card">Teclados</div>
+                <div class="category-card">Procesadores</div>
+                <div class="category-card">Memorias RAM</div>
+                <div class="category-card">Fuentes de poder</div>
+                <div class="category-card">Laptops</div>
+                <div class="category-card">Ratones</div>
+            </div>
         </div>
-      </div>
     </section>
-  </main>
+</main>
 
-  <!-- Footer -->
-  <footer class="footer">
+<!-- Footer -->
+<footer class="footer">
     <nav class="footer-nav">
-      <a href="index.html">Inicio</a>
-      <a href="cuenta.html"  class="requires-auth">Cuenta</a>
-      <a href="Carrito.html" class="requires-auth">Carrito</a>
+        <a href="index.html">Inicio</a>
+        <a href="cuenta.html" class="requires-auth">Cuenta</a>
+        <a href="Carrito.html" class="requires-auth">Carrito</a>
     </nav>
-  </footer>
-  <!-- Overlay -->
-  <div id="ttSurveyOverlay" class="ttq-overlay" hidden></div>
+</footer>
+<!-- Overlay -->
+<div id="ttSurveyOverlay" class="ttq-overlay" hidden></div>
 
-  <!-- Modal -->
-  <div id="ttSurveyModal" class="ttq-modal" role="dialog" aria-modal="true" hidden>
-      <div class="ttq-content tt-modal-content">
-          <button class="ttq-close tt-modal-close" type="button" title="Cerrar">&times;</button>
-          <h3 class="ttq-title tt-modal-title">Cuestionario de recomendaciones</h3>
+<!-- Modal -->
+<div id="ttSurveyModal" class="ttq-modal" role="dialog" aria-modal="true" hidden>
+    <div class="ttq-content tt-modal-content">
+        <button class="ttq-close tt-modal-close" type="button" title="Cerrar">&times;</button>
+        <h3 class="ttq-title tt-modal-title">Cuestionario de recomendaciones</h3>
 
-          <form id="ttSurveyForm">
-              <!-- El JS rellena las preguntas aquí -->
-              <div class="ttq-actions tt-modal-actions">
-                  <button id="ttSurveySubmit"
-                          class="ttq-btn btn btn-primary"
-                          type="submit">
-                      Enviar
-                  </button>
-              </div>
-          </form>
+        <form id="ttSurveyForm">
+            <!-- El JS rellena las preguntas aquí -->
+            <div class="ttq-actions tt-modal-actions">
+                <button id="ttSurveySubmit"
+                        class="ttq-btn btn btn-primary"
+                        type="submit">
+                    Enviar
+                </button>
+            </div>
+        </form>
 
 
-          <div id="ttSurveyResult" class="ttq-result tt-result"></div>
-      </div>
-  </div>
-  <!-- Logout dentro del menú -->
-  <script>
-  (function () {
-    const REDIRECT_TO = 'Login.html'; // nombre real del login
+        <div id="ttSurveyResult" class="ttq-result tt-result"></div>
+    </div>
+</div>
+<!-- Logout dentro del menú -->
+<script>
+    (function () {
+      const REDIRECT_TO = 'Login.html'; // nombre real del login
 
-    const menu = document.getElementById('hamburgerMenu');
-    if (!menu) return;
+      const menu = document.getElementById('hamburgerMenu');
+      if (!menu) return;
 
-    function hasActiveSession(){
-      const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-      let ok = false;
-      try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
-      return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-    }
-
-    function getLogoutLink(){
-      return Array.from(menu.querySelectorAll('a.menu-item'))
-        .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
-    }
-
-    function updateLogoutVisibility(){
-      const a = getLogoutLink();
-      if (!a) return;
-      if (hasActiveSession()){
-        a.classList.remove('logout-disabled');
-        a.removeAttribute('aria-disabled');
-        a.tabIndex = 0;
-      } else {
-        a.classList.add('logout-disabled');
-        a.setAttribute('aria-disabled','true');
-        a.tabIndex = -1;
+      function hasActiveSession(){
+        const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+        let ok = false;
+        try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
+        return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
       }
-    }
 
-    menu.addEventListener('click', async function (ev) {
-      const a = ev.target.closest('a.menu-item');
-      if (!a) return;
+      function getLogoutLink(){
+        return Array.from(menu.querySelectorAll('a.menu-item'))
+          .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
+      }
 
-      const label = (a.textContent || '').trim().toLowerCase();
-      if (label !== 'cerrar sesión') return;
+      function updateLogoutVisibility(){
+        const a = getLogoutLink();
+        if (!a) return;
+        if (hasActiveSession()){
+          a.classList.remove('logout-disabled');
+          a.removeAttribute('aria-disabled');
+          a.tabIndex = 0;
+        } else {
+          a.classList.add('logout-disabled');
+          a.setAttribute('aria-disabled','true');
+          a.tabIndex = -1;
+        }
+      }
 
-      if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+      menu.addEventListener('click', async function (ev) {
+        const a = ev.target.closest('a.menu-item');
+        if (!a) return;
+
+        const label = (a.textContent || '').trim().toLowerCase();
+        if (label !== 'cerrar sesión') return;
+
+        if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
+          ev.preventDefault();
+          return;
+        }
+
         ev.preventDefault();
-        return;
-      }
 
-      ev.preventDefault();
+        try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+        try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
 
-      try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-      try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
 
-      sessionStorage.removeItem('user');
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
+        try {
+          document.cookie.split(';').forEach(c=>{
+            document.cookie = c.replace(/^ +/,'')
+              .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
+          });
+        } catch {}
 
-      try {
-        document.cookie.split(';').forEach(c=>{
-          document.cookie = c.replace(/^ +/,'')
-            .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
-        });
-      } catch {}
+        try { closeMenu(); } catch {}
+        window.location.href = REDIRECT_TO;
+      });
 
-      try { closeMenu(); } catch {}
-      window.location.href = REDIRECT_TO;
-    });
+      document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
+      window.addEventListener('storage', updateLogoutVisibility);
+      document.addEventListener('visibilitychange', updateLogoutVisibility);
+    })();
+</script>
 
-    document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
-    window.addEventListener('storage', updateLogoutVisibility);
-    document.addEventListener('visibilitychange', updateLogoutVisibility);
-  })();
-  </script>
-
-  <!-- UI básica -->
-  <script>
+<!-- UI básica -->
+<script>
     function toggleMenu() {
       const menu = document.getElementById('hamburgerMenu');
       const overlay = document.getElementById('overlay');
@@ -322,163 +263,163 @@
     }
 
     });
-  </script>
-
-  <!-- Opción 1: Interceptor con wireGuards + MutationObserver -->
-  <script>
-  (function(){
-    const LOGIN_PAGE = '/Login.html';
-
-    function isLogged() {
-      try {
-        const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-        if (raw && JSON.parse(raw)) return true;
-      } catch {}
-      return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-    }
-
-    function guardClick(ev) {
-      const a = ev.currentTarget;
-      if (isLogged()) return; // dejar pasar
-      ev.preventDefault();
-      const target = a.getAttribute('href') || '/';
-      const next = encodeURIComponent(target);
-      location.href = `${LOGIN_PAGE}?next=${next}`;
-    }
-
-    // Tolerante si recibe un Event u otro objeto
-    function wireGuards(rootOrEvent) {
-      const ctx = (rootOrEvent && typeof rootOrEvent.querySelectorAll === 'function')
-        ? rootOrEvent
-        : document;
-
-      ctx.querySelectorAll('a.requires-auth').forEach(a => {
-        a.removeEventListener('click', guardClick);
-        a.addEventListener('click', guardClick);
-      });
-    }
-
-    // FIX: pasa document explícitamente
-    document.addEventListener('DOMContentLoaded', () => wireGuards(document));
-
-    // Re-wire si cambia el DOM (abrir/cerrar menú, etc.)
-    new MutationObserver(() => wireGuards(document))
-      .observe(document.body, { subtree: true, childList: true });
-  })();
-  </script>
-<script>
-// (async function loadTopVendidosSoloImagen(){
-//   const wrap = document.querySelector('.carousel-products');
-//   if (!wrap) return;
-
-//   const res = await fetch('/api/productos/mas-vendidos?limite=3', {credentials:'include'});
-//   const items = await res.json();
-
-//   wrap.innerHTML = items.map(it => `
-//     <a class="product-card" href="Producto.html?id=${it.productoId}" title="${it.nombre}">
-//       <img class="product-img"
-//            src="${it.urlImagen || '/img/placeholder.png'}"
-//            alt="${it.nombre}" loading="lazy"
-//            onerror="this.onerror=null; this.src='/img/placeholder.png';">
-//     </a>
-//   `).join('');
-// })();
 </script>
 
-  <script>
-  // Carga categorías desde /api/categorias y las pinta en la rejilla.
-  // Al hacer click, navega a Busqueda.html pasando ?cat=ID&nombre=Nombre
-  (async function loadCategories(){
-    const grid = document.getElementById('categoriesGrid');
-    if (!grid) return;
+<!-- Opción 1: Interceptor con wireGuards + MutationObserver -->
+<script>
+    (function(){
+      const LOGIN_PAGE = '/Login.html';
 
-    try {
-      const res  = await fetch('/api/categorias', { credentials:'include' });
-      const cats = await res.json();
+      function isLogged() {
+        try {
+          const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+          if (raw && JSON.parse(raw)) return true;
+        } catch {}
+        return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+      }
 
-      grid.innerHTML = cats.map(c => `
-        <button class="category-card"
-                data-id="${c.id}"
-                data-nombre="${c.nombre}">
-          ${c.nombre}
-        </button>
-      `).join('');
+      function guardClick(ev) {
+        const a = ev.currentTarget;
+        if (isLogged()) return; // dejar pasar
+        ev.preventDefault();
+        const target = a.getAttribute('href') || '/';
+        const next = encodeURIComponent(target);
+        location.href = `${LOGIN_PAGE}?next=${next}`;
+      }
 
-      grid.addEventListener('click', (e) => {
-        const card = e.target.closest('.category-card');
-        if (!card) return;
-        const id = card.dataset.id;
-        const nombre = encodeURIComponent(card.dataset.nombre);
-        location.href = `Busqueda.html?cat=${id}&nombre=${nombre}`;
-      });
-    } catch (err){
-      console.error('Error cargando categorías', err);
-      grid.innerHTML = `<p class="text-danger">No se pudieron cargar las categorías.</p>`;
-    }
-  })();
-  </script>
-  <!-- <script>
-      (function pcBuilderSlideshow(){
-        // Rutas absolutas desde /static: ajusta nombres según tus archivos
-        const IMAGES = [
-          '/assets/menu/img1.jpg',
-          '/assets/menu/img2.jpg'
-          // agrega más si quieres: '/assets/menu/img3.jpg', ...
-        ];
+      // Tolerante si recibe un Event u otro objeto
+      function wireGuards(rootOrEvent) {
+        const ctx = (rootOrEvent && typeof rootOrEvent.querySelectorAll === 'function')
+          ? rootOrEvent
+          : document;
 
-        const INTERVAL_MS = 5000;    // tiempo que cada imagen permanece visible
-        const FADE_MS     = 1000;    // debe coincidir con el CSS (transition)
+        ctx.querySelectorAll('a.requires-auth').forEach(a => {
+          a.removeEventListener('click', guardClick);
+          a.addEventListener('click', guardClick);
+        });
+      }
 
-        const box = document.querySelector('.pc-builder-container');
-        if (!box) return;
+      // FIX: pasa document explícitamente
+      document.addEventListener('DOMContentLoaded', () => wireGuards(document));
 
-        const a = box.querySelector('.pcb-bg.layer-a');
-        const b = box.querySelector('.pcb-bg.layer-b');
+      // Re-wire si cambia el DOM (abrir/cerrar menú, etc.)
+      new MutationObserver(() => wireGuards(document))
+        .observe(document.body, { subtree: true, childList: true });
+    })();
+</script>
+<script>
+    // (async function loadTopVendidosSoloImagen(){
+    //   const wrap = document.querySelector('.carousel-products');
+    //   if (!wrap) return;
 
-        if (!a || !b) return;
+    //   const res = await fetch('/api/productos/mas-vendidos?limite=3', {credentials:'include'});
+    //   const items = await res.json();
 
-        // Preload simple (para evitar parpadeos)
-        IMAGES.forEach(src => { const i = new Image(); i.src = src; });
+    //   wrap.innerHTML = items.map(it => `
+    //     <a class="product-card" href="Producto.html?id=${it.productoId}" title="${it.nombre}">
+    //       <img class="product-img"
+    //            src="${it.urlImagen || '/img/placeholder.png'}"
+    //            alt="${it.nombre}" loading="lazy"
+    //            onerror="this.onerror=null; this.src='/img/placeholder.png';">
+    //     </a>
+    //   `).join('');
+    // })();
+</script>
 
-        let idx = 0;
-        let frontIsA = true;
+<script>
+    // Carga categorías desde /api/categorias y las pinta en la rejilla.
+    // Al hacer click, navega a Busqueda.html pasando ?cat=ID&nombre=Nombre
+    (async function loadCategories(){
+      const grid = document.getElementById('categoriesGrid');
+      if (!grid) return;
 
-        function setBg(el, src){
-          el.style.backgroundImage = `url("${src}")`;
-        }
+      try {
+        const res  = await fetch('/api/categorias', { credentials:'include' });
+        const cats = await res.json();
 
-        function show(el){ el.classList.add('show'); }
-        function hide(el){ el.classList.remove('show'); }
+        grid.innerHTML = cats.map(c => `
+          <button class="category-card"
+                  data-id="${c.id}"
+                  data-nombre="${c.nombre}">
+            ${c.nombre}
+          </button>
+        `).join('');
 
-        // estado inicial
-        setBg(a, IMAGES[idx]);
-        show(a);
-        setBg(b, IMAGES[(idx+1) % IMAGES.length]);
+        grid.addEventListener('click', (e) => {
+          const card = e.target.closest('.category-card');
+          if (!card) return;
+          const id = card.dataset.id;
+          const nombre = encodeURIComponent(card.dataset.nombre);
+          location.href = `Busqueda.html?cat=${id}&nombre=${nombre}`;
+        });
+      } catch (err){
+        console.error('Error cargando categorías', err);
+        grid.innerHTML = `<p class="text-danger">No se pudieron cargar las categorías.</p>`;
+      }
+    })();
+</script>
+<!-- <script>
+    (function pcBuilderSlideshow(){
+      // Rutas absolutas desde /static: ajusta nombres según tus archivos
+      const IMAGES = [
+        '/assets/menu/img1.jpg',
+        '/assets/menu/img2.jpg'
+        // agrega más si quieres: '/assets/menu/img3.jpg', ...
+      ];
 
-        function next(){
-          idx = (idx + 1) % IMAGES.length;
+      const INTERVAL_MS = 5000;    // tiempo que cada imagen permanece visible
+      const FADE_MS     = 1000;    // debe coincidir con el CSS (transition)
 
-          const front = frontIsA ? a : b;   // el que está visible
-          const back  = frontIsA ? b : a;   // el que quedará visible
+      const box = document.querySelector('.pc-builder-container');
+      if (!box) return;
 
-          // prepara la siguiente imagen en el back layer
-          setBg(back, IMAGES[idx]);
+      const a = box.querySelector('.pcb-bg.layer-a');
+      const b = box.querySelector('.pcb-bg.layer-b');
 
-          // crossfade
-          show(back);
-          hide(front);
+      if (!a || !b) return;
 
-          // tras el fade, el back pasa a ser front
-          setTimeout(() => { frontIsA = !frontIsA; }, FADE_MS);
-        }
+      // Preload simple (para evitar parpadeos)
+      IMAGES.forEach(src => { const i = new Image(); i.src = src; });
 
-        // inicia rotación si hay más de una imagen
-        if (IMAGES.length > 1){
-          setInterval(next, INTERVAL_MS);
-        }
-      })();
-  </script> -->
-  <script>
+      let idx = 0;
+      let frontIsA = true;
+
+      function setBg(el, src){
+        el.style.backgroundImage = `url("${src}")`;
+      }
+
+      function show(el){ el.classList.add('show'); }
+      function hide(el){ el.classList.remove('show'); }
+
+      // estado inicial
+      setBg(a, IMAGES[idx]);
+      show(a);
+      setBg(b, IMAGES[(idx+1) % IMAGES.length]);
+
+      function next(){
+        idx = (idx + 1) % IMAGES.length;
+
+        const front = frontIsA ? a : b;   // el que está visible
+        const back  = frontIsA ? b : a;   // el que quedará visible
+
+        // prepara la siguiente imagen en el back layer
+        setBg(back, IMAGES[idx]);
+
+        // crossfade
+        show(back);
+        hide(front);
+
+        // tras el fade, el back pasa a ser front
+        setTimeout(() => { frontIsA = !frontIsA; }, FADE_MS);
+      }
+
+      // inicia rotación si hay más de una imagen
+      if (IMAGES.length > 1){
+        setInterval(next, INTERVAL_MS);
+      }
+    })();
+</script> -->
+<script>
     (function(){
       const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
       function setTheme(theme){
@@ -507,327 +448,342 @@
         setTheme(localStorage.getItem(STORAGE_KEY)||'light');
       });
     })();
-  </script>
-  <script>
-      // ====== Subir nivel: estado global + helpers ======
-      let lastBasePayload = null;      // payload original del POST
-      let lastOriginalData = null;     // respuesta original del backend
-      let nivelUpActive = false;     // ¿estamos viendo el nivel superior?
-      let nivelBoost = 1.20;      // +20% de presupuesto
+</script>
+<script>
+    // ====== Subir nivel: estado global + helpers ======
+    let lastBasePayload = null;      // payload original del POST
+    let lastOriginalData = null;     // respuesta original del backend
+    let nivelUpActive = false;     // ¿estamos viendo el nivel superior?
+    let nivelBoost = 1.20;      // +20% de presupuesto
 
-      async function postSugerencia(payload) {
-          const resp = await fetch('/api/sugerencias/generar', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json', 'X-Username': payload.usuario || ''},
-              credentials: 'include',
-              body: JSON.stringify(payload)
-          });
-          const text = await resp.text().catch(() => '');
-          if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
-          const data = JSON.parse(text || '{}');
+    async function postSugerencia(payload) {
+        const resp = await fetch('/api/sugerencias/generar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Username': payload.usuario || ''},
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const text = await resp.text().catch(() => '');
+        if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+        const data = JSON.parse(text || '{}');
 
-          if (Array.isArray(data.warnings) && data.warnings.some(w => w.code === 'LOW_BUDGET')) {
-              window.showToast && showToast('Presupuesto muy bajo');
-          }
-          return data;
-      }
+        if (Array.isArray(data.warnings) && data.warnings.some(w => w.code === 'LOW_BUDGET')) {
+            window.showToast && showToast('Presupuesto muy bajo');
+        }
+        return data;
+    }
 
-      async function generarSugerencia(respuestas, resultEl) {
-          // usuario desde storage
-          const getUserFromStorage = () => {
-              try {
-                  const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
-                  for (const k of keys) {
-                      const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
-                      if (raw) return JSON.parse(raw);
-                  }
-              } catch (_) {
-              }
-              return null;
-          };
-          const user = getUserFromStorage();
-          if (!user) {
-              const next = encodeURIComponent(location.pathname);
-              location.href = `/Login.html?next=${next}`;
-              return;
-          }
-          const userId = user.usuario_id ?? user.id ?? user.userId ?? null;
-          const username = user.usuario ?? user.username ?? user.nombreUsuario ?? null;
+    async function generarSugerencia(respuestas, resultEl) {
+        // usuario desde storage
+        const getUserFromStorage = () => {
+            try {
+                const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
+                for (const k of keys) {
+                    const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+                    if (raw) return JSON.parse(raw);
+                }
+            } catch (_) {
+            }
+            return null;
+        };
+        const user = getUserFromStorage();
+        if (!user) {
+            const next = encodeURIComponent(location.pathname);
+            location.href = `/Login.html?next=${next}`;
+            return;
+        }
+        const userId = user.usuario_id ?? user.id ?? user.userId ?? null;
+        const username = user.usuario ?? user.username ?? user.nombreUsuario ?? null;
 
-          // payload base
-          const payload = {
-              usuario: username,
-              usuario_id: userId,
-              presupuesto: (respuestas.presupuesto === '' || respuestas.presupuesto == null)
-                  ? null : Number(respuestas.presupuesto),
-              preferencias: respuestas,
-              minimos: {}
-          };
+        // payload base
+        const payload = {
+            usuario: username,
+            usuario_id: userId,
+            presupuesto: (respuestas.presupuesto === '' || respuestas.presupuesto == null)
+                ? null : Number(respuestas.presupuesto),
+            preferencias: respuestas,
+            minimos: {}
+        };
 
-          // guardar estado para togglear luego
-          lastBasePayload = JSON.parse(JSON.stringify(payload));
-          nivelUpActive = false;
+        // guardar estado para togglear luego
+        lastBasePayload = JSON.parse(JSON.stringify(payload));
+        nivelUpActive = false;
 
-          const data = await postSugerencia(payload);
-          lastOriginalData = data;
-          renderConBotonNivel(data, resultEl);
-      }
+        const data = await postSugerencia(payload);
+        lastOriginalData = data;
+        renderConBotonNivel(data, resultEl);
+    }
 
-      async function onToggleNivel() {
-          const resultEl = document.getElementById('ttSurveyResult') || document.body;
-          try {
-              if (!nivelUpActive) {
-                  // subir nivel -> mismo payload con presupuesto aumentado
-                  const boosted = JSON.parse(JSON.stringify(lastBasePayload || {}));
-                  const basePres = lastBasePayload?.presupuesto ?? null;
-                  const fallback = lastOriginalData?.totalPrecio ?? 0;
-                  const base = (typeof basePres === 'number' && basePres > 0) ? basePres : fallback;
+    async function onToggleNivel() {
+        const resultEl = document.getElementById('ttSurveyResult') || document.body;
+        try {
+            if (!nivelUpActive) {
+                // subir nivel -> mismo payload con presupuesto aumentado
+                const boosted = JSON.parse(JSON.stringify(lastBasePayload || {}));
+                const basePres = lastBasePayload?.presupuesto ?? null;
+                const fallback = lastOriginalData?.totalPrecio ?? 0;
+                const base = (typeof basePres === 'number' && basePres > 0) ? basePres : fallback;
 
-                  boosted.presupuesto = Math.max(1, Math.round(base * nivelBoost));
-                  const data = await postSugerencia(boosted);
+                boosted.presupuesto = Math.max(1, Math.round(base * nivelBoost));
+                const data = await postSugerencia(boosted);
 
-                  nivelUpActive = true;
-                  renderConBotonNivel(data, resultEl);
-                  window.showToast && showToast(`Subiendo nivel (+${Math.round((nivelBoost - 1) * 100)}% presupuesto)`);
-              } else {
-                  // volver a resultados originales (sin re-llamar)
-                  nivelUpActive = false;
-                  renderConBotonNivel(lastOriginalData, resultEl);
-              }
-          } catch (e) {
-              console.error(e);
-              resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
-          }
-      }
+                nivelUpActive = true;
+                renderConBotonNivel(data, resultEl);
+                window.showToast && showToast(`Subiendo nivel (+${Math.round((nivelBoost - 1) * 100)}% presupuesto)`);
+            } else {
+                // volver a resultados originales (sin re-llamar)
+                nivelUpActive = false;
+                renderConBotonNivel(lastOriginalData, resultEl);
+            }
+        } catch (e) {
+            console.error(e);
+            resultEl.innerHTML = `<p style="color:#e66">No se pudo generar la sugerencia: ${e.message || e}</p>`;
+        }
+    }
 
-      function renderConBotonNivel(data, resultEl) {
-          renderResultPcCompleta(data, resultEl); // pinta la tabla
-          const actions = document.getElementById('nivel-actions');
-          if (!actions) return;
+    function renderConBotonNivel(data, resultEl) {
+        renderResultPcCompleta(data, resultEl); // pinta la tabla
+        const actions = document.getElementById('nivel-actions');
+        if (!actions) return;
 
-          actions.innerHTML = '';
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = nivelUpActive ? 'Volver' : 'Subir nivel';
-          btn.style.cssText = `
-      padding:.35rem .6rem; border:1px solid #4c8; border-radius:.4rem;
-      background:#182; color:#fff; cursor:pointer; font-size:.9rem;
-    `;
-          btn.onclick = onToggleNivel;
-          actions.appendChild(btn);
-      }
-  </script>
+        actions.innerHTML = '';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = nivelUpActive ? 'Volver' : 'Subir nivel';
+        btn.style.cssText = `
+    padding:.35rem .6rem; border:1px solid #4c8; border-radius:.4rem;
+    background:#182; color:#fff; cursor:pointer; font-size:.9rem;
+  `;
+        btn.onclick = onToggleNivel;
+        actions.appendChild(btn);
+    }
+</script>
 
-  <script>
-      // ===== Modal de Encuesta (clientes logueados) =====
-      (() => {
-          const LOGIN_URL = '/Login.html';
-          const ENCUESTA_ID = 1;
-          const TOP_N = 3;
+<script>
+    // ===== Modal de Encuesta (clientes logueados) =====
+    (() => {
+        const LOGIN_URL = '/Login.html';
+        const ENCUESTA_ID = 1;
+        const TOP_N = 3;
 
-          const $ = (s, r = document) => r.querySelector(s);
-          const el = (tag, attrs = {}) => Object.assign(document.createElement(tag), attrs);
+        const $ = (s, r = document) => r.querySelector(s);
+        const el = (tag, attrs = {}) => Object.assign(document.createElement(tag), attrs);
 
-          function isLogged() {
-              try {
-                  const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-                  if (raw) {
-                      JSON.parse(raw);
-                      return true;
-                  }
-              } catch {
-              }
-              return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-          }
+        function isLogged() {
+            try {
+                const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                if (raw) {
+                    JSON.parse(raw);
+                    return true;
+                }
+            } catch {
+            }
+            return !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
+        }
 
-          function getUserFromStorage() {
-              try {
-                  const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-                  return raw ? JSON.parse(raw) : null;
-              } catch {
-                  return null;
-              }
-          }
+        function getUserFromStorage() {
+            try {
+                const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+                return raw ? JSON.parse(raw) : null;
+            } catch {
+                return null;
+            }
+        }
 
-          // UI bootstrap: botón + modal
-          function injectUI() {
-              // 🔁 Usamos los elementos existentes en el DOM (no creamos nada)
-              const btn = document.getElementById('openSurveyBtn');
-              const overlay = document.getElementById('ttSurveyOverlay');
-              const modal = document.getElementById('ttSurveyModal');
-              const form = document.getElementById('ttSurveyForm');
-              const result = document.getElementById('ttSurveyResult');
-              const close = modal.querySelector('.tt-modal-close');
+        // UI bootstrap: botón + modal
+        function injectUI() {
+            // 🔁 Usamos los elementos existentes en el DOM (no creamos nada)
+            const btn = document.getElementById('openSurveyBtn');
+            const overlay = document.getElementById('ttSurveyOverlay');
+            const modal = document.getElementById('ttSurveyModal');
+            const form = document.getElementById('ttSurveyForm');
+            const result = document.getElementById('ttSurveyResult');
+            const close = modal.querySelector('.tt-modal-close');
 
-              const open = () => {
-                  if (!isLogged()) {
-                      const next = encodeURIComponent(location.pathname);
-                      location.href = `/Login.html?next=${next}`;
-                      return;
-                  }
-                  // mostrar modal
-                  overlay.removeAttribute('hidden');
-                  modal.removeAttribute('hidden');
-                  overlay.style.display = 'block';
-                  modal.style.display = 'flex';
-                  result.innerHTML = '';
-                  loadSurvey(form);
-              };
+            const open = () => {
+                if (!isLogged()) {
+                    const next = encodeURIComponent(location.pathname);
+                    location.href = `/Login.html?next=${next}`;
+                    return;
+                }
+                // mostrar modal
+                overlay.removeAttribute('hidden');
+                modal.removeAttribute('hidden');
+                overlay.style.display = 'block';
+                modal.style.display = 'flex';
+                result.innerHTML = '';
+                loadSurvey(form);
+            };
 
-              const closeAll = () => {
-                  overlay.style.display = 'none';
-                  modal.style.display = 'none';
-                  overlay.setAttribute('hidden', '');
-                  modal.setAttribute('hidden', '');
-                  form.innerHTML = '';
-                  result.innerHTML = '';
-              };
+            const closeAll = () => {
+                overlay.style.display = 'none';
+                modal.style.display = 'none';
+                overlay.setAttribute('hidden', '');
+                modal.setAttribute('hidden', '');
+                form.innerHTML = '';
+                result.innerHTML = '';
+            };
 
-              btn.addEventListener('click', open);
-              overlay.addEventListener('click', closeAll);
-              close.addEventListener('click', closeAll);
+            btn.addEventListener('click', open);
+            overlay.addEventListener('click', closeAll);
+            close.addEventListener('click', closeAll);
 
-              // submit
-              form.addEventListener('submit', async (e) => {
-                  e.preventDefault();
-                  await submitSurvey(form, result, closeAll);
-              });
-          }
-
-
-          async function loadSurvey(formEl) {
-              formEl.innerHTML = '<div class="field"><em>Cargando encuesta…</em></div>';
-              try {
-                  const enc = await fetch('/api/encuesta', {credentials: 'include'}).then(r => r.json());
-                  formEl.innerHTML = '';
-                  (enc.preguntas || []).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).forEach(p => {
-                      if (p.habilitado === false) return;
-                      const field = el('div', {className: 'field'});
-                      const label = el('label', {htmlFor: `f_${p.key}`, textContent: p.texto || p.key});
-                      field.appendChild(label);
-
-                      if (Array.isArray(p.opciones) && p.opciones.length) {
-                          // SELECT por opciones
-                          const sel = el('select', {id: `f_${p.key}`, name: p.key});
-                          sel.appendChild(el('option', {value: '', textContent: '-- Selecciona --'}));
-                          p.opciones
-                              .filter(o => o.habilitado !== false)
-                              .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
-                              .forEach(o => sel.appendChild(el('option', {
-                                  value: o.valor,
-                                  textContent: o.texto || o.valor
-                              })));
-                          field.appendChild(sel);
-                      } else {
-                          // Heurística simple por key
-                          const k = String(p.key || '').toLowerCase();
-                          if (k.includes('presupuesto') || k.includes('anio') || k.includes('años') || k === 'horizonte_anios') {
-                              field.appendChild(el('input', {
-                                  type: 'number',
-                                  id: `f_${p.key}`,
-                                  name: p.key,
-                                  min: '0',
-                                  step: '1',
-                                  placeholder: 'Ingresa un número'
-                              }));
-                          } else if (k.includes('ray_tracing') || k.includes('rt') || k.startsWith('bool_')) {
-                              const wrap = el('div', {className: 'field inline'});
-                              const chk = el('input', {type: 'checkbox', id: `f_${p.key}`, name: p.key});
-                              wrap.append(chk, el('label', {htmlFor: `f_${p.key}`, textContent: 'Sí'}));
-                              field.appendChild(wrap);
-                          } else {
-                              field.appendChild(el('input', {
-                                  type: 'text',
-                                  id: `f_${p.key}`,
-                                  name: p.key,
-                                  placeholder: 'Tu respuesta…'
-                              }));
-                          }
-                      }
-                      formEl.appendChild(field);
-                  });
-
-                  if (!formEl.querySelector('#ttSurveySubmit')) {
-                      const actions = el('div', {className: 'tt-modal-actions'});
-                      const btn = el('button', {
-                          id: 'ttSurveySubmit',
-                          type: 'submit',
-                          className: 'btn btn-primary',
-                          textContent: 'Enviar'
-                      });
-                      actions.appendChild(btn);
-                      formEl.appendChild(actions);
-                  }
-
-              } catch (e) {
-                  formEl.innerHTML = `<div class="field"><span style="color:#e66">No se pudo cargar la encuesta.</span></div>`;
-                  console.warn(e);
-              }
-          }
-
-          function collectAnswers(formEl) {
-              const data = {};
-              formEl.querySelectorAll('input,select,textarea').forEach(inp => {
-                  const name = inp.name || inp.id;
-                  if (!name) return;
-                  if (inp.type === 'checkbox') {
-                      data[name] = inp.checked ? 'true' : 'false'; // el backend ya acepta strings "true"/"false"
-                  } else if (inp.type === 'number') {
-                      data[name] = inp.value === '' ? null : Number(inp.value);
-                  } else {
-                      data[name] = inp.value;
-                  }
-              });
-              return data;
-          }
-
-          async function submitSurvey(formEl, resultEl, closeModal) {
-              const user = (() => {
-                  try {
-                      const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
-                      for (const k of keys) {
-                          const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
-                          if (raw) return JSON.parse(raw);
-                      }
-                  } catch (_) {
-                  }
-                  return null;
-              })();
-
-              if (!user) {
-                  const next = encodeURIComponent(location.pathname);
-                  location.href = `/Login.html?next=${next}`;
-                  return;
-              }
-
-              const respuestas = collectAnswers(formEl);
-              if ('presupuesto' in respuestas && (respuestas.presupuesto == null || respuestas.presupuesto === '')) {
-                  alert('Por favor ingresa tu presupuesto.');
-                  return;
-              }
-
-              // llama a la nueva función (guarda estado + pinta y agrega botón)
-              await generarSugerencia(respuestas, resultEl);
-          }
+            // submit
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await submitSurvey(form, result, closeAll);
+            });
+        }
 
 
-          function renderResultPcCompleta(data, box) {
-              if (!data || !Array.isArray(data.items) || data.items.length === 0) {
-                  box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
-                  return;
-              }
+        async function loadSurvey(formEl) {
+            formEl.innerHTML = '<div class="field"><em>Cargando encuesta…</em></div>';
+            try {
+                const enc = await fetch('/api/encuesta', {credentials: 'include'}).then(r => r.json());
+                formEl.innerHTML = '';
+                (enc.preguntas || []).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).forEach(p => {
+                    if (p.habilitado === false) return;
+                    const field = el('div', {className: 'field'});
+                    const label = el('label', {htmlFor: `f_${p.key}`, textContent: p.texto || p.key});
+                    field.appendChild(label);
 
-              const rows = data.items.map(it => `
+                    if (Array.isArray(p.opciones) && p.opciones.length) {
+                        // SELECT por opciones
+                        const sel = el('select', {id: `f_${p.key}`, name: p.key});
+                        sel.appendChild(el('option', {value: '', textContent: '-- Selecciona --'}));
+                        p.opciones
+                            .filter(o => o.habilitado !== false)
+                            .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+                            .forEach(o => sel.appendChild(el('option', {
+                                value: o.valor,
+                                textContent: o.texto || o.valor
+                            })));
+                        field.appendChild(sel);
+                    } else {
+                        // Heurística simple por key
+                        const k = String(p.key || '').toLowerCase();
+                        if (k.includes('presupuesto') || k.includes('anio') || k.includes('años') || k === 'horizonte_anios') {
+                            field.appendChild(el('input', {
+                                type: 'number',
+                                id: `f_${p.key}`,
+                                name: p.key,
+                                min: '0',
+                                step: '1',
+                                placeholder: 'Ingresa un número'
+                            }));
+                        } else if (k.includes('ray_tracing') || k.includes('rt') || k.startsWith('bool_')) {
+                            const wrap = el('div', {className: 'field inline'});
+                            const chk = el('input', {type: 'checkbox', id: `f_${p.key}`, name: p.key});
+                            wrap.append(chk, el('label', {htmlFor: `f_${p.key}`, textContent: 'Sí'}));
+                            field.appendChild(wrap);
+                        } else {
+                            field.appendChild(el('input', {
+                                type: 'text',
+                                id: `f_${p.key}`,
+                                name: p.key,
+                                placeholder: 'Tu respuesta…'
+                            }));
+                        }
+                    }
+                    formEl.appendChild(field);
+                });
+
+                if (!formEl.querySelector('#ttSurveySubmit')) {
+                    const actions = el('div', {className: 'tt-modal-actions'});
+                    const btn = el('button', {
+                        id: 'ttSurveySubmit',
+                        type: 'submit',
+                        className: 'btn btn-primary',
+                        textContent: 'Enviar'
+                    });
+                    actions.appendChild(btn);
+                    formEl.appendChild(actions);
+                }
+
+            } catch (e) {
+                formEl.innerHTML = `<div class="field"><span style="color:#e66">No se pudo cargar la encuesta.</span></div>`;
+                console.warn(e);
+            }
+        }
+
+        function collectAnswers(formEl) {
+            const data = {};
+            formEl.querySelectorAll('input,select,textarea').forEach(inp => {
+                const name = inp.name || inp.id;
+                if (!name) return;
+                if (inp.type === 'checkbox') {
+                    data[name] = inp.checked ? 'true' : 'false'; // el backend ya acepta strings "true"/"false"
+                } else if (inp.type === 'number') {
+                    data[name] = inp.value === '' ? null : Number(inp.value);
+                } else {
+                    data[name] = inp.value;
+                }
+            });
+            return data;
+        }
+
+        async function submitSurvey(formEl, resultEl, closeModal) {
+            const user = (() => {
+                try {
+                    const keys = ['user', 'usuario', 'usuarioLogueado', 'currentUser'];
+                    for (const k of keys) {
+                        const raw = sessionStorage.getItem(k) || localStorage.getItem(k);
+                        if (raw) return JSON.parse(raw);
+                    }
+                } catch (_) {
+                }
+                return null;
+            })();
+
+            if (!user) {
+                const next = encodeURIComponent(location.pathname);
+                location.href = `/Login.html?next=${next}`;
+                return;
+            }
+
+            const respuestas = collectAnswers(formEl);
+            if ('presupuesto' in respuestas && (respuestas.presupuesto == null || respuestas.presupuesto === '')) {
+                alert('Por favor ingresa tu presupuesto.');
+                return;
+            }
+
+            // llama a la nueva función (guarda estado + pinta y agrega botón)
+            await generarSugerencia(respuestas, resultEl);
+        }
+
+  function capitalize(s = '') {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  }
+  function categoriaDisplayName(it) {
+    const cat = (it.categoria || '').toLowerCase();
+    if (cat.startsWith('perif') && it.slot_key) {
+      return `Periféricos (${capitalize(String(it.slot_key))})`;
+    }
+    return it.categoria || '';
+  }
+
+  function renderResultPcCompleta(data, box) {
+    if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+      box.innerHTML = `<p class="tt-muted-row">No se obtuvieron recomendaciones (ajusta tus respuestas o presupuesto).</p>`;
+      return;
+    }
+
+    // Construye filas mostrando el tipo en Categoría si es periférico
+    const rows = data.items.map(it => `
       <tr>
-        <td>${it.categoria ?? ''}</td>
+        <td>${categoriaDisplayName(it)}</td>
         <td>${it.producto ?? ''}</td>
         <td>${Number((it.precio ?? it.precio_snap) ?? 0).toFixed(2)}</td>
         <td>${(it.compatOk === false) ? '⚠️' : ''}</td>
-        <td>${it.motivo ?? ''}</td>
+        <td>${
+          (String(it.categoria || '').toLowerCase().startsWith('perif') && it.slot_key)
+            ? `Tipo: ${capitalize(String(it.slot_key))}`
+            : (it.motivo ?? '')
+        }</td>
       </tr>
     `).join('');
 
-              const header = `
+    const header = `
       <h4 style="margin:10px 0;">PC sugerida #${data.sugerenciaId} — ${data.tipo}</h4>
       <p class="tt-muted-row">
         <b>Presupuesto:</b> ${data.presupuestoTotal ?? data.presupuesto ?? '—'}
@@ -837,7 +793,7 @@
       <div id="nivel-actions" style="display:flex;justify-content:flex-end;margin:.25rem 0;"></div>
     `;
 
-              box.innerHTML = `
+    box.innerHTML = `
       ${header}
       <div class="data-table">
         <table>
@@ -848,24 +804,25 @@
         </table>
       </div>
     `;
-          }
-
-          /* ¡EXponerla al ámbito global! */
-          window.renderResultPcCompleta = renderResultPcCompleta;
+  }
 
 
-          // init
-          if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', injectUI);
-          } else {
-              injectUI();
-          }
-      })();
+        /* ¡EXponerla al ámbito global! */
+        window.renderResultPcCompleta = renderResultPcCompleta;
 
-  </script>
 
-  <!-- PC Fotos -->
-  <script>
+        // init
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', injectUI);
+        } else {
+            injectUI();
+        }
+    })();
+
+</script>
+
+<!-- PC Fotos -->
+<script>
     (function pcBuilderSlideshow(){
       // RUTAS a tus imágenes descargadas (ajusta a tu carpeta real)
       const IMAGES = [
@@ -910,134 +867,134 @@
 
       if (IMAGES.length > 1) setInterval(next, INTERVAL_MS);
     })();
-  </script>
-  <script>
-      (function(){
-        const RECENTES_API = '/api/productos/recientes-menu';
-        const IMG_URL      = id => `/api/galeria/${id}/contenido`;
-        const PRODUCT_URL  = pid => `/informacion_producto.html?id=${pid}`;
+</script>
+<script>
+    (function(){
+      const RECENTES_API = '/api/productos/recientes-menu';
+      const IMG_URL      = id => `/api/galeria/${id}/contenido`;
+      const PRODUCT_URL  = pid => `/informacion_producto.html?id=${pid}`;
 
-        const _fetch = (window.authFetch || window.fetch).bind(window);
+      const _fetch = (window.authFetch || window.fetch).bind(window);
 
-        const $section = document.getElementById('slider-nuevos');
-        const $track   = document.getElementById('ttSliderTrack');
-        const $dots    = document.getElementById('ttSliderDots');
-        const $prev    = $section?.querySelector('.tt-slider__nav--prev');
-        const $next    = $section?.querySelector('.tt-slider__nav--next');
+      const $section = document.getElementById('slider-nuevos');
+      const $track   = document.getElementById('ttSliderTrack');
+      const $dots    = document.getElementById('ttSliderDots');
+      const $prev    = $section?.querySelector('.tt-slider__nav--prev');
+      const $next    = $section?.querySelector('.tt-slider__nav--next');
 
-        if (!$section || !$track || !$dots || !$prev || !$next) return;
+      if (!$section || !$track || !$dots || !$prev || !$next) return;
 
-        const fmtPrecio = n => {
-          try { return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(n); }
-          catch { return `$${Number(n||0).toFixed(2)}`; }
-        };
-        const gidOf = it => it?.galeriaId ?? it?.galeria_id ?? it?.galeria?.id ?? null;
+      const fmtPrecio = n => {
+        try { return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(n); }
+        catch { return `$${Number(n||0).toFixed(2)}`; }
+      };
+      const gidOf = it => it?.galeriaId ?? it?.galeria_id ?? it?.galeria?.id ?? null;
 
-        function buildSlide(item){
-          const gid = gidOf(item);          // ya definido arriba
-          const li  = document.createElement('li');
-          li.className = 'tt-slider__slide';
-          li.innerHTML = `
-            <article class="tt-card">
-              <a class="tt-card__imgwrap" href="${PRODUCT_URL(item.productoId)}" aria-label="${item.nombre ?? 'Producto'}">
-                <img loading="lazy" decoding="async"
-                     src="${IMG_URL(gid)}"
-                     alt="${item.nombre ?? 'Producto'}">
-              </a>
-              <div class="tt-card__info">
-                <div class="tt-card__title" title="${item.nombre ?? ''}">${item.nombre ?? ''}</div>
-                <div class="tt-card__price">${fmtPrecio(item.precio)}</div>
-              </div>
-            </article>`;
-          return li;
+      function buildSlide(item){
+        const gid = gidOf(item);          // ya definido arriba
+        const li  = document.createElement('li');
+        li.className = 'tt-slider__slide';
+        li.innerHTML = `
+          <article class="tt-card">
+            <a class="tt-card__imgwrap" href="${PRODUCT_URL(item.productoId)}" aria-label="${item.nombre ?? 'Producto'}">
+              <img loading="lazy" decoding="async"
+                   src="${IMG_URL(gid)}"
+                   alt="${item.nombre ?? 'Producto'}">
+            </a>
+            <div class="tt-card__info">
+              <div class="tt-card__title" title="${item.nombre ?? ''}">${item.nombre ?? ''}</div>
+              <div class="tt-card__price">${fmtPrecio(item.precio)}</div>
+            </div>
+          </article>`;
+        return li;
+      }
+
+
+
+      // Estado del slider (1 por vista)
+      let page = 0, pages = 1;
+
+      function computeLayout(){
+        const total = $track.children.length;
+        pages = Math.max(1, total);   // 1 slide = 1 página
+        page  = Math.min(page, pages - 1);
+        update();
+      }
+
+      function update(){
+        const viewport = $section.querySelector('.tt-slider__viewport');
+        const width = viewport.clientWidth || 0;       // usar ancho del viewport
+        $track.style.transform = `translateX(${-page * width}px)`;
+
+        $prev.disabled = (page === 0);
+        $next.disabled = (page >= pages - 1);
+
+        // Dots
+        $dots.innerHTML = '';
+        for (let i=0;i<pages;i++){
+          const d = document.createElement('span');
+          d.className = 'tt-slider__dot' + (i===page ? ' is-active' : '');
+          d.addEventListener('click', ()=>{ page = i; update(); });
+          $dots.appendChild(d);
         }
+      }
 
+      $prev.addEventListener('click', ()=>{ if (page>0)       { page--; update(); } });
+      $next.addEventListener('click', ()=>{ if (page<pages-1) { page++; update(); } });
+      window.addEventListener('resize', computeLayout);
 
+      async function init(){
+        try{
+          const res = await _fetch(RECENTES_API, { headers:{ 'Accept':'application/json' } });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const items = await res.json();
 
-        // Estado del slider (1 por vista)
-        let page = 0, pages = 1;
+          // Candidatos que traen id de galería
+          const candidates = (items || [])
+            .map(it => ({ it, gid: gidOf(it) }))
+            .filter(x => !!x.gid);
 
-        function computeLayout(){
-          const total = $track.children.length;
-          pages = Math.max(1, total);   // 1 slide = 1 página
-          page  = Math.min(page, pages - 1);
-          update();
-        }
+          // Verifica imagen sin descargarla (HEAD). Si tu backend no implementa HEAD,
+          // deja el fallback GET que ves abajo.
+          const checks = await Promise.all(candidates.map(async x => {
+            try {
+              let r = await _fetch(IMG_URL(x.gid), { method:'HEAD', credentials:'include' });
+              if (r.status === 405) { // fallback si HEAD no está soportado
+                r = await _fetch(IMG_URL(x.gid), { method:'GET', credentials:'include' });
+              }
+              return r.ok ? x.it : null;     // OK = 200
+            } catch { return null; }
+          }));
 
-        function update(){
-          const viewport = $section.querySelector('.tt-slider__viewport');
-          const width = viewport.clientWidth || 0;       // usar ancho del viewport
-          $track.style.transform = `translateX(${-page * width}px)`;
+          const okItems = checks.filter(Boolean);
 
-          $prev.disabled = (page === 0);
-          $next.disabled = (page >= pages - 1);
+          // Render SOLO los que tienen imagen servible
+          $track.innerHTML = '';
+          okItems.forEach(it => $track.appendChild(buildSlide(it)));
 
-          // Dots
-          $dots.innerHTML = '';
-          for (let i=0;i<pages;i++){
-            const d = document.createElement('span');
-            d.className = 'tt-slider__dot' + (i===page ? ' is-active' : '');
-            d.addEventListener('click', ()=>{ page = i; update(); });
-            $dots.appendChild(d);
-          }
-        }
-
-        $prev.addEventListener('click', ()=>{ if (page>0)       { page--; update(); } });
-        $next.addEventListener('click', ()=>{ if (page<pages-1) { page++; update(); } });
-        window.addEventListener('resize', computeLayout);
-
-        async function init(){
-          try{
-            const res = await _fetch(RECENTES_API, { headers:{ 'Accept':'application/json' } });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const items = await res.json();
-
-            // Candidatos que traen id de galería
-            const candidates = (items || [])
-              .map(it => ({ it, gid: gidOf(it) }))
-              .filter(x => !!x.gid);
-
-            // Verifica imagen sin descargarla (HEAD). Si tu backend no implementa HEAD,
-            // deja el fallback GET que ves abajo.
-            const checks = await Promise.all(candidates.map(async x => {
-              try {
-                let r = await _fetch(IMG_URL(x.gid), { method:'HEAD', credentials:'include' });
-                if (r.status === 405) { // fallback si HEAD no está soportado
-                  r = await _fetch(IMG_URL(x.gid), { method:'GET', credentials:'include' });
-                }
-                return r.ok ? x.it : null;     // OK = 200
-              } catch { return null; }
-            }));
-
-            const okItems = checks.filter(Boolean);
-
-            // Render SOLO los que tienen imagen servible
-            $track.innerHTML = '';
-            okItems.forEach(it => $track.appendChild(buildSlide(it)));
-
-            if ($track.children.length === 0){
-              $track.innerHTML =
-                '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Sin productos recientes</span></div></div></li>';
-            }
-
-            computeLayout();
-          }catch(err){
-            console.error('Slider recientes error:', err);
+          if ($track.children.length === 0){
             $track.innerHTML =
-              '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Error cargando recientes</span></div></div></li>';
-            computeLayout();
+              '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Sin productos recientes</span></div></div></li>';
           }
+
+          computeLayout();
+        }catch(err){
+          console.error('Slider recientes error:', err);
+          $track.innerHTML =
+            '<li class="tt-slider__slide"><div class="tt-card"><div class="tt-card__imgwrap" style="display:grid;place-items:center;"><span>Error cargando recientes</span></div></div></li>';
+          computeLayout();
         }
+      }
 
 
-        // iniciar
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', init);
-        } else {
-          init();
-        }
-      })();
-  </script>
+      // iniciar
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+</script>
 
 </body>
 </html>

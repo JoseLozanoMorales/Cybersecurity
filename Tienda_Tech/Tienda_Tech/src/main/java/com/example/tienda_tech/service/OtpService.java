@@ -11,6 +11,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
@@ -35,6 +37,17 @@ public class OtpService {
 
     @Value("${otp.rate.max-per-15min:3}")
     private int maxPerWindow;
+
+    //NUEVO
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
+
+    private String buildPasswordChangeUrl() {
+        // evita doble slash y apunta a tu página
+        String base = (frontendBaseUrl == null) ? "" : frontendBaseUrl.trim();
+        if (base.endsWith("/")) base = base.substring(0, base.length()-1);
+        return base + "/ActualizarContrasenia.html";
+    }
 
     private static final SecureRandom RAND = new SecureRandom();
 
@@ -122,7 +135,7 @@ public class OtpService {
         ALL = all.toCharArray();
     }
 
-    /** Genera una contraseña legible (por defecto 12). Incluye al menos 1 mayúscula, 1 minúscula y 1 dígito. */
+    /* Genera una contraseña legible (por defecto 12). Incluye al menos 1 mayúscula, 1 minúscula y 1 dígito. */
     public String generarPasswordLegible(int len) {
         int L = Math.max(8, Math.min(len <= 0 ? 12 : len, 32)); // 8..32
         List<Character> buf = new ArrayList<>(L);
@@ -144,29 +157,38 @@ public class OtpService {
         return sb.toString();
     }
 
-    /** Envía un correo con las credenciales (usuario + password en claro). Lanza excepción si falla. */
+    /* Envía un correo con las credenciales (usuario + password en claro). Lanza excepción si falla. */
     public void enviarCredenciales(String correo, String usuario, String passwordPlano) {
+
+        // 1) Genera token y URL con token
+        String token = emitirTokenCambioPassword(correo);
+        String urlCambio = buildPasswordChangeUrl() + "?t=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(correo);
         msg.setSubject("Tus credenciales de acceso - TiendaTech");
         msg.setText("""
-                ¡Hola!
+        ¡Hola!
 
-                Se ha creado tu cuenta en TiendaTech.
+        Se ha creado tu cuenta en TiendaTech.
 
-                Usuario: %s
-                Contraseña temporal: %s
+        Usuario: %s
+        Contraseña temporal: %s
 
-                Por seguridad, cambia tu contraseña al iniciar sesión.
+        Por seguridad, debes cambiar tu contraseña:
+        %s
 
-                Saludos,
-                TiendaTech
-                """.formatted(
+        Si no solicitaste esta cuenta, ignora este correo.
+
+        Saludos,
+        TiendaTech
+        """.formatted(
                 (usuario == null || usuario.isBlank()) ? "(asignado por sistema)" : usuario,
-                passwordPlano
+                passwordPlano,
+                urlCambio
         ));
 
-        mailSender.send(msg); // si falla, lanzará una excepción
+        mailSender.send(msg); // si falla, lanzará una excepción  buildPasswordChangeUrl()
     }
 
     /*Genera una contraseña legible y la envía por correo. */
@@ -177,28 +199,51 @@ public class OtpService {
         return pwd;
     }
 
+    //nuevooooo
+
+
     public void enviarPasswordTemporalRecuperacion(String correo, String usuario, String passwordPlano) {
+        String token = emitirTokenCambioPassword(correo);
+        String urlCambio = buildPasswordChangeUrl() + "?t=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(correo);
         msg.setSubject("Recuperación de contraseña - TiendaTech");
-
-        String body = """
+        msg.setText("""
             ¡Hola %s!
 
             Generamos una contraseña temporal para que puedas ingresar:
 
             %s
 
-            Por seguridad, cámbiala apenas inicies sesión.
+            Luego, cámbiala aquí:
+            %s
+
             Si no solicitaste este cambio, ignora este correo o contáctanos.
 
             -- TiendaTech
             """.formatted(
                 (usuario == null || usuario.isBlank()) ? "usuario" : usuario,
-                passwordPlano
-        );
+                passwordPlano,
+                urlCambio
+        ));
+        mailSender.send(msg);
+    }
 
-        msg.setText(body);
-        mailSender.send(msg); // si falla, lanza excepción
+    // inyecta el cache:
+    private final @Qualifier("pwdChangeCache") Cache<String, String> pwdChangeCache;
+
+    // emitir/consumir
+    public String emitirTokenCambioPassword(String correo) {
+        String token = java.util.UUID.randomUUID().toString().replace("-", "");
+        pwdChangeCache.put(token, correo.toLowerCase());
+        return token;
+    }
+
+    public String peekTokenCambioPassword(String token) {
+        return pwdChangeCache.getIfPresent(token); // NO invalida
+    }
+    public void invalidateTokenCambioPassword(String token) {
+        pwdChangeCache.invalidate(token);
     }
 }

@@ -1904,3 +1904,9 @@ a.product-card{
   background:#eee; cursor:pointer; border:2px solid transparent;
 }
 .tt-thumbs img.active{ border-color:#0d6efd; }
+/*Imagenes del carrito*/
+  .product-image-small{
+    width:80px; height:80px; border-radius:10px; overflow:hidden;
+    background:#3a3a3a; display:flex; align-items:center; justify-content:center;
+  }
+  .product-image-small img{ width:100%; height:100%; object-fit:contain; display:block; }

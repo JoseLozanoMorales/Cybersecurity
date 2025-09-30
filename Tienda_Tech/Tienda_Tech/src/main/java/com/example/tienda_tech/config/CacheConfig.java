@@ -2,6 +2,7 @@ package com.example.tienda_tech.config;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,15 @@ public class CacheConfig {
         return Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(15))
                 .maximumSize(100_000)
+                .build();
+    }
+    //token del correo
+    @Bean
+    @Qualifier("pwdChangeCache")
+    public Cache<String, String> pwdChangeCache() {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofMinutes(30)) // TTL del token
+                .maximumSize(10_000)
                 .build();
     }
 }

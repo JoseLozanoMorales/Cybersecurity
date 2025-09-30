@@ -454,24 +454,70 @@
     </div>
 
     <!-- Reportes -->
-    <div id="reports" class="admin-section">
-      <div class="section-title">📊 Reportes del Sistema</div>
-      <div class="action-grid">
-        <div class="action-card">
-          <h3>📈 Estadísticas Generales</h3>
-          <p>🛍️ Total Productos: <strong>156</strong></p>
-          <p>👥 Total Usuarios: <strong>1,245</strong></p>
-          <p>🚫 Usuarios Bloqueados: <strong>23</strong></p>
-          <p>💰 Ventas del Mes: <strong>$45,678</strong></p>
+        <div id="reports" class="admin-section">
+            <div class="section-title">📊 Reportes del Sistema</div>
+
+            <div class="action-card" style="margin-bottom:1rem;">
+                <h3>🎛️ Filtros y acciones</h3>
+
+                <div class="form-group">
+                    <label>Selecciona el reporte</label>
+                    <select id="rep-select" class="form-control" style="max-width:420px">
+                        <option value="general">📥 Reporte General (todo en un PDF)</option>
+                        <option value="usuarios">👥 Usuarios</option>
+                        <option value="productos">📦 Productos</option>
+                        <option value="ordenes">🧾 Órdenes</option>
+                        <option value="stock-bajo">⚠️ Stock Bajo</option>
+                        <option value="ventas-producto">📈 Ventas por Producto</option>
+                        <option value="roles">🧩 Roles</option>
+                        <option value="ciudades">🏙️ Ciudades</option>
+                        <option value="provincias">🗺️ Provincias</option>
+                        <option value="metodos-pago">💳 Métodos de Pago</option>
+                        <option value="kardex">📒 Kardex Valorizado</option>
+                    </select>
+                    <small class="muted">Descarga o visualiza inline sin cambiar el backend.</small>
+                </div>
+
+                <div class="form-inline" style="margin:.5rem 0 0">
+                    <label class="inline tiny"><input type="radio" name="rep-modo" value="todo" checked> Sin límite de fechas</label>
+                    <label class="inline tiny"><input type="radio" name="rep-modo" value="rango"> Por rango de fechas</label>
+                    <input type="date" id="rep-desde" class="form-control" style="width:120px" disabled>
+                    <input type="date" id="rep-hasta" class="form-control" style="width:120px" disabled>
+                    <span class="muted tiny">Se filtra por <b>orden.fecha</b> donde aplica.</span>
+                </div>
+
+                <div class="form-inline" style="margin-top:.5rem">
+                    <label class="tiny">Producto (solo Kardex):</label>
+                    <input type="number" id="rep-producto-id" class="form-control" style="width:110px" placeholder="ID opcional" disabled>
+                </div>
+
+                <div style="margin-top:1rem; display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+                    <a href="#" id="rep-descargar" class="btn btn-download">
+                        <span class="btn-download__icon">⬇️</span>
+                        <span class="btn-download__text">Descargar PDF</span>
+                    </a>
+
+                    <a href="#" id="rep-ver" class="btn btn-download" style="background:linear-gradient(135deg,#10b981,#3b82f6)">
+                        <span class="btn-download__icon">👁️</span>
+                        <span class="btn-download__text">Ver en la página</span>
+                    </a>
+
+                    <small class="btn-download__hint">“Ver” usa <code>?inline=true</code> en el mismo endpoint.</small>
+                </div>
+            </div>
+
+            <!-- Visor inline -->
+            <div class="action-card" id="rep-viewer-card" style="display:none; padding:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee;">
+                    <strong id="rep-viewer-title">Visor de PDF</strong>
+                    <button class="btn btn-danger btn--sm" id="rep-cerrar-visor">Cerrar visor</button>
+                </div>
+                <div style="height:70vh;">
+                    <iframe id="rep-iframe" title="report-preview" src="about:blank"
+                            style="width:100%; height:100%; border:0;"></iframe>
+                </div>
+            </div>
         </div>
-        <div class="action-card">
-          <h3>📅 Reportes por Fecha</h3>
-          <div class="form-group"><label>Fecha Inicio</label><input type="date" class="form-control"></div>
-          <div class="form-group"><label>Fecha Fin</label><input type="date" class="form-control"></div>
-          <button class="btn btn-primary">Generar Reporte</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Configuración -->
     <div id="settings" class="admin-section">
@@ -877,7 +923,98 @@
     </div>
   </div>
 
+  <!-- ===== Reportes: lógica con un solo selector + un botón ===== -->
+  <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const sel     = document.getElementById('rep-select');
+          const radios  = Array.from(document.querySelectorAll('input[name="rep-modo"]'));
+          const iDesde  = document.getElementById('rep-desde');
+          const iHasta  = document.getElementById('rep-hasta');
+          const iProd   = document.getElementById('rep-producto-id');
+          const btnDl   = document.getElementById('rep-descargar');
+          const btnView = document.getElementById('rep-ver');
 
+          const card    = document.getElementById('rep-viewer-card');
+          const iframe  = document.getElementById('rep-iframe');
+          const ttl     = document.getElementById('rep-viewer-title');
+          const btnClose= document.getElementById('rep-cerrar-visor');
+
+          // IMPORTANTE: como admin.html vive en http://localhost:8080, usamos exactamente ese origen
+          const API_ORIGIN = window.location.origin; // http://localhost:8080
+
+          const ENDPOINTS = {
+              general:          '/api/report/admin/pdf',
+              usuarios:         '/api/report/usuarios/pdf',
+              productos:        '/api/report/productos/pdf',
+              ordenes:          '/api/report/ordenes/pdf',
+              'stock-bajo':     '/api/report/stock-bajo/pdf',
+              'ventas-producto':'/api/report/ventas-producto/pdf',
+              roles:            '/api/report/roles/pdf',
+              ciudades:         '/api/report/ciudades/pdf',
+              provincias:       '/api/report/provincias/pdf',
+              'metodos-pago':   '/api/report/metodos-pago/pdf',
+              kardex:           '/api/report/kardex/pdf'
+          };
+
+          const hoy = new Date();
+          const dfltHasta = hoy.toISOString().slice(0,10);
+          const dfltDesde = new Date(hoy.getTime() - 30*24*60*60*1000).toISOString().slice(0,10);
+          if (!iDesde.value) iDesde.value = dfltDesde;
+          if (!iHasta.value) iHasta.value = dfltHasta;
+
+          function refreshFechas() {
+              const byRange = (radios.find(r => r.checked) || {}).value === 'rango';
+              iDesde.disabled = !byRange;
+              iHasta.disabled = !byRange;
+          }
+          radios.forEach(r => r.addEventListener('change', refreshFechas));
+          refreshFechas();
+
+          function refreshProducto() {
+              const isKardex = sel.value === 'kardex';
+              iProd.disabled = !isKardex;
+              if (!isKardex) iProd.value = '';
+          }
+          sel.addEventListener('change', refreshProducto);
+          refreshProducto();
+
+          function buildUrl({ inline } = { inline:false }) {
+              const key = sel.value || 'general';
+              const base = ENDPOINTS[key] || ENDPOINTS.general;
+              const url = new URL(base, API_ORIGIN); // mismo origen: http://localhost:8080
+
+              const modo = (radios.find(r => r.checked) || {}).value;
+              if (modo === 'rango') {
+                  if (iDesde.value) url.searchParams.set('desde', iDesde.value);
+                  if (iHasta.value) url.searchParams.set('hasta', iHasta.value);
+              }
+              if (key === 'kardex') {
+                  const pid = (iProd.value || '').trim();
+                  if (pid) url.searchParams.set('productoId', pid);
+              }
+              if (inline) url.searchParams.set('inline', 'true');
+              return url.toString();
+          }
+
+          btnDl.addEventListener('click', (e) => {
+              e.preventDefault();
+              window.location.href = buildUrl({ inline:false });
+          });
+
+          btnView.addEventListener('click', (e) => {
+              e.preventDefault();
+              iframe.src = buildUrl({ inline:true });
+              ttl.textContent = 'Visor de PDF — ' + (sel.options[sel.selectedIndex]?.text || '');
+              card.style.display = '';
+              card.scrollIntoView({ behavior:'smooth', block:'start' });
+          });
+
+          btnClose.addEventListener('click', () => {
+              iframe.src = 'about:blank';
+              card.style.display = 'none';
+          });
+      });
+  </script>
   <script>
       (function () {
           if (!document.body.classList.contains('tt-admin')) return; // ← solo en Admin

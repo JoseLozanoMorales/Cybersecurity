@@ -1,5 +1,8 @@
 package com.example.tienda_tech.report.dto;
-import lombok.*; import java.math.BigDecimal;
+
+import lombok.*;
+
+import java.math.BigDecimal;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class SalesByProductRow {
     private Integer productoId; private String producto;

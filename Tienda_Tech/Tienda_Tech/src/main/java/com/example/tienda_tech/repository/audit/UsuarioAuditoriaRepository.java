@@ -16,7 +16,6 @@ public interface UsuarioAuditoriaRepository extends JpaRepository<UsuarioAuditor
     @Query(value = "CALL public.sp_usuario_auditoria_agregar(:p_usuario_id)", nativeQuery = true)
     void auditarLogin(@Param("p_usuario_id") Integer usuarioId);
 
-
     // ======== NUEVO: lectura por FUNCIONES (no @Modifying) ========
     @Query(value = "select * from fn_aud_usuarios()", nativeQuery = true)
     List<String> fnUsuarios(); // llena el <select id="au_usuario">

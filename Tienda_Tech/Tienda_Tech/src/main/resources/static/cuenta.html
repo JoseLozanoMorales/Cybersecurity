@@ -412,6 +412,7 @@
         } catch (e) {
           console.error(e);
           listEl.innerHTML = `<div class="col-12 text-danger text-center py-4">No se pudieron cargar las direcciones.</div>`;
+          notify('No se pudieron cargar las direcciones.', 'error');
         }
       }
 
@@ -480,10 +481,10 @@
           referencia: (inRef.value.trim() || null),
           ciudadId:   citySel.value ? Number(citySel.value) : null // backend lo mapea a Short
         };
-        if (!payload.calle)    { alert('Calle es obligatoria'); return; }
-        if (!payload.ciudadId) { alert('Seleccione una ciudad'); return; }
+        if (!payload.calle)    { notify('Calle es obligatoria.', 'error'); return; }
+        if (!payload.ciudadId) { notify('Seleccione una ciudad.', 'error'); return; }
 
-        try {
+        /*try {
           if (editingId == null) {
             // CREAR
             const r = await fetch(`/api/usuarios/${USER_ID}/direcciones`, {
@@ -504,6 +505,32 @@
         } catch (e) {
           console.error('No se pudo guardar la dirección:', e);
           alert('No se pudo guardar la dirección.');
+        }*/
+
+        try {
+          if (editingId == null) {
+            // CREAR
+            await fetchOrThrow(`/api/usuarios/${USER_ID}/direcciones`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            notify('Dirección agregada.', 'success');
+          } else {
+            // EDITAR
+            await fetchOrThrow(`/api/usuarios/${USER_ID}/direcciones/${editingId}`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            notify('Dirección actualizada.', 'success');
+          }
+          (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).hide();
+          await loadUserAddresses();
+        } catch (e) {
+          console.error('No se pudo guardar la dirección:', e);
+          // Mensajes más claros por estado (si usas fetchOrThrow tendrás e.status)
+          if (e.status === 409) notify('Datos ya guardados: ya existe una dirección con esos datos.', 'error');
+          else if (e.status === 422) notify('Datos inválidos. Verifique la información.', 'error');
+          else notify(e.message || 'No se pudo guardar la dirección.', 'error');
         }
       });
 
@@ -844,5 +871,46 @@
         });
       })();
     </script>
+
+
+  <script>
+    // ====== NOTIFICADOR GLOBAL (top-right) ======
+    (function () {
+      const css = `
+  .tt-toast{position:fixed;right:20px;top:20px;z-index:3000;display:flex;flex-direction:column;gap:10px}
+  .tt-toast .item{min-width:260px;max-width:380px;padding:12px 14px;border-radius:10px;color:#fff;
+                  box-shadow:0 10px 25px rgba(0,0,0,.18);opacity:0;transform:translateX(16px);
+                  animation:tt-in .18s ease forwards}
+  .tt-toast .success{background:#198754}.tt-toast .error{background:#dc3545}
+  .tt-toast .info{background:#0d6efd}.tt-toast .warn{background:#fd7e14}
+  @keyframes tt-in{to{opacity:1;transform:none}}
+  @keyframes tt-out{to{opacity:0;transform:translateX(16px)}}
+  `;
+      const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+      const box = document.createElement('div'); box.className = 'tt-toast'; document.body.appendChild(box);
+
+      // Uso: notify('mensaje','success'|'error'|'info'|'warn', milisegundos)
+      window.notify = function (msg, type='info', ms=3500) {
+        const el = document.createElement('div');
+        el.className = `item ${type}`; el.textContent = msg; box.appendChild(el);
+        setTimeout(() => { el.style.animation = 'tt-out .18s ease forwards';
+          setTimeout(() => el.remove(), 200); }, ms);
+      };
+
+      // Helper para fetch con mensajes por estado (opcional, ver usos abajo)
+      window.fetchOrThrow = async function (url, opts) {
+        const r = await fetch(url, opts);
+        if (!r.ok) {
+          let serverMsg = '';
+          try { const data = await r.json(); serverMsg = (data?.message || data?.error || '').trim(); } catch {}
+          let msg = serverMsg || `Error ${r.status}`;
+          if (r.status === 409 && !serverMsg) msg = 'Datos ya guardados / registro duplicado.';
+          if (r.status >= 500 && !serverMsg) msg = 'Error en el servidor.';
+          const err = new Error(msg); err.status = r.status; throw err;
+        }
+        return r;
+      };
+    })();
+  </script>
 </body>
 </html>

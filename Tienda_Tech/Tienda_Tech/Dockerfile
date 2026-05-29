@@ -4,6 +4,10 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
+# Añadir estas líneas para forzar la codificación UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # Copia solo lo necesario para cachear dependencias
 COPY pom.xml .
 RUN mvn -q -DskipTests dependency:go-offline

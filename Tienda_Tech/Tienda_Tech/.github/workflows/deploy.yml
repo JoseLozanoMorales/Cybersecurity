@@ -3,7 +3,7 @@ name: Deploy Spring Boot VM
 on:
   push:
     branches:
-      - main
+      - Organizadito
 
 jobs:
   deploy:

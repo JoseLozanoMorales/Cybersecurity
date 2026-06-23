@@ -38,6 +38,12 @@ const USE_MOCK = false;
 
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('loginForm') || document.querySelector('form[data-login]');
+    const mfaForm = document.getElementById('mfaForm');
+    const loginSection = document.getElementById('loginForm') || form; // fallback
+    const mfaSection = document.getElementById('mfaSection');
+    const mfaEmailMask = document.getElementById('mfaEmailMask');
+    const mfaCodeInput = document.getElementById('mfaCode');
+
     if (!form) { console.warn('login.js: no hay #loginForm ni [data-login]'); return; }
 
     const $u = form.querySelector('#usuario, [name="usuario"]');
@@ -45,6 +51,7 @@ const USE_MOCK = false;
     const btn = form.querySelector('.login-button');
     const uiBusy = (on) => { if (!btn) return; btn.disabled = !!on; btn.textContent = on ? 'Validando...' : 'Entrar'; };
 
+    // 1. Envío del Formulario de Credenciales Básicas
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const usuario    = ($u?.value || '').trim();
@@ -59,16 +66,14 @@ const USE_MOCK = false;
         redirectByRole(mockUser);
         return;
       }
-//ay mi corazon
+
       // ===== BACKEND REAL =====
       uiBusy(true);
       try {
-        // Usa UNO de tus endpoints (sé consistente). Aquí /api/login:
         const res = await fetch('/api/login', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           credentials:'include',
-          // Enviamos las 3 variantes por si tu controller espera una en particular:
           body: JSON.stringify({ usuario, contrasena, contrasenia: contrasena, password: contrasena })
         });
 
@@ -78,18 +83,30 @@ const USE_MOCK = false;
           notify(data.message || `Error ${res.status} en el servidor`);
           return;
         }
-        // Ajusta a tu respuesta real:
-        // ejemplos válidos: {success:true, user:{...}, token:'...'} o {user:{...}, access:'...'}
+
+        // Si el backend indica que requiere MFA
+        if (data.mfaRequired) {
+          if (loginSection) loginSection.style.display = 'none';
+          if (mfaSection) mfaSection.style.display = 'block';
+          if (mfaEmailMask) mfaEmailMask.textContent = data.correo;
+
+          // Guardamos datos temporales para el paso de verificación MFA
+          sessionStorage.setItem('mfaTempData', JSON.stringify({
+            txId: data.txId,
+            correo: data.correo,
+            usuarioId: data.usuarioId
+          }));
+          return;
+        }
+
+        // Si no requiere MFA (flujo directo fallback)
         const user  = data.user || data.usuario || null;
         const token = data.token || data.access || data.accessToken || null;
 
         if (!user) { notify(data.message || 'Credenciales inválidas'); return; }
 
         setLoggedUser(user, token);
-        // si tienes un helper global
         window.SessionAuth?.sessionStart?.({ access: token, user });
-
-        // redirigir según rol
         redirectByRole(user);
       } catch (err) {
         console.error(err);
@@ -98,5 +115,53 @@ const USE_MOCK = false;
         uiBusy(false);
       }
     });
+
+    // 2. Envío de Formulario para Verificación de Código OTP (MFA)
+    if (mfaForm) {
+      mfaForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codigo = (mfaCodeInput?.value || '').trim();
+        const tempDataRaw = sessionStorage.getItem('mfaTempData');
+        
+        if (!tempDataRaw) {
+          notify('Sesión de verificación expirada. Intenta iniciar sesión de nuevo.');
+          location.reload();
+          return;
+        }
+
+        const tempData = JSON.parse(tempDataRaw);
+
+        try {
+          const res = await fetch('/api/login/mfa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              codigo,
+              correo: tempData.correo,
+              txId: tempData.txId,
+              usuarioId: tempData.usuarioId
+            })
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.success) {
+            sessionStorage.removeItem('mfaTempData');
+            
+            const user = data.user || null;
+            const token = data.token || null;
+
+            setLoggedUser(user, token);
+            window.SessionAuth?.sessionStart?.({ access: token, user });
+            redirectByRole(user);
+          } else {
+            notify(data.message || 'Código incorrecto o expirado');
+          }
+        } catch (err) {
+          console.error(err);
+          notify('Error al verificar código');
+        }
+      });
+    }
   });
 })();

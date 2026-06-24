@@ -1,0 +1,21 @@
+<!-- Panel SIEM independiente (Cargado dinámicamente) -->
+<div class="section-title">🛡️ Panel de Eventos SIEM</div>
+<p>Monitoreo en tiempo real de inicios de sesión, manipulación de inventario, errores de API y auditoría general.</p>
+
+<div class="toolbar" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button class="btn btn-primary" onclick="loadSiemEvents()">🔄 Actualizar Eventos</button>
+    <button class="btn btn-danger" onclick="clearSiemEvents()">🗑️ Limpiar Historial</button>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <label style="font-weight: bold; margin: 0; color: #555;">Filtrar nivel:</label>
+        <select id="siemFilter" class="form-control" style="width: 150px; margin: 0; padding: 5px;" onchange="renderSiemEvents()">
+            <option value="TODOS">TODOS</option>
+            <option value="INFO">INFO</option>
+            <option value="ADVERTENCIA">ADVERTENCIA</option>
+            <option value="ALERTA">ALERTA</option>
+        </select>
+    </div>
+</div>
+
+<div id="siemLogs" class="logs-container">
+    <div style="color: #888; text-align: center;">Cargando logs de auditoría...</div>
+</div>

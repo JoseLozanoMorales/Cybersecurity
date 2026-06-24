@@ -36,6 +36,7 @@
       <div class="nav-item" onclick="showSection('delivery', this)">Puntos de Entrega</div>
       <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
       <div class="nav-item" onclick="showSection('settings', this)">Configuración</div>
+      <div class="nav-item" onclick="showSection('siem-audit', this)">🛡️ SIEM</div>
       <div class="nav-item" onclick="logout()">Cerrar sesión</div>
 
     </div>
@@ -519,7 +520,30 @@
             </div>
         </div>
 
-    <!-- Configuración -->
+        <!-- Panel SIEM independiente (Cargado dinámicamente) -->
+        <div class="section-title">🛡️ Panel de Eventos SIEM</div>
+        <p>Monitoreo en tiempo real de inicios de sesión, manipulación de inventario, errores de API y auditoría general.</p>
+
+        <div class="toolbar" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="btn btn-primary" onclick="loadSiemEvents()">🔄 Actualizar Eventos</button>
+            <button class="btn btn-danger" onclick="clearSiemEvents()">🗑️ Limpiar Historial</button>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                <label style="font-weight: bold; margin: 0; color: #555;">Filtrar nivel:</label>
+                <select id="siemFilter" class="form-control" style="width: 150px; margin: 0; padding: 5px;" onchange="renderSiemEvents()">
+                    <option value="TODOS">TODOS</option>
+                    <option value="INFO">INFO</option>
+                    <option value="ADVERTENCIA">ADVERTENCIA</option>
+                    <option value="ALERTA">ALERTA</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="siemLogs" class="logs-container">
+            <div style="color: #888; text-align: center;">Cargando logs de auditoría...</div>
+        </div>
+
+
+        <!-- Configuración -->
     <div id="settings" class="admin-section">
       <div class="section-title">⚙️ Configuración del Sistema</div>
       <div class="action-grid">
@@ -1705,6 +1729,69 @@
                       if (e.key === 'Enter' && E.tabla?.value === 'usuarios') buscarUsuarios();
                   });
               });
+          });
+      })();
+  </script>
+  <!-- Agregar este bloque al final de admin.html, antes de </body> -->
+  <script>
+      (() => {
+          let siemEventsRaw = [];
+
+          window.loadSiemEvents = async function() {
+              const box = document.getElementById('siemLogs');
+              if (!box) return;
+              box.innerHTML = '<div style="color:#888;text-align:center;">Cargando…</div>';
+              try {
+                  const res = await fetch('/api/siem/events');
+                  if (!res.ok) throw new Error('Error al obtener eventos SIEM');
+                  siemEventsRaw = await res.json();
+                  renderSiemEvents();
+              } catch (err) {
+                  box.innerHTML = `<div style="color:#e74c3c;text-align:center;">❌ ${err.message}</div>`;
+              }
+          };
+
+          window.renderSiemEvents = function() {
+              const box = document.getElementById('siemLogs');
+              if (!box) return;
+              const filter = document.getElementById('siemFilter')?.value || 'TODOS';
+              const filtered = siemEventsRaw.filter(e =>
+                  filter === 'TODOS' || String(e.nivel).toUpperCase() === filter
+              );
+              if (!filtered.length) {
+                  box.innerHTML = '<div style="color:#888;text-align:center;">No hay eventos que coincidan.</div>';
+                  return;
+              }
+              box.innerHTML = filtered.map(e => {
+                  let cls = '';
+                  if (e.nivel === 'ADVERTENCIA') cls = ' log-warn';
+                  if (e.nivel === 'ALERTA')      cls = ' log-err';
+                  return `<div class="siem-log-entry${cls}">
+                      <strong>[${e.nivel}] - ${e.tipo}</strong> | Fecha: ${e.fecha} | IP: ${e.ip}<br>
+                      <strong>Módulo:</strong> ${e.modulo} | <strong>Resultado:</strong> ${e.resultado} | <strong>Usuario:</strong> ${e.usuario}<br>
+                      <strong>Detalle:</strong> ${e.detalle}
+                  </div>`;
+              }).join('');
+          };
+
+          window.clearSiemEvents = async function() {
+              if (!confirm('¿Limpiar el historial de auditoría en memoria?')) return;
+              try {
+                  const res = await fetch('/api/siem/clear', { method: 'POST' });
+                  if (!res.ok) throw new Error('No se pudo limpiar');
+                  alert('✅ Historial limpiado');
+                  loadSiemEvents();
+              } catch (err) {
+                  alert('❌ Error: ' + err.message);
+              }
+          };
+
+          document.addEventListener('DOMContentLoaded', () => {
+              const orig = window.showSection;
+              window.showSection = function(id, el) {
+                  if (typeof orig === 'function') orig(id, el);
+                  if (id === 'siem-audit') loadSiemEvents();
+              };
           });
       })();
   </script>

@@ -62,6 +62,25 @@ public class UsuarioService {
         }
         return u;
     }
+    public Usuario loginPorCorreo(String correo, String contraseniaPlain) {
+        String c = correo == null ? "" : correo.trim();
+
+        var opt = usuarioRepository.findByCorreoIgnoreCase(c);
+
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+
+        Usuario u = opt.get();
+
+        String hash = u.getContrasenia();
+
+        if (hash == null || !passwordEncoder.matches(contraseniaPlain, hash)) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+
+        return u;
+    }
 
 
     // Ya existente: registro público (cliente)

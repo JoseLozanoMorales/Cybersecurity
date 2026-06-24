@@ -49,9 +49,17 @@
                     </div>
                 </div>
             </div>
+            <!-- Sección para el segundo factor (MFA) -->
+            <div id="mfaSection" style="display: none;">
+                <h2>Verificación de Seguridad</h2>
+                <p>Hemos enviado un código a tu correo <span id="mfaEmailMask"></span></p>
+                <form id="mfaForm">
+                    <input type="text" id="mfaCode" placeholder="Código de 6 dígitos" required maxlength="6">
+                    <button type="submit">Verificar Código</button>
+                </form>
+            </div>
         </div>
     </div>
-
     <script>
         // Función para mostrar mensajes
         function showMessage(message, type) {
@@ -113,7 +121,7 @@
             particle.style.position = 'absolute';
             particle.style.width = Math.random() * 4 + 2 + 'px';
             particle.style.height = particle.style.width;
-            particle.style.background = 'rgba(255, 255, 255, 0.3)';
+            particle.style.background = 'rgba(255, 255, 255, 0.1)';
             particle.style.borderRadius = '50%';
             particle.style.left = Math.random() * 100 + '%';
             particle.style.top = '100%';

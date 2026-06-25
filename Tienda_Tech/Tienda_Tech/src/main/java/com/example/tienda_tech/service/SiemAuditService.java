@@ -18,47 +18,84 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @Service
 public class SiemAuditService {
 
+    // Este logger escribe en siem-audit.log gracias al logback-spring.xml
     private static final Logger logger = LoggerFactory.getLogger(SiemAuditService.class);
+
+    // Cola en memoria para el panel web en tiempo real (últimos 200 eventos)
     private final ConcurrentLinkedQueue<SiemEvent> eventQueue = new ConcurrentLinkedQueue<>();
     private static final int MAX_EVENTS = 200;
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public void registrarEvento(String tipo, String usuario, String modulo, String resultado, String detalle, String nivel) {
-        String fecha = LocalDateTime.now().format(formatter);
-        String ip = obtenerIPCliente();
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        SiemEvent evento = new SiemEvent(fecha, tipo, usuario != null ? usuario : "Desconocido", ip, modulo, resultado, nivel, detalle);
+    /**
+     * Registra un evento SIEM:
+     *  1. Lo guarda en la cola en memoria (para el panel web).
+     *  2. Lo persiste en siem-audit.log con formato estructurado.
+     *
+     * @param tipo      Identificador del evento (ej. "LOGIN_EXITOSO", "BUSQUEDA_TEXTO")
+     * @param usuario   Nombre o ID del usuario que generó el evento
+     * @param modulo    Módulo del sistema (ej. "Carrito", "Búsqueda")
+     * @param resultado Resultado de la acción (ej. "Exitoso", "Denegado")
+     * @param detalle   Descripción legible del evento
+     * @param nivel     Severidad: "INFO", "ADVERTENCIA" o "ALERTA"
+     */
+    public void registrarEvento(String tipo, String usuario, String modulo,
+                                String resultado, String detalle, String nivel) {
 
+        String fecha = LocalDateTime.now().format(FORMATTER);
+        String ip    = obtenerIPCliente();
+
+        // ── 1. Cola en memoria ──────────────────────────────────────────
+        SiemEvent evento = new SiemEvent(
+                fecha, tipo,
+                usuario  != null ? usuario  : "Desconocido",
+                ip, modulo, resultado, nivel, detalle
+        );
         eventQueue.add(evento);
         while (eventQueue.size() > MAX_EVENTS) {
             eventQueue.poll();
         }
 
-        String logMessage = String.format("SIEM_ALERT [%s] | Type: %s | User: %s | IP: %s | Mod: %s | Res: %s | Details: %s",
-                nivel, tipo, usuario, ip, modulo, resultado, detalle);
+        // ── 2. Persistencia en archivo de log ───────────────────────────
+        // Formato de cada línea (pipe-separated para facilitar parsing con grep/awk/Splunk):
+        // NIVEL | TIPO | USUARIO | IP | MODULO | RESULTADO | DETALLE
+        String lineaLog = String.format(
+                "%-11s | %-30s | %-20s | %-15s | %-15s | %-15s | %s",
+                nivel, tipo,
+                usuario  != null ? usuario  : "Desconocido",
+                ip, modulo, resultado, detalle
+        );
 
         if ("ALERTA".equalsIgnoreCase(nivel)) {
-            logger.error(logMessage);
+            logger.error(lineaLog);
         } else if ("ADVERTENCIA".equalsIgnoreCase(nivel)) {
-            logger.warn(logMessage);
+            logger.warn(lineaLog);
         } else {
-            logger.info(logMessage);
+            logger.info(lineaLog);
         }
     }
 
+    /** Retorna los eventos en memoria, del más reciente al más antiguo. */
     public List<SiemEvent> obtenerEventos() {
         List<SiemEvent> lista = new ArrayList<>(eventQueue);
         Collections.reverse(lista);
         return lista;
     }
 
+    /** Limpia la cola en memoria (el archivo de log NO se borra). */
     public void limpiarEventos() {
         eventQueue.clear();
-        registrarEvento("SIEM_CLEAR", "Sistema", "Seguridad", "Exitoso", "Se limpio el historial de eventos en memoria.", "INFO");
+        registrarEvento(
+                "SIEM_CLEAR", "Sistema", "Seguridad",
+                "Exitoso", "Se limpió el historial en memoria. El archivo de log se conserva.", "INFO"
+        );
     }
 
+    // ── Utilidad: detectar IP real del cliente ──────────────────────────
     private String obtenerIPCliente() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
             String xHeader = request.getHeader("X-Forwarded-For");

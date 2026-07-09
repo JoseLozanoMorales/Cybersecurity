@@ -25,6 +25,21 @@ public interface MetodoPagoRepository extends JpaRepository<MetodoPago, Integer>
         """, nativeQuery = true)
     List<Object[]> fnListarPorUsuario(@Param("userId") Integer userId);
 
+    @Query(value = """
+        SELECT
+          m.metodopago_id,
+          m.numero_tarjeta,
+          m.fecha_expiracion,
+          m.habilitado,
+          t.tipo_id,
+          t.nombre
+        FROM metodopago m
+        JOIN tipo_metodopago t ON t.tipo_id = m.tipo_id
+        WHERE m.usuario_id = :userId
+        ORDER BY m.metodopago_id DESC
+        """, nativeQuery = true)
+    List<Object[]> listarPorUsuario(@Param("userId") Integer userId);
+
     // Catálogo: función fn_tipos_metodopago()
     @Query(value = """
         SELECT

@@ -2,6 +2,8 @@ package com.example.tienda_tech.service;
 
 import com.example.tienda_tech.dto.MetodoPagoDTO;
 import com.example.tienda_tech.repository.MetodoPagoRepository;
+import com.example.tienda_tech.security.SymmetricCryptoService;
+import com.example.tienda_tech.util.MaskUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,11 @@ public class MetodoPagoService {
 
     private final MetodoPagoRepository repo;
     private final ObjectMapper objectMapper;
+    private final SymmetricCryptoService cryptoService;
 
     // ===== Lecturas =====
     public List<MetodoPagoDTO> listar(Integer userId) {
-        return repo.fnListarPorUsuario(userId).stream().map(this::mapRowMetodo).toList();
+        return repo.listarPorUsuario(userId).stream().map(this::mapRowMetodo).toList();
     }
 
     public List<MetodoPagoDTO> listarTipos() {
@@ -42,7 +45,7 @@ public class MetodoPagoService {
         // "YYYY-MM" -> fin de mes como DATE (ej. 2028-12-31)
         LocalDate fecha = YearMonth.parse(req.getMesExpiracion()).atEndOfMonth();
 
-        repo.agregar(req.getNumeroTarjeta(), fecha, req.getTipoId(), userId);
+        repo.agregar(cryptoService.encrypt(req.getNumeroTarjeta()), fecha, req.getTipoId(), userId);
     }
 
     @Transactional
@@ -54,10 +57,11 @@ public class MetodoPagoService {
 
     // ===== Mappers =====
     private MetodoPagoDTO mapRowMetodo(Object[] r){
-        // 0:id 1:mascara 2:fecha 3:habilitado 4:tipoId 5:tipoNombre
+        // 0:id 1:numero_tarjeta cifrado o legado 2:fecha 3:habilitado 4:tipoId 5:tipoNombre
+        String numeroTarjeta = cryptoService.decrypt(asString(r[1]));
         return MetodoPagoDTO.builder()
                 .metodoId(asInt(r[0]))
-                .mascara(asString(r[1]))
+                .mascara(MaskUtils.maskLast4(numeroTarjeta))
                 .fechaExpiracion(asLocalDate(r[2]))
                 .habilitado(asBool(r[3]))
                 .tipoId(asInt(r[4]))

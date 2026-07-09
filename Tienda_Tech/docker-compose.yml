@@ -6,9 +6,9 @@ services:
     restart: always
 
     environment:
-      POSTGRES_DB: TiendaTechV18
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: ${DOCKER_POSTGRES_DB}
+      POSTGRES_USER: ${DOCKER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
 
     ports:
       - "5432:5432"

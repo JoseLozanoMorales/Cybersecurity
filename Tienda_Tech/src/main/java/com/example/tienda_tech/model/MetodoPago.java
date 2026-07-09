@@ -18,7 +18,7 @@ public class MetodoPago {
     @Column(name = "metodopago_id")
     private Integer metodopagoId;
 
-    @Column(name = "numero_tarjeta", length = 16)
+    @Column(name = "numero_tarjeta", length = 512)
     private String numeroTarjeta;
 
     @Column(name = "fecha_expiracion")

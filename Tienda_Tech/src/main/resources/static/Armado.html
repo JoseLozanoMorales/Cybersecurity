@@ -261,10 +261,9 @@
 
     </style>
 
-    <!-- <link rel="stylesheet" href="style2.css"> -->
     <link id="themeStylesheet" rel="stylesheet"
-          href="styleClaroMenu.css" data-light="styleClaroMenu.css"
-          data-dark="styleOscuroMenu.css" />
+          href="css/styleClaroMenu.css" data-light="css/styleClaroMenu.css"
+          data-dark="css/styleOscuroMenu.css" />
 
     <script src="/js/auth-menu.js?v=4" defer></script>
 </head>
@@ -877,8 +876,8 @@
         function setTheme(theme){
             const link=document.getElementById(LINK_ID); if(!link) return;
             const href = theme==='dark'
-                ? (link.dataset.dark  || 'styleOscuroMenu.css')   // <-- aquí
-                : (link.dataset.light || 'styleClaroMenu.css');
+                ? (link.dataset.dark  || 'css/styleOscuroMenu.css')   // <-- aquí
+                : (link.dataset.light || 'css/styleClaroMenu.css');
             if(link.getAttribute('href')!==href) link.setAttribute('href', href);
             localStorage.setItem(STORAGE_KEY, theme);
             const btn=document.getElementById(BTN_ID);

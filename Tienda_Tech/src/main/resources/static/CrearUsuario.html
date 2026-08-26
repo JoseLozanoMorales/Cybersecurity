@@ -13,6 +13,9 @@
     <link id="themeStylesheet" rel="stylesheet"
           href="css/styleClaroMenu.css" data-light="css/styleClaroMenu.css"
           data-dark="css/styleOscuroMenu.css" />
+  <link rel="stylesheet" href="/css/csp-static.css">
+  <link rel="stylesheet" href="/css/csp-runtime.css">
+  <script src="/js/csp-style-runtime.js"></script>
 </head>
 <body>
 <!-- Header -->
@@ -21,7 +24,7 @@
     <div class="search-container">
         <input type="text" class="search-bar" placeholder="Buscar..." />
     </div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <button class="menu-toggle" data-csp-handler-click="csp-crearusuario-1">☰</button>
     <!-- Modo oscuro -->
     <button id="themeToggle" class="theme-toggle"
             type="button" aria-pressed="false">
@@ -30,11 +33,11 @@
 </header>
 
 <!-- Overlay -->
-<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<div class="overlay" id="overlay" data-csp-handler-click="csp-crearusuario-2"></div>
 
 <!-- Menú Hamburguesa -->
 <nav class="hamburger-menu" id="hamburgerMenu">
-    <button class="menu-close" onclick="closeMenu()">✕</button>
+    <button class="menu-close" data-csp-handler-click="csp-crearusuario-3">✕</button>
     <a href="#" class="menu-item">Inicio</a>
     <a href="#" class="menu-item">Cuenta</a>
     <a href="#" class="menu-item">Carrito</a>
@@ -46,7 +49,7 @@
 <div class="container">
     <!-- Back button -->
     <div class="back-button-container">
-        <button class="btn btn-link btn-back p-0" onclick="goBack()">
+        <button class="btn btn-link btn-back p-0" data-csp-handler-click="csp-crearusuario-4">
             <i class="bi bi-arrow-left fs-4"></i>
         </button>
     </div>
@@ -55,7 +58,7 @@
 
     <!-- Profile Image -->
     <div class="text-center mb-4">
-        <div class="profile-image" onclick="changeProfileImage()">
+        <div class="profile-image" data-csp-handler-click="csp-crearusuario-5">
             Foto de perfil
         </div>
         <small class="text-muted">Haz clic para cambiar la foto</small>
@@ -128,7 +131,7 @@
     </form>
 
     <!-- Bloque de Verificación por Código (OTP) -->
-    <div id="verifyBlock" class="container mt-4" style="display:none">
+    <div id="verifyBlock" class="container mt-4 csp-s-6aa34d7432e7">
         <hr class="my-4" />
         <h3 class="h5 mb-3">Verifica tu correo</h3>
         <p class="text-muted mb-3">
@@ -174,386 +177,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
 <!-- Script: Menú / Logout (igual que tenías) -->
-<script>
-    (function () {
-        const REDIRECT_TO = 'login.html';
-
-        const menu = document.getElementById('hamburgerMenu');
-        if (!menu) return;
-
-        function hasActiveSession(){
-            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-            let ok = false;
-            try { ok = !!(raw && JSON.parse(raw)); } catch { ok = !!raw; }
-            return ok || !!localStorage.getItem('token') || !!localStorage.getItem('refreshToken');
-        }
-
-        function getLogoutLink(){
-            return Array.from(menu.querySelectorAll('a.menu-item'))
-                .find(a => (a.textContent || '').trim().toLowerCase() === 'cerrar sesión');
-        }
-
-        function updateLogoutVisibility(){
-            const a = getLogoutLink();
-            if (!a) return;
-            if (hasActiveSession()){
-                a.classList.remove('logout-disabled');
-                a.removeAttribute('aria-disabled');
-                a.tabIndex = 0;
-            } else {
-                a.classList.add('logout-disabled');
-                a.setAttribute('aria-disabled','true');
-                a.tabIndex = -1;
-            }
-        }
-
-        menu.addEventListener('click', async function (ev) {
-            const a = ev.target.closest('a.menu-item');
-            if (!a) return;
-
-            const label = (a.textContent || '').trim().toLowerCase();
-            if (label !== 'cerrar sesión') return;
-
-            if (a.getAttribute('aria-disabled') === 'true' || a.classList.contains('logout-disabled')){
-                ev.preventDefault();
-                return;
-            }
-
-            ev.preventDefault();
-
-            try { await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-            try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-
-            sessionStorage.removeItem('user');
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-
-            try {
-                document.cookie.split(';').forEach(c=>{
-                    document.cookie = c.replace(/^ +/,'')
-                        .replace(/=.*/,'=;expires=' + new Date(0).toUTCString() + ';path=/');
-                });
-            } catch {}
-
-            try { closeMenu(); } catch {}
-            window.location.href = REDIRECT_TO;
-        });
-
-        document.addEventListener('DOMContentLoaded', updateLogoutVisibility);
-        window.addEventListener('storage', updateLogoutVisibility);
-        document.addEventListener('visibilitychange', updateLogoutVisibility);
-    })();
-</script>
+<script src="/js/pages/crearusuario-inline-1.js"></script>
 
 <!-- Script: UI básicos (toggle, imagen, toasts) -->
-<script>
-    function toggleMenu() {
-        const menu = document.getElementById('hamburgerMenu');
-        const overlay = document.getElementById('overlay');
-        menu.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-
-    function closeMenu() {
-        const menu = document.getElementById('hamburgerMenu');
-        const overlay = document.getElementById('overlay');
-        menu.classList.remove('active');
-        overlay.classList.remove('active');
-    }
-
-    document.getElementById('togglePassword').addEventListener('click', function() {
-        const passwordField = document.getElementById('contrasena');
-        const icon = this.querySelector('i');
-        if (passwordField.type === 'password') {
-            passwordField.type = 'text';
-            icon.className = 'bi bi-eye-slash';
-        } else {
-            passwordField.type = 'password';
-            icon.className = 'bi bi-eye';
-        }
-    });
-
-    function changeProfileImage() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const profileImage = document.querySelector('.profile-image');
-                    profileImage.style.backgroundImage = `url(${e.target.result})`;
-                    profileImage.style.backgroundSize = 'cover';
-                    profileImage.style.backgroundPosition = 'center';
-                    profileImage.innerHTML = '';
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-        input.click();
-    }
-
-    function goBack() {
-        if (confirm('¿Estás seguro de que deseas salir? Los cambios no guardados se perderán.')) {
-            window.location.href = '/';
-        }
-    }
-
-    function showToast(message, type = 'info') {
-        const toastHtml = `
-        <div class="toast align-items-center text-bg-${type} border-0 position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-          <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`;
-        document.body.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = document.querySelector('.toast:last-child');
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-    }
-
-    window.addEventListener('load', function() {});
-</script>
+<script src="/js/pages/crearusuario-inline-2.js"></script>
 
 <!-- ========================= -->
 <!-- Script A: Registro (submit) + Envío de OTP -->
 <!-- ========================= -->
-<script>
-    // Namespace compartido
-    window.TTREG = {
-        API_OTP: '/api/otp',
-        API_USER_CREATE: '/api/usuarios/crear',
-        pendingUserData: null,
-        pendingEmail: null,
-        txId: null,
-        resendTimerId: null,
-        resendLeft: 60,
-        setFormDisabled(disabled) {
-            const formEl = document.getElementById('editUserForm');
-            if (!formEl) return;
-            Array.from(formEl.elements).forEach(el => {
-                if (el.id === 'togglePassword') return; // deja el ojo activo
-                el.disabled = disabled;
-            });
-        },
-        startResendTimer() {
-            const btn = document.getElementById('btnResend');
-            const lbl = document.getElementById('resendTimer');
-            if (!btn || !lbl) return;
-            btn.disabled = true;
-            this.resendLeft = 60;
-            lbl.textContent = `(${this.resendLeft})`;
-            clearInterval(this.resendTimerId);
-            this.resendTimerId = setInterval(() => {
-                this.resendLeft--;
-                lbl.textContent = `(${this.resendLeft})`;
-                if (this.resendLeft <= 0) {
-                    clearInterval(this.resendTimerId);
-                    btn.disabled = false;
-                    lbl.textContent = '';
-                }
-            }, 1000);
-        },
-        async sendOtp(email) {
-            try {
-                const r = await fetch(this.API_OTP, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accion: 'enviar', correo: email, txId: this.txId })
-                });
-                if (!r.ok) {
-                    const txt = await r.text().catch(() => '');
-                    showToast(`Error al enviar código (HTTP ${r.status})` + (txt ? `: ${txt}` : ''), 'danger');
-                    this.setFormDisabled(false);
-                    return false;
-                }
-                const payload = await r.json();
-                this.txId = payload.txId;
-                this.pendingEmail = payload.correo;
-
-                // Mostrar bloque OTP
-                document.getElementById('verifyEmailLabel').textContent = this.pendingEmail;
-                document.getElementById('verifyBlock').style.display = 'block';
-                this.startResendTimer();
-                showToast('Código enviado al correo', 'info');
-                return true;
-            } catch (e) {
-                console.error('OTP/enviar EXCEPTION', e);
-                showToast('Error de conexión al enviar OTP', 'danger');
-                this.setFormDisabled(false);
-                return false;
-            }
-        }
-    };
-
-    // Submit: valida y SOLO envía OTP (no crea usuario aún)
-    document.getElementById('editUserForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        const nombre      = document.getElementById('nombre').value.trim();
-        const correo      = document.getElementById('correo').value.trim();
-        const contrasena  = document.getElementById('contrasena').value.trim();
-        const repetir     = document.getElementById('repetirContrasena').value.trim();
-        const cedula      = document.getElementById('cedula').value.trim();
-        const telefono    = document.getElementById('telefono').value.trim();
-        const usuario     = document.getElementById('usuario').value.trim();
-
-        if (!nombre || !correo || !contrasena || !repetir || !cedula || !telefono) {
-            showToast('Completa los campos obligatorios.', 'danger');
-            return;
-        }
-        if (contrasena !== repetir) {
-            showToast('Las contraseñas no coinciden.', 'danger');
-            document.getElementById('repetirContrasena').classList.add('is-invalid');
-            return;
-        }
-        if (!/^[0-9]{10}$/.test(cedula)) {
-            showToast('Cédula inválida (10 dígitos).', 'danger');
-            return;
-        }
-        if (!/^[0-9]{10}$/.test(telefono)) {
-            showToast('Teléfono inválido (10 dígitos).', 'danger');
-            return;
-        }
-
-        // Guarda los datos hasta que verifique OTP
-        window.TTREG.pendingUserData = { nombre, correo, contrasena, cedula, telefono, usuario };
-
-        // Deshabilita el form y envía OTP
-        window.TTREG.setFormDisabled(true);
-        const ok = await window.TTREG.sendOtp(correo);
-        if (!ok) {
-            // Si falla el envío de OTP, re-habilita para corregir
-            window.TTREG.setFormDisabled(false);
-        }
-    });
-</script>
+<script src="/js/pages/crearusuario-inline-3.js"></script>
 
 <!-- ================================== -->
 <!-- Script B: Verificación OTP + Creación de Usuario -->
 <!-- ================================== -->
-<script>
-    async function TTREG_createUser() {
-        const ns = window.TTREG;
-        if (!ns || !ns.pendingUserData) {
-            showToast('No hay datos de registro en espera. Intenta nuevamente.', 'danger');
-            ns?.setFormDisabled(false);
-            return;
-        }
-
-        // Sugerido: enviar otpTxId para validación en backend
-        const body = { ...ns.pendingUserData, otpTxId: ns.txId };
-
-        try {
-            const r = await fetch(ns.API_USER_CREATE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const txt = await r.text().catch(() => '');
-
-            if (!r.ok) {
-                showToast('Error al crear usuario' + (txt ? `: ${txt}` : ''), 'danger');
-                document.getElementById('verifyBlock').style.display = 'none';
-                ns.setFormDisabled(false);
-                return;
-            }
-
-            showToast('Cuenta creada. Redirigiendo al login…', 'success');
-            // Limpieza
-            ns.pendingUserData = null;
-            ns.txId = null;
-            try {
-                document.getElementById('contrasena').value = '';
-                document.getElementById('repetirContrasena').value = '';
-            } catch {}
-            setTimeout(() => location.href = '/login.html', 1200);
-        } catch (e) {
-            console.error('CREATE USER EXCEPTION', e);
-            showToast('Error de conexión al crear la cuenta', 'danger');
-            document.getElementById('verifyBlock').style.display = 'none';
-            ns.setFormDisabled(false);
-        }
-    }
-
-    async function TTREG_verifyOtp() {
-        const ns = window.TTREG;
-        const input = document.getElementById('otpCode');
-        const code = (input.value || '').trim();
-        if (!/^[0-9]{6}$/.test(code)) {
-            input.classList.add('is-invalid');
-            return;
-        }
-        input.classList.remove('is-invalid');
-
-        try {
-            const r = await fetch(ns.API_OTP, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: 'validar', correo: ns.pendingEmail, codigo: code, txId: ns.txId })
-            });
-            const txt = await r.text().catch(() => '');
-
-            if (r.ok) {
-                showToast('Código verificado. Creando la cuenta…', 'success');
-                await TTREG_createUser();
-            } else {
-                showToast('Código inválido o expirado' + (txt ? `: ${txt}` : ''), 'danger');
-            }
-        } catch (e) {
-            console.error('OTP/validar EXCEPTION', e);
-            showToast('Error de conexión al verificar OTP', 'danger');
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnVerify = document.getElementById('btnVerify');
-        const btnResend = document.getElementById('btnResend');
-        if (btnVerify) btnVerify.addEventListener('click', TTREG_verifyOtp);
-        if (btnResend) btnResend.addEventListener('click', () => {
-            if (!window.TTREG?.pendingEmail) {
-                showToast('No hay un correo pendiente. Completa el formulario primero.', 'warning');
-                return;
-            }
-            window.TTREG.sendOtp(window.TTREG.pendingEmail);
-        });
-    });
-</script>
+<script src="/js/pages/crearusuario-inline-4.js"></script>
 
 <!-- Script: Theme toggle (igual que tenías) -->
-<script>
-    (function(){
-        const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
-        function setTheme(theme){
-            const link=document.getElementById(LINK_ID); if(!link) return;
-            const href = theme==='dark'
-                ? (link.dataset.dark  || 'styleOscuroMenu.css')
-                : (link.dataset.light || 'styleClaroMenu.css');
-            if(link.getAttribute('href')!==href) link.setAttribute('href', href);
-            localStorage.setItem(STORAGE_KEY, theme);
-            const btn=document.getElementById(BTN_ID);
-            if(btn){
-                const dark=theme==='dark';
-                btn.textContent = dark ? '☀️ Claro' : '🌙 Oscuro';
-                btn.title       = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-                btn.setAttribute('aria-pressed', String(dark));
-                btn.classList.toggle('btn-warning', dark);
-                btn.classList.toggle('btn-secondary', !dark);
-            }
-        }
-        function toggleTheme(){
-            const current=localStorage.getItem(STORAGE_KEY)||'light';
-            setTheme(current==='light' ? 'dark' : 'light');
-        }
-        document.addEventListener('DOMContentLoaded',()=>{
-            document.getElementById(BTN_ID)?.addEventListener('click', toggleTheme);
-            setTheme(localStorage.getItem(STORAGE_KEY)||'light');
-        });
-    })();
-</script>
+<script src="/js/pages/crearusuario-inline-5.js"></script>
+<script src="/js/pages/crearusuario-events.js"></script>
 </body>
 </html>

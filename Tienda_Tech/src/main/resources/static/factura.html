@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Factura</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body{background:#f8f9fa}
-        .invoice{max-width:900px;margin:24px auto;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-        .invoice-header{border-bottom:1px dashed #e5e7eb}
-        .table td, .table th{vertical-align:middle}
-    </style>
+    <link rel="stylesheet" href="/css/pages/factura-inline-1.css">
+  <link rel="stylesheet" href="/css/csp-static.css">
+  <link rel="stylesheet" href="/css/csp-runtime.css">
+  <script src="/js/csp-style-runtime.js"></script>
 </head>
 <body>
 <div class="invoice p-4 p-md-5">
@@ -60,7 +58,7 @@
     </div>
 
     <div class="d-flex justify-content-end mt-3">
-        <div style="min-width:260px">
+        <div class="csp-s-45435946eaf3">
             <div class="d-flex justify-content-between">
                 <span>Subtotal</span><strong id="tot-sub">$0.00</strong>
             </div>
@@ -71,43 +69,6 @@
     </div>
 </div>
 
-<script>
-    const fmt = n => '$' + Number(n||0).toFixed(2);
-    async function fetchJSON(u){
-      const r=await fetch(u,{credentials:'include'});
-      if(!r.ok) throw new Error(await r.text());
-      return r.json();
-    }
-    (async function(){
-      const fid = new URL(location.href).searchParams.get('fid');
-      if(!fid){ alert('Factura no especificada'); return; }
-
-      const data = await fetchJSON(`/api/facturas/${encodeURIComponent(fid)}`);
-      const e = data.encabezado || {}, items = data.detalle || [];
-
-      document.getElementById('inv-numero').textContent = 'Factura ' + (e.numero || '#'+fid);
-      document.getElementById('inv-fecha').textContent  = e.fechaemision || '';
-      document.getElementById('inv-nombre').textContent = e.nombre || '';
-      document.getElementById('inv-correo').textContent = e.correo || '';
-      document.getElementById('inv-telefono').textContent = e.telefono || '';
-      document.getElementById('inv-direccion').textContent = e.direccionentrega || '';
-
-      document.getElementById('inv-body').innerHTML = items.map(it => `
-        <tr>
-          <td>${it.nombre_producto||''}</td>
-          <td class="text-end">${it.cantidad||0}</td>
-          <td class="text-end">${fmt(it.precio)}</td>
-          <td class="text-end">${fmt(it.subtotal)}</td>
-          <td class="text-end">${fmt(it.iva)}</td>
-          <td class="text-end">${fmt(it.total)}</td>
-        </tr>`).join('');
-
-      document.getElementById('tot-sub').textContent = fmt(e.subtotal);
-      document.getElementById('tot-tot').textContent = fmt(e.total);
-
-      const a = document.getElementById('btn-pdf');
-      if (a) a.href = `/api/facturas/${encodeURIComponent(fid)}/pdf`; // sólo funcionará si implementas el servicio PDF
-    })();
-</script>
+<script src="/js/pages/factura-inline-1.js"></script>
 </body>
 </html>

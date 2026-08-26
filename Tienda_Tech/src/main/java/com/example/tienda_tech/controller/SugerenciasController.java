@@ -13,6 +13,13 @@ import java.util.Map;
 public class SugerenciasController {
     private final SuggestionRepository repo;
 
+    private void assertOwner(Integer usuarioId) {
+        if (!usuarioId.equals(com.example.tienda_tech.security.AuthenticatedUser.id())
+                && !com.example.tienda_tech.security.AuthenticatedUser.hasRole("ADMIN")) {
+            throw new org.springframework.security.access.AccessDeniedException("Historial de otro usuario");
+        }
+    }
+
     @PostMapping("/sugerencias")
     public Map<String,Object> crear(@RequestBody SugerenciaCreate b) throws Exception {
         repo.createV3(b.respuestas(), b.topN(), b.encuestaId(), b.usuarioFallback());
@@ -27,6 +34,7 @@ public class SugerenciasController {
 
     @GetMapping("/usuarios/{usuarioId}/sugerencias/ultima")
     public Map<String,Object> last(@PathVariable Integer usuarioId) throws Exception {
+        assertOwner(usuarioId);
         return repo.getLastForUser(usuarioId);
     }
 
@@ -50,6 +58,7 @@ public class SugerenciasController {
     public Map<String,Object> list(@PathVariable Integer usuarioId,
                                    @RequestParam(required=false) Integer limit,
                                    @RequestParam(required=false) Integer offset) throws Exception {
+        assertOwner(usuarioId);
         return repo.listForUser(usuarioId, limit, offset);
     }
     @PostMapping("/sugerencias/full")

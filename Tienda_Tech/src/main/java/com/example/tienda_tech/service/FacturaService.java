@@ -13,6 +13,13 @@ public class FacturaService {
 
     private final JdbcTemplate jdbc;
 
+    public boolean perteneceA(Integer facturaId, Integer usuarioId) {
+        Boolean result = jdbc.queryForObject(
+                "select exists(select 1 from public.factura_encabezado where factura_id = ? and usuario_id = ?)",
+                Boolean.class, facturaId, usuarioId);
+        return Boolean.TRUE.equals(result);
+    }
+
     public Map<String,Object> obtenerFactura(Integer facturaId){
         var enc = jdbc.queryForMap(
                 "select * from public.f_factura_enc(?)", facturaId);

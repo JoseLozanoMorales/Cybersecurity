@@ -146,6 +146,11 @@ public class UsuarioController {
             @PathVariable Integer id,
             @RequestBody ClienteUpdateRequest dto) {
 
+        if (!id.equals(com.example.tienda_tech.security.AuthenticatedUser.id())
+                && !com.example.tienda_tech.security.AuthenticatedUser.hasRole("ADMIN")) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "message", "Acceso denegado"));
+        }
+
         usuarioService.actualizarCliente(id, dto);
 
         siemAuditService.registrarEvento(
@@ -160,7 +165,7 @@ public class UsuarioController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Cliente actualizado"));
     }
 
-    @GetMapping("/api/usuarios/me")
+    @GetMapping("/me")
     public ResponseEntity<?> me(HttpServletRequest req) {
         Integer userId = resolveUserId(req);
         var u = usuarioService.getById(userId);
@@ -275,14 +280,6 @@ public class UsuarioController {
 
     /** Obtiene el userId desde la cabecera X-User-Id (fallback: sesión) */
     private Integer resolveUserId(HttpServletRequest req) {
-        String hdr = req.getHeader("X-User-Id");
-        if (hdr != null && !hdr.isBlank()) {
-            try { return Integer.valueOf(hdr); } catch (NumberFormatException ignore) {}
-        }
-        var ses = req.getSession(false);
-        Object attr = (ses != null) ? ses.getAttribute("userId") : null;
-        if (attr instanceof Integer i) return i;
-        if (attr instanceof String s) try { return Integer.valueOf(s); } catch (Exception ignore) {}
-        throw new IllegalArgumentException("No se pudo resolver el usuario actual");
+        return com.example.tienda_tech.security.AuthenticatedUser.id();
     }
 }

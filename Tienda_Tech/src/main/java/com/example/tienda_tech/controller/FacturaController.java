@@ -22,14 +22,24 @@ public class FacturaController {
 
     @GetMapping("/{id}")
     public Map<String,Object> get(@PathVariable Integer id){
+        assertOwner(id);
         return facturas.obtenerFactura(id);
     }
 
     @GetMapping(value="/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> pdf(@PathVariable Integer id){
+        assertOwner(id);
         byte[] pdf = pdfs.render(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=factura-"+id+".pdf")
                 .body(pdf);
+    }
+
+    private void assertOwner(Integer facturaId) {
+        Integer userId = com.example.tienda_tech.security.AuthenticatedUser.id();
+        if (!com.example.tienda_tech.security.AuthenticatedUser.hasRole("ADMIN")
+                && !facturas.perteneceA(facturaId, userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("La factura pertenece a otro usuario");
+        }
     }
 }

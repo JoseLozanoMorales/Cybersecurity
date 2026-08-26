@@ -2,12 +2,12 @@
 <div class="section-title">🛡️ Panel de Eventos SIEM</div>
 <p>Monitoreo en tiempo real de inicios de sesión, manipulación de inventario, errores de API y auditoría general.</p>
 
-<div class="toolbar" style="display: flex; gap: 10px; margin-bottom: 15px;">
-    <button class="btn btn-primary" onclick="loadSiemEvents()">🔄 Actualizar Eventos</button>
-    <button class="btn btn-danger" onclick="clearSiemEvents()">🗑️ Limpiar Historial</button>
-    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-        <label style="font-weight: bold; margin: 0; color: #555;">Filtrar nivel:</label>
-        <select id="siemFilter" class="form-control" style="width: 150px; margin: 0; padding: 5px;" onchange="renderSiemEvents()">
+<div class="toolbar csp-s-91a730300a23">
+    <button class="btn btn-primary" data-csp-handler-click="csp-siem-1">🔄 Actualizar Eventos</button>
+    <button class="btn btn-danger" data-csp-handler-click="csp-siem-2">🗑️ Limpiar Historial</button>
+    <div class="csp-s-07497ebe9e04">
+        <label class="csp-s-525f98511c0a">Filtrar nivel:</label>
+        <select id="siemFilter" class="form-control csp-s-5cdb3a595e0c" data-csp-handler-change="csp-siem-3">
             <option value="TODOS">TODOS</option>
             <option value="INFO">INFO</option>
             <option value="ADVERTENCIA">ADVERTENCIA</option>
@@ -17,5 +17,7 @@
 </div>
 
 <div id="siemLogs" class="logs-container">
-    <div style="color: #888; text-align: center;">Cargando logs de auditoría...</div>
+    <div class="csp-s-b96e0c1465e3">Cargando logs de auditoría...</div>
 </div>
+
+<script src="/js/pages/siem-events.js"></script>

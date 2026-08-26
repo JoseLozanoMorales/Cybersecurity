@@ -16,8 +16,7 @@ public class CarritoController {
     private final SiemAuditService siemAuditService;
 
     private Integer resolveUserId(Integer headerUserId) {
-        if (headerUserId == null) throw new RuntimeException("Usuario no autenticado");
-        return headerUserId;
+        return com.example.tienda_tech.security.AuthenticatedUser.id();
     }
 
     /** Agregar producto al carrito */

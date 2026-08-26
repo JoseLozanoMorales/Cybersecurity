@@ -2,6 +2,7 @@ package com.example.tienda_tech.controller;
 
 import com.example.tienda_tech.dto.MetodoPagoDTO;
 import com.example.tienda_tech.service.MetodoPagoService;
+import com.example.tienda_tech.security.AuthenticatedUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +20,7 @@ public class MetodoPagoController {
     private final MetodoPagoService service;
 
     private Integer resolveUserId(HttpServletRequest req){
-        String raw = req.getHeader("X-User-Id"); // TODO: obtener de Authentication/JWT en producción
-        if (raw == null || raw.isBlank()) throw new IllegalArgumentException("Falta X-User-Id");
-        return Integer.valueOf(raw);
+        return AuthenticatedUser.id();
     }
 
     // Catálogo para el <select>

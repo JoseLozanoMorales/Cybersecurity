@@ -33,3 +33,9 @@ build/
 .vscode/
 
 .env
+
+### Runtime security artifacts ###
+logs/
+uploads/
+*.pem
+*.key

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Trabajador - TiendaTech</title>
+    <script src="/js/auth-menu.js?v=10" defer></script>
     <script src="/js/role-utils.js" defer></script>
 
 
@@ -13,14 +14,17 @@
           href="css/styleClaroMenu.css" data-light="css/styleClaroMenu.css"
           data-dark="css/styleOscuroMenu.css" />
 
+  <link rel="stylesheet" href="/css/csp-static.css">
+  <link rel="stylesheet" href="/css/csp-runtime.css">
+  <script src="/js/csp-style-runtime.js"></script>
 </head>
 <body class="tt-admin">
 <div class="sidebar">
     <div class="logo">TiendaTech<br><small>Panel Trabajador</small></div>
-    <div class="nav-item" onclick="showSection('account', this)">Cuenta</div>
-    <div class="nav-item active" onclick="showSection('products', this)">Gestión de Productos</div>
-    <div class="nav-item" onclick="showSection('reports', this)">Reportes</div>
-    <div class="nav-item" onclick="logout()">Cerrar sesión</div>
+    <div class="nav-item" data-csp-handler-click="csp-trabajador-1">Cuenta</div>
+    <div class="nav-item active" data-csp-handler-click="csp-trabajador-2">Gestión de Productos</div>
+    <div class="nav-item" data-csp-handler-click="csp-trabajador-3">Reportes</div>
+    <div class="nav-item" data-csp-handler-click="csp-trabajador-4">Cerrar sesión</div>
 </div>
 
 <div class="main-content">
@@ -51,11 +55,11 @@
                     <div class="form-group"><label>Usuario</label>  <input id="acc_usuario"  class="form-control" readonly></div>
                     <div class="form-group"><label>Teléfono</label> <input id="acc_telefono" class="form-control" readonly></div>
                     <div class="form-group"><label>Cédula</label>   <input id="acc_cedula"   class="form-control" readonly></div>
-                    <div class="form-group" style="grid-column:1/-1">
+                    <div class="form-group csp-s-51377a917eb3">
                         <label>Correo</label> <input id="acc_correo" class="form-control" readonly>
                     </div>
 
-                    <div style="grid-column:1/-1;display:flex;gap:.5rem;">
+                    <div class="csp-s-aa7facaf6851">
                         <a class="btn btn-primary" href="EditarTrabajadores.html">✏️ Editar</a>
                     </div>
                 </div>
@@ -182,211 +186,19 @@
     </div>
 
 
-    <script>
-        function showSection(sectionId, el) {
-            // Ocultar todas las secciones
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-            // Quitar active de todos los nav items
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            // Mostrar la sección seleccionada y activar el item
-            document.getElementById(sectionId)?.classList.add('active');
-            el?.classList.add('active');
-        }
-
-        // Funcionalidad adicional para botones
-        document.addEventListener('DOMContentLoaded', function() {
-            // Agregar eventos a los botones
-            const buttons = document.querySelectorAll('.btn');
-            buttons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const action = this.textContent.trim();
-
-                    // Simular acciones
-                    if(action.includes('Agregar') || action.includes('Actualizar') || action.includes('Guardar')) {
-                        this.style.backgroundColor = '#4caf50';
-                        this.textContent = '✓ Completado';
-                        setTimeout(() => {
-                            this.style.backgroundColor = '';
-                            this.textContent = action;
-                        }, 2000);
-                    }
-
-                    if(action.includes('Eliminar') || action.includes('Bloquear')) {
-                        if(confirm('¿Estás seguro de realizar esta acción?')) {
-                            this.style.backgroundColor = '#ff5722';
-                            this.textContent = '✓ Realizado';
-                            setTimeout(() => {
-                                this.style.backgroundColor = '';
-                                this.textContent = action;
-                            }, 2000);
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-        // Espera que role-utils.js esté cargado con defer
-        document.addEventListener('DOMContentLoaded', () => {
-          const u = RoleUtils.ensureLoggedIn();
-          if (!u) {
-            const next = encodeURIComponent(location.pathname + location.search);
-            location.href = '/Login.html?next=' + next; // respeta el nombre real del archivo
-            return;
-          }
-          const role = RoleUtils.resolveRoleName(u);
-          if (role !== 'trabajador') {
-            location.href = '/index.html';
-            return;
-          }
-          const name = RoleUtils.resolveUserName(u);
-          const ui = document.querySelector('.user-info');
-          if (ui) ui.textContent = `👤 ${role.charAt(0).toUpperCase() + role.slice(1)}: ${name}`;
-          document.title = 'Panel Trabajador - TiendaTech';
-        });
-    </script>
+    <script src="/js/pages/trabajador-inline-1.js"></script>
+    <script src="/js/pages/trabajador-inline-2.js"></script>
 
 
     <!-- ===== Script: Cuenta ===== -->
-    <script>
-        //cerrar sesion
-          async function logout() {
-            try {
-              sessionStorage.removeItem('user');
-              localStorage.removeItem('user');
-              sessionStorage.removeItem('token');
-              localStorage.removeItem('token');
-
-              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-            } finally {
-              location.replace('Login.html');
-            }
-          }
-        /* Si entras por el sidebar, también carga el perfil */
-        document.addEventListener('DOMContentLoaded', () => {
-            const item = Array.from(document.querySelectorAll('.sidebar .nav-item'))
-                .find(i => i.textContent.trim().toLowerCase()==='cuenta');
-            item?.addEventListener('click', () => loadAccountProfile());
-        });
-
-        /* Helpers de sesión/API */
-        function readUser(){
-            try{ return JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || 'null'); }
-            catch{ return null; }
-        }
-        function getAvatarUrl(u){
-            const v = (u?.avatar_path || u?.avatarPath || u?.avatarUrl || '').trim();
-            return v || null;
-        }
-
-        /* Rellenar datos personales */
-        async function loadAccountProfile(){
-            const u0 = readUser();
-            const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
-            const img = document.getElementById('acc_avatar');
-
-            // Prefill inmediato desde storage
-            if (u0){
-                set('acc_nombre',   u0.nombre);
-                set('acc_usuario',  u0.usuario);
-                set('acc_telefono', u0.telefono);
-                set('acc_cedula',   u0.cedula);
-                set('acc_correo',   u0.correo);
-                const nameTag = document.getElementById('adminName');
-                if (nameTag) nameTag.textContent = u0.nombre || u0.usuario || 'Admin';
-                const a0 = getAvatarUrl(u0); if (a0 && img) img.src = a0 + '?t=' + Date.now();
-            }
-            if (img) img.onerror = () => { img.onerror=null; img.src='/assets/avatars/defaults/user.png'; };
-
-            // Sincroniza con backend (/me)
-            try{
-                const r = await fetch('/api/usuarios/me', { credentials:'include' });
-                if (r.ok){
-                    const me = await r.json();
-                    set('acc_nombre',   me.nombre);
-                    set('acc_usuario',  me.usuario);
-                    set('acc_telefono', me.telefono);
-                    set('acc_cedula',   me.cedula);
-                    set('acc_correo',   me.correo);
-                    const nameTag = document.getElementById('adminName');
-                    if (nameTag) nameTag.textContent = me.nombre || me.usuario || 'Admin';
-                    const a1 = getAvatarUrl(me); if (a1 && img) img.src = a1 + '?t=' + Date.now();
-                }
-            }catch{}
-        }
-    </script>
+    <script src="/js/pages/trabajador-inline-3.js"></script>
 
 
-    <script>
-        (function(){
-            const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
-            function setTheme(theme){
-                const link=document.getElementById(LINK_ID); if(!link) return;
-                const href = theme==='dark'
-                    ? (link.dataset.dark  || 'styleOscuro.css')   // <-- aquí
-                    : (link.dataset.light || 'styleClaro.css');
-                if(link.getAttribute('href')!==href) link.setAttribute('href', href);
-                localStorage.setItem(STORAGE_KEY, theme);
-                const btn=document.getElementById(BTN_ID);
-                if(btn){
-                    const dark=theme==='dark';
-                    btn.textContent = dark ? '☀️ Claro' : '🌙 Oscuro';
-                    btn.title       = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-                    btn.setAttribute('aria-pressed', String(dark));
-                    btn.classList.toggle('btn-warning', dark);
-                    btn.classList.toggle('btn-secondary', !dark);
-                }
-            }
-            function toggleTheme(){
-                const current=localStorage.getItem(STORAGE_KEY)||'light';
-                setTheme(current==='light' ? 'dark' : 'light');
-            }
-            document.addEventListener('DOMContentLoaded',()=>{
-                document.getElementById(BTN_ID)?.addEventListener('click', toggleTheme);
-                setTheme(localStorage.getItem(STORAGE_KEY)||'light');
-            });
-        })();
-    </script>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => window.SessionAuth?.initAuthUI?.());
-        document.querySelectorAll('[data-logout]')
-          .forEach(b => b.addEventListener('click', () => window.SessionAuth?.sessionLogout?.()));
-    </script>
+    <script src="/js/pages/trabajador-inline-4.js"></script>
+    <script src="/js/pages/trabajador-inline-5.js"></script>
 
-    <script>
-        /* Auto-logout por inactividad: 3 minutos */
-        (function () {
-            const IDLE_MS   = 3 * 60 * 1000;          // 3 min
-            const REDIRECT  = "/index.html";          // cambia si tu login es otra ruta
-            let timer;
-
-            async function autoLogout() {
-                try {
-                    // Si ya tienes una función global logout(), úsala
-                    if (typeof logout === "function") {
-                        await logout();
-                    } else {
-                        // fallback: cerrar sesión en el backend
-                        await fetch("/api/logout", { method: "POST", credentials: "include" });
-                    }
-                } catch (_) { /* ignora errores de red */ }
-                // y redirigir al login/página pública
-                location.href = REDIRECT;
-            }
-
-            function resetTimer() {
-                clearTimeout(timer);
-                timer = setTimeout(autoLogout, IDLE_MS);
-            }
-
-            // Eventos que cuentan como “actividad” del usuario
-            ["click","mousemove","keydown","scroll","touchstart","focus"].forEach(ev =>
-                window.addEventListener(ev, resetTimer, { passive: true })
-            );
-
-            resetTimer();
-        })();
-    </script>
+    <script src="/js/pages/trabajador-inline-6.js"></script>
 </div>
+<script src="/js/pages/trabajador-events.js"></script>
 </body>
 </html>

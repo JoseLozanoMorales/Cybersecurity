@@ -43,6 +43,8 @@ public class SiemAuditService {
     public void registrarEvento(String tipo, String usuario, String modulo,
                                 String resultado, String detalle, String nivel) {
 
+        tipo = safe(tipo); usuario = safe(usuario); modulo = safe(modulo);
+        resultado = safe(resultado); detalle = safe(detalle); nivel = safe(nivel);
         String fecha = LocalDateTime.now().format(FORMATTER);
         String ip    = obtenerIPCliente();
 
@@ -98,12 +100,13 @@ public class SiemAuditService {
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
-            String xHeader = request.getHeader("X-Forwarded-For");
-            if (xHeader != null && !xHeader.isEmpty()) {
-                return xHeader.split(",")[0].trim();
-            }
             return request.getRemoteAddr();
         }
         return "127.0.0.1";
+    }
+
+    private String safe(String value) {
+        if (value == null) return "Desconocido";
+        return value.replace('\r', ' ').replace('\n', ' ').replace('|', '/').trim();
     }
 }

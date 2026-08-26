@@ -1,0 +1,5 @@
+body{background:#f8f9fa}
+        .invoice{max-width:900px;margin:24px auto;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+        .invoice-header{border-bottom:1px dashed #e5e7eb}
+        .table td, .table th{vertical-align:middle}
+    

@@ -3,19 +3,15 @@ package com.example.tienda_tech.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 public class JwtUtil {
     private final Key key;
-    public JwtUtil(String secret){ this.key = Keys.hmacShaKeyFor(secret.getBytes()); }
+    public JwtUtil(String secret){ this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); }
 
     public String generateAccess(Integer userId, String username, String role, int minutes){
         Instant now = Instant.now();

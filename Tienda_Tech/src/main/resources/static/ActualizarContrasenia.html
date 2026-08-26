@@ -8,6 +8,9 @@
   <script src="/js/auth-menu.js?v=8" defer></script>
   <script src="/js/role-utils.js" defer></script>
   <!-- No cargamos login.js para evitar lógica de login aquí -->
+  <link rel="stylesheet" href="/css/csp-static.css">
+  <link rel="stylesheet" href="/css/csp-runtime.css">
+  <script src="/js/csp-style-runtime.js"></script>
 </head>
 <body>
 <div class="container">
@@ -44,7 +47,7 @@
         </div>
 
         <button type="submit" class="login-button" id="btnActualizar">Actualizar</button>
-        <div style="clear: both;"></div>
+        <div class="csp-s-99ab7011cea0"></div>
       </form>
 
       <div class="footer-links">
@@ -59,118 +62,7 @@
   </div>
 </div>
 
-<script>
-  // ====== Config ======
-  const ENDPOINT_SESSION = '/api/seguridad/cambiar-password';
-  const ENDPOINT_TOKEN   = '/api/seguridad/cambiar-password-token';
-  const LOGIN_URL        = '/login.html';
-
-  // ====== Toast ======
-  function showMessage(message, type) {
-    const existing = document.querySelector('.message'); if (existing) existing.remove();
-    const el = document.createElement('div');
-    el.className = `message ${type}`;
-    el.textContent = message;
-    el.style.cssText = `
-      position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:8px;
-      color:#fff;font-weight:500;z-index:1000;animation:slideIn .3s ease;
-      ${type==='success'?'background:#4CAF50;':'background:#dc3545;'}
-    `;
-    document.body.appendChild(el);
-    setTimeout(()=>{ el.style.animation='slideOut .3s ease'; setTimeout(()=>el.remove(),300); }, 4000);
-  }
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-    @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
-  `;
-  document.head.appendChild(style);
-
-  // Partículas (decorativo)
-  function createParticle(){
-    const left=document.querySelector('.left-section'); const p=document.createElement('div');
-    p.style.cssText='position:absolute;width:3px;height:3px;background:rgba(255,255,255,.3);border-radius:50%;left:'+Math.random()*100+'%;top:100%;pointer-events:none';
-    left.appendChild(p); let y=100,v=Math.random()*2+1;(function loop(){y-=v;p.style.top=y+'%'; if(y>-10) requestAnimationFrame(loop); else p.remove();})();}
-  setInterval(createParticle,3000);
-
-  // Micro-animaciones
-  document.querySelectorAll('.form-input').forEach(i=>{
-    i.addEventListener('focus',function(){this.style.transform='translateY(-2px)';});
-    i.addEventListener('blur', function(){this.style.transform='translateY(0)';});
-  });
-
-  // ====== Token en URL ======
-  const params   = new URLSearchParams(location.search);
-  const token    = params.get('t');
-  const hasToken = !!token;
-
-  if (hasToken) {
-    const h1 = document.querySelector('.welcome-text');
-    const note = document.createElement('p');
-    note.textContent = 'Has abierto un enlace seguro. Ingresa también tu contraseña actual para confirmar.';
-    note.style.margin='6px 0 0'; note.style.opacity='.85'; note.style.fontSize='.95rem';
-    h1.insertAdjacentElement('afterend', note);
-  }
-
-  // ====== Submit ======
-  const form = document.getElementById('changePwdForm');
-  const btn  = document.getElementById('btnActualizar');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const actual = (document.getElementById('pwdActual')?.value || '').trim();
-    const nueva  = (document.getElementById('pwdNueva')?.value  || '').trim();
-    const repite = (document.getElementById('pwdRepite')?.value || '').trim();
-
-    if (!actual || !nueva || !repite) { showMessage('Completa todos los campos.', 'error'); return; }
-    if (nueva.length < 8)            { showMessage('La nueva contraseña debe tener al menos 8 caracteres.', 'error'); return; }
-    if (nueva !== repite)            { showMessage('La nueva contraseña y su repetición no coinciden.', 'error'); return; }
-
-    btn.disabled = true;
-    try {
-      const endpoint = hasToken ? ENDPOINT_TOKEN : ENDPOINT_SESSION;
-      const payload  = hasToken ? { token, actual, nueva } : { actual, nueva };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        let body = null;
-        try { body = await res.json(); } catch {}
-        const serverMsg = body?.message?.trim();
-
-        let msg = 'No se pudo actualizar la contraseña.';
-        if (res.status === 401 || res.status === 403 || (serverMsg && /actual.*incorrecta/i.test(serverMsg))) {
-          msg = 'La contraseña actual es incorrecta.';
-        } else if (res.status === 422 || (serverMsg && /(débil|no cumple|pol[ií]tica)/i.test(serverMsg))) {
-          msg = 'La nueva contraseña no cumple las reglas de seguridad.';
-        } else if (res.status === 409 || (serverMsg && /(igual.*actual|reutiliz)/i.test(serverMsg))) {
-          msg = 'La nueva contraseña no debe ser igual a la actual.';
-        } else if (res.status >= 500) {
-          msg = 'Error 500 en el servidor.';
-        } else if (serverMsg) {
-          msg = serverMsg;
-        }
-        throw new Error(msg);
-      }
-
-
-      showMessage('Contraseña actualizada. Inicia sesión de nuevo.', 'success');
-      try { await fetch('/api/logout', { method:'POST', credentials:'include' }); } catch {}
-      localStorage.removeItem('tt_user'); localStorage.removeItem('tt_idle_ms');
-      setTimeout(()=>{ location.href = LOGIN_URL; }, 1200);
-    } catch (err) {
-      showMessage(err.message || 'Error inesperado.', 'error');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-</script>
+<script src="/js/pages/actualizarcontrasenia-inline-1.js"></script>
 
 </body>
 </html>

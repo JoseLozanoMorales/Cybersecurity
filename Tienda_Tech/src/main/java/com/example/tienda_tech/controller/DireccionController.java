@@ -16,10 +16,18 @@ import java.util.List;
 public class DireccionController {
     private final DireccionService service;
 
+    private void assertOwner(Integer usuarioId) {
+        if (!usuarioId.equals(com.example.tienda_tech.security.AuthenticatedUser.id())
+                && !com.example.tienda_tech.security.AuthenticatedUser.hasRole("ADMIN")) {
+            throw new org.springframework.security.access.AccessDeniedException("La dirección pertenece a otro usuario");
+        }
+    }
+
     // GET normal o detallado (con ?view=full)
     @GetMapping
     public List<DireccionDTO> listar(@PathVariable Integer usuarioId,
                                      @RequestParam(value="view", required=false) String view){
+        assertOwner(usuarioId);
         if ("full".equalsIgnoreCase(view)) {
             return service.listarDetallado(usuarioId);   // ← calle/ref/ciudad/provincia
         }
@@ -29,6 +37,7 @@ public class DireccionController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<DireccionDTO> crear(@PathVariable Integer usuarioId,
                                               @RequestBody DireccionDTO body){
+        assertOwner(usuarioId);
         DireccionDTO creado = service.crear(usuarioId, body);
         return ResponseEntity.created(
                 URI.create("/api/usuarios/" + usuarioId + "/direcciones/" + creado.getDireccionId())
@@ -39,12 +48,14 @@ public class DireccionController {
     public DireccionDTO actualizar(@PathVariable Integer usuarioId,
                                    @PathVariable Short direccionId,     // <- Short
                                    @RequestBody DireccionDTO body){
+        assertOwner(usuarioId);
         return service.actualizar(usuarioId, direccionId, body);
     }
 
     @DeleteMapping("/{direccionId}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer usuarioId,
                                          @PathVariable Short direccionId){ // <- Short
+        assertOwner(usuarioId);
         service.eliminar(usuarioId, direccionId);
         return ResponseEntity.noContent().build();
     }

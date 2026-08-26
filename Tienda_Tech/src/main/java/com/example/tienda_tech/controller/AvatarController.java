@@ -32,6 +32,7 @@ public class AvatarController {
   @PostMapping(value="/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> uploadAvatar(@PathVariable Integer id,
                                         @RequestPart("file") MultipartFile file) throws Exception {
+    assertOwner(id);
     if (file.isEmpty()) return bad("Archivo vacío");
     if (file.getSize() > MAX_BYTES) return bad("Archivo supera el límite");
 
@@ -71,6 +72,7 @@ public class AvatarController {
 
   @DeleteMapping("/{id}/avatar")
   public ResponseEntity<?> removeAvatar(@PathVariable Integer id) {
+    assertOwner(id);
     // Poner NULL en BD (opcionalmente borrar archivo)
     jdbc.update("UPDATE public.usuario SET avatar_path = NULL WHERE usuario_id = ?", id);
 
@@ -82,5 +84,12 @@ public class AvatarController {
 
   private static ResponseEntity<Map<String, Object>> bad(String msg) {
     return ResponseEntity.badRequest().body(Map.of("ok", false, "error", msg));
+  }
+
+  private void assertOwner(Integer id) {
+    if (!id.equals(com.example.tienda_tech.security.AuthenticatedUser.id())
+        && !com.example.tienda_tech.security.AuthenticatedUser.hasRole("ADMIN")) {
+      throw new org.springframework.security.access.AccessDeniedException("El avatar pertenece a otro usuario");
+    }
   }
 }

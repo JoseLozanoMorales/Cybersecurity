@@ -287,3 +287,20 @@ function showIdleModal(seconds){
 }
 function hideIdleModal(){ idleModalShown=false; if (idleCountdownTimer) clearInterval(idleCountdownTimer); const m=document.getElementById('idle-modal'); if (m) m.style.display='none'; }
 window.SessionAuth = { sessionStart, sessionLogout, initAuthUI };
+// Adjunta el access token a todas las solicitudes de la API del mismo origen.
+// Centralizarlo evita que una pantalla olvide proteger accidentalmente sus llamadas.
+(function installAuthenticatedFetch(global) {
+  const nativeFetch = global.fetch.bind(global);
+  global.fetch = function authenticatedFetch(input, init = {}) {
+    const url = new URL(typeof input === 'string' ? input : input.url, location.href);
+    if (url.origin === location.origin && url.pathname.startsWith('/api/')) {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) {
+        const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+        if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+        init = { ...init, headers };
+      }
+    }
+    return nativeFetch(input, init);
+  };
+})(window);

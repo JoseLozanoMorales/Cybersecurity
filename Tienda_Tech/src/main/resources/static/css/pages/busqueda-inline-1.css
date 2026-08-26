@@ -1,0 +1,20 @@
+/* Botón de carrito flotante dentro de cada card */
+    .add-cart-btn{
+      position:absolute; right:14px; top:14px;
+      border-radius:12px;
+      width:38px; height:38px; padding:0;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 4px 10px rgba(0,0,0,.15);
+    }
+    .add-cart-btn i{ font-size:1.1rem; line-height:1; }
+    .product-card{ position:relative; } /* por si tu CSS no lo tiene */
+    /* Mini aviso */
+    #snack{
+      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+      background:#1b5e20; color:#fff; padding:10px 16px; border-radius:8px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25); opacity:0; pointer-events:none;
+      transition:opacity .25s ease;
+      z-index: 9999;
+    }
+    #snack.show{ opacity:1; }
+  

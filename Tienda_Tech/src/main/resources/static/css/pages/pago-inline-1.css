@@ -1,0 +1,11 @@
+body { background: #f5f6f8; }
+        .pay-card { border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
+        .pay-title { font-weight: 600; }
+        .summary-line { display:flex; justify-content:space-between; margin:.35rem 0; }
+        .summary-total { font-weight:700; font-size:1.05rem; }
+        .hf-box { height: 40px; border:1px solid #d1d5db; border-radius: .5rem; padding: .5rem .75rem; background:#fff; }
+        .hf-box.is-invalid { border-color:#dc3545; }
+        .pay-btn { height: 46px; font-weight:600; }
+        .mini { font-size:.92rem; color:#6b7280; }
+        .divider { border-top: 1px dashed #e5e7eb; margin: .8rem 0 1rem; }
+    

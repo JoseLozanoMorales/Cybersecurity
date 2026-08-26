@@ -22,7 +22,7 @@ public class PaypalController {
     @PostMapping("/create-order")
     public Map<String,String> createOrder(
             @RequestHeader(value="X-User-Id", required=false) Integer uidHdr) throws Exception {
-        Integer u = uidHdr;
+        Integer u = com.example.tienda_tech.security.AuthenticatedUser.id();
         var r = carrito.resumen(u);
         var total = new BigDecimal(String.valueOf(r.getOrDefault("total","0")));
         var ref = "CART-" + u + "-" + System.currentTimeMillis();
@@ -53,6 +53,7 @@ public class PaypalController {
     }
 
     private ResponseEntity<?> doCapture(Integer uidHdr, String orderId, Integer direccionId, Integer metodopagoId) throws Exception {
+        uidHdr = com.example.tienda_tech.security.AuthenticatedUser.id();
         System.out.printf("[CAPTURE] uid=%s, order=%s, dir=%s, mp=%s%n", uidHdr, orderId, direccionId, metodopagoId);        if (orderId == null || orderId.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "Falta orderId"));
         }

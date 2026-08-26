@@ -1,0 +1,449 @@
+/* Estilos mejorados para el modal */
+        .ttq-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9998;
+            display: none;
+        }
+
+        .ttq-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .ttq-content {
+            background: #ffffff;
+            border-radius: 24px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            position: relative;
+            animation: modalAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 32px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .ttq-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #ffffff;
+            font-size: 24px;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            line-height: 1;
+            padding: 0;
+        }
+
+        .ttq-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .ttq-title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            letter-spacing: -0.5px;
+        }
+
+        .modal-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            text-align: center;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #ttSurveyForm {
+            padding: 32px;
+            max-height: none;
+            overflow: visible;
+            flex-shrink: 0;
+        }
+
+        #ttSurveyForm::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #ttSurveyForm::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+
+        #ttSurveyForm::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        #ttSurveyForm::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        .field {
+            margin-bottom: 24px;
+        }
+
+        .field label {
+            display: block;
+            color: #2d3748;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: -0.2px;
+        }
+
+        .field input[type="text"],
+        .field input[type="number"],
+        .field select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
+            background: #f8fafc !important;
+            color: #2d3748 !important;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            font-family: inherit;
+        }
+
+        .field select {
+            background-color: #f8fafc !important;
+            background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 16px 16px !important;
+            padding-right: 44px;
+            cursor: pointer;
+        }
+
+        .field input[type="text"]:focus,
+        .field input[type="number"]:focus,
+        .field select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .field input::placeholder {
+            color: #a0aec0;
+        }
+
+        .field select option {
+            padding: 12px;
+            background-color: #ffffff !important;
+            color: #2d3748 !important;
+            font-size: 15px;
+        }
+
+        .field select option:first-child {
+            color: #a0aec0 !important;
+        }
+
+        .field select option:checked,
+        .field select option:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: #ffffff !important;
+        }
+
+        select::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        select::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        select::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .field select:not([multiple]) {
+            color: #2d3748 !important;
+        }
+
+        .field select[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .field.inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .field.inline input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .field.inline label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .ttq-actions {
+            padding: 0 32px 32px;
+        }
+
+        .ttq-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ttq-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .ttq-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .ttq-result {
+            padding: 0 32px 32px;
+            color: #2d3748;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+
+        .ttq-result::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ttq-result::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+
+        .ttq-result::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        .ttq-result::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        .ttq-result h4 {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .data-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .data-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .tt-muted-row {
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 12px;
+            color: #4a5568;
+            margin: 12px 0;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+        }
+
+        .tt-muted-row b {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        #nivel-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin: 12px 0;
+        }
+
+        #nivel-actions button {
+            padding: 10px 24px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        #nivel-actions button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .ttq-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ttq-content::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+
+        .ttq-content::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        .ttq-content::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        /* Asegurar que el resultado sea visible */
+        #ttSurveyResult {
+            display: none;
+        }
+
+        #ttSurveyResult.visible {
+            display: block;
+        }
+    

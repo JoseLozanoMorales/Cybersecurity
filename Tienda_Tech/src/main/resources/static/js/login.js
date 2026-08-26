@@ -12,7 +12,7 @@ const USE_MOCK = false;
   // Guarda usuario y token
   function setLoggedUser(u, token) {
     sessionStorage.setItem('user', JSON.stringify(u));
-    if (token) localStorage.setItem('token', token);
+    if (token) sessionStorage.setItem('token', token);
   }
 
   function parseRole(u) {

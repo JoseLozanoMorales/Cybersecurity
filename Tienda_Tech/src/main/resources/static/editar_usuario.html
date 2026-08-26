@@ -16,6 +16,9 @@
 
   <!-- Menú / sesión -->
   <script src="/js/auth-menu.js?v=4" defer></script>
+  <link rel="stylesheet" href="/css/csp-static.css">
+  <link rel="stylesheet" href="/css/csp-runtime.css">
+  <script src="/js/csp-style-runtime.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -24,7 +27,7 @@
     <div class="search-container">
       <input type="text" class="search-bar" placeholder="Buscar..." />
     </div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <button class="menu-toggle" data-csp-handler-click="csp-editar_usuario-1">☰</button>
     <!-- Modo oscuro -->
     <button id="themeToggle" class="theme-toggle"
             type="button" aria-pressed="false">
@@ -33,11 +36,11 @@
   </header>
 
   <!-- Overlay -->
-  <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+  <div class="overlay" id="overlay" data-csp-handler-click="csp-editar_usuario-2"></div>
 
   <!-- Menú Hamburguesa -->
   <nav class="hamburger-menu" id="hamburgerMenu">
-    <button class="menu-close" onclick="closeMenu()">✕</button>
+    <button class="menu-close" data-csp-handler-click="csp-editar_usuario-3">✕</button>
     <a href="index.html" class="menu-item">Inicio</a>
     <a href="cuenta.html" class="menu-item">Cuenta</a>
     <a href="Carrito.html" class="menu-item">Carrito</a>
@@ -48,7 +51,7 @@
   <div class="container">
     <!-- Back button -->
     <div class="back-button-container">
-      <button class="btn btn-link btn-back p-0" onclick="goBack()">
+      <button class="btn btn-link btn-back p-0" data-csp-handler-click="csp-editar_usuario-4">
         <i class="bi bi-arrow-left fs-4"></i>
       </button>
     </div>
@@ -59,7 +62,7 @@
   <div class="text-center mb-4">
     <div id="avatarEdit" class="profile-image" role="button" title="Haz clic para cambiar la foto">
       <img id="avatar-edit" alt="Foto de perfil"
-          style="width:128px;height:128px;border-radius:50%;object-fit:cover;" />
+          / class="csp-s-d812f7ce3398">
     </div>
     <input type="file" id="avatarFile" accept="image/*" hidden />
     <small class="text-muted">Haz clic para cambiar la foto</small>
@@ -138,265 +141,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
   <!-- Utilidades UI (menú, foto, toggle password) -->
-  <script>
-    function toggleMenu() {
-      const menu = document.getElementById('hamburgerMenu');
-      const overlay = document.getElementById('overlay');
-      menu.classList.toggle('active');
-      overlay.classList.toggle('active');
-    }
-    function closeMenu() {
-      const menu = document.getElementById('hamburgerMenu');
-      const overlay = document.getElementById('overlay');
-      menu.classList.remove('active');
-      overlay.classList.remove('active');
-    }
-    // Toggle password visibility
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('togglePassword');
-      if (btn) {
-        btn.addEventListener('click', function () {
-          const input = document.getElementById('contrasena');
-          const icon = this.querySelector('i');
-          if (!input) return;
-          if (input.type === 'password') { input.type = 'text'; icon.className = 'bi bi-eye-slash'; }
-          else { input.type = 'password'; icon.className = 'bi bi-eye'; }
-        });
-      }
-    });
-    // Cambiar imagen de perfil (demo local)
-    function changeProfileImage() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-          const el = document.querySelector('.profile-image');
-          el.style.backgroundImage = `url(${ev.target.result})`;
-          el.style.backgroundSize = 'cover';
-          el.style.backgroundPosition = 'center';
-          el.innerHTML = '';
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click();
-    }
-    function goBack() {
-      if (confirm('¿Salir sin guardar?')) window.history.back();
-    }
-  </script>
+  <script src="/js/pages/editar_usuario-inline-1.js"></script>
 
   <!-- Lógica de edición (Opción A: PUT /api/usuarios/cliente/{id}) -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const $ = (s) => document.querySelector(s);
-
-      // 1) Resolver userId de forma robusta
-      const qsId = Number(new URLSearchParams(location.search).get('id')) || 0;
-
-      function resolveUserIdFromCache() {
-        try {
-          const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
-          if (!raw) return 0;
-          const u = JSON.parse(raw);
-          const keys = [
-            'usuario_id', 'usuarioId', 'id_usuario', 'idUsuario',
-            'id', 'userId', 'idUser'
-          ];
-          for (const k of keys) {
-            const v = Number(u?.[k]);
-            if (Number.isFinite(v) && v > 0) return v;
-          }
-          return 0;
-        } catch { return 0; }
-      }
-
-      function resolveUserIdFromPath() {
-        const segs = location.pathname.split('/').filter(Boolean);
-        const last = Number(segs[segs.length - 1]);
-        return Number.isFinite(last) && last > 0 ? last : 0;
-      }
-
-      let userId = qsId || resolveUserIdFromCache() || resolveUserIdFromPath();
-
-      if (!userId) {
-        const manual = Number(prompt('No se pudo resolver el ID. Ingresa el ID de usuario a editar:') || 0);
-        if (Number.isFinite(manual) && manual > 0) userId = manual;
-      }
-
-      document.getElementById('usuarioId').value = userId || '';
-      if (!userId) {
-        alert('No se pudo resolver el ID de usuario. Abre la página como: editar_usuario.html?id=16');
-      }
-
-      // Cache del usuario (si existe)
-      let cached = {};
-      try {
-        const raw = sessionStorage.getItem('user') || localStorage.getItem('user') || '{}';
-        cached = JSON.parse(raw) || {};
-      } catch { cached = {}; }
-
-      // 2) Inputs
-      const form = $('#editUserForm');
-      const iNombre   = $('#nombre');
-      const iUsuario  = $('#usuario');
-      const iCorreo   = $('#correo');
-      const iTelefono = $('#telefono');
-      const iPass     = $('#contrasena');
-      const iPass2    = $('#repetirContrasena');
-
-      // 3) Prellenar desde cache (opcional)
-      if (cached.nombre)   iNombre.value   = cached.nombre;
-      if (cached.usuario)  iUsuario.value  = cached.usuario;
-      if (cached.correo)   iCorreo.value   = cached.correo;
-      if (cached.telefono) iTelefono.value = cached.telefono;
-
-    // --- Avatar: pintar actual y manejar subida ---
-
-    const imgAvatar   = document.getElementById('avatar-edit');
-    const fileAvatar  = document.getElementById('avatarFile');
-    const btnAvatar   = document.getElementById('avatarEdit');
-
-    function resolveAvatarUrlForView() {
-      // intenta desde cache; si no, la ruta estándar del servidor
-      const cachedUrl = cached.avatar_path || cached.avatarPath || null;
-      if (cachedUrl) return `${cachedUrl}?t=${Date.now()}`;
-      if (userId)    return `/uploads/avatars/${userId}/avatar.png?t=${Date.now()}`;
-      return `/assets/avatars/defaults/user.png`;
-    }
-    imgAvatar.addEventListener('error', () => {
-      imgAvatar.src = '/assets/avatars/defaults/user.png?t=' + Date.now();
-    });
-    // pintar actual
-    imgAvatar.src = resolveAvatarUrlForView();
-
-    // abrir selector de archivo al hacer clic en el avatar
-    btnAvatar.addEventListener('click', () => fileAvatar.click());
-
-    // subir archivo y refrescar imagen
-    fileAvatar.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file || !userId) return;
-
-      const fd = new FormData();
-      fd.append('file', file);
-
-      try {
-        const resp = await fetch(`/api/usuarios/${userId}/avatar`, { method: 'POST', body: fd });
-        const data = await resp.json().catch(() => ({}));
-
-        if (!resp.ok || data.ok === false) {
-          throw new Error(data.error || `HTTP ${resp.status}`);
-        }
-
-        // url “limpia” que guarda el backend; cache-buster para refrescar la vista
-        const baseUrl = data.url || `/uploads/avatars/${userId}/avatar.png`;
-        imgAvatar.src = `${baseUrl}?t=${Date.now()}`;
-
-        // persiste en cache local para que otras páginas lo usen
-        try {
-          const raw = sessionStorage.getItem('user') || localStorage.getItem('user') || '{}';
-          const u   = JSON.parse(raw);
-          u.avatar_path = baseUrl;
-          sessionStorage.setItem('user', JSON.stringify(u));
-          localStorage.setItem('user', JSON.stringify(u));
-          cached = u; // sincroniza la variable local
-        } catch (_) {}
-        const bust = Date.now();
-        document.querySelectorAll('img[data-avatar="user"]').forEach(el => {
-          el.src = `${baseUrl}?t=${bust}`;
-        });
-        alert('✅ Avatar actualizado');
-      } catch (err) {
-        alert('❌ No se pudo actualizar el avatar: ' + (err.message || err));
-      } finally {
-        // permitir volver a elegir el mismo archivo
-        fileAvatar.value = '';
-      }
-    });
-
-
-      // 4) Envío
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Validación simple: contraseñas iguales si se ingresaron
-        if (iPass.value || iPass2.value) {
-          if (iPass.value !== iPass2.value) { alert('Las contraseñas no coinciden'); return; }
-        }
-
-        // Construye payload; null => no cambiar (COALESCE en SP)
-        const payload = {
-          nombre:      (iNombre.value   || '').trim() || null,
-          usuario:     (iUsuario.value  || '').trim() || null,
-          correo:      (iCorreo.value   || '').trim() || null,
-          telefono:    (iTelefono.value || '').trim() || null,
-          contrasenia: (iPass.value     || '').trim() || null
-          // cedula:   null
-        };
-
-        try {
-          const res  = await fetch(`/api/usuarios/cliente/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const text = await res.text();
-
-          if (!res.ok) {
-            if (res.status === 409) { alert(text || 'Correo/usuario ya usados'); return; }
-            throw new Error(text || `HTTP ${res.status}`);
-          }
-
-          alert('✅ Cambios guardados');
-
-          // Actualiza cache local (sin usar optional chaining a la izquierda)
-          const updated = {
-            ...cached,
-            nombre:   payload.nombre   ?? cached.nombre,
-            usuario:  payload.usuario  ?? cached.usuario,
-            correo:   payload.correo   ?? cached.correo,
-            telefono: payload.telefono ?? cached.telefono
-          };
-          sessionStorage.setItem('user', JSON.stringify(updated));
-        } catch (err) {
-          alert('❌ Error: ' + (err.message || err));
-        }
-      });
-    });
-  </script>
-    <script>
-      (function(){
-        const LINK_ID='themeStylesheet', STORAGE_KEY='tt-theme', BTN_ID='themeToggle';
-        function setTheme(theme){
-          const link=document.getElementById(LINK_ID); if(!link) return;
-          const href = theme==='dark'
-                  ? (link.dataset.dark  || 'styleOscuroMenu.css')   // <-- aquí
-                  : (link.dataset.light || 'styleClaroMenu.css');
-          if(link.getAttribute('href')!==href) link.setAttribute('href', href);
-          localStorage.setItem(STORAGE_KEY, theme);
-          const btn=document.getElementById(BTN_ID);
-          if(btn){
-            const dark=theme==='dark';
-            btn.textContent = dark ? '☀️ Claro' : '🌙 Oscuro';
-            btn.title       = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-            btn.setAttribute('aria-pressed', String(dark));
-            btn.classList.toggle('btn-warning', dark);
-            btn.classList.toggle('btn-secondary', !dark);
-          }
-        }
-        function toggleTheme(){
-          const current=localStorage.getItem(STORAGE_KEY)||'light';
-          setTheme(current==='light' ? 'dark' : 'light');
-        }
-        document.addEventListener('DOMContentLoaded',()=>{
-          document.getElementById(BTN_ID)?.addEventListener('click', toggleTheme);
-          setTheme(localStorage.getItem(STORAGE_KEY)||'light');
-        });
-      })();
-    </script>
+  <script src="/js/pages/editar_usuario-inline-2.js"></script>
+    <script src="/js/pages/editar_usuario-inline-3.js"></script>
+<script src="/js/pages/editar_usuario-events.js"></script>
 </body>
 </html>

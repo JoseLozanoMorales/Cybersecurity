@@ -24,7 +24,7 @@ public class ApiErrors {
 
     private static final Logger log = LoggerFactory.getLogger(ApiErrors.class);
 
-    // 1) Respeta estados lanzados explícitamente por los controladores
+    //Respeta estados lanzados explícitamente por los controladores
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> onRse(ResponseStatusException ex) {
         return ResponseEntity.status(ex.getStatusCode())
@@ -37,7 +37,7 @@ public class ApiErrors {
         return ResponseEntity.notFound().build();
     }
 
-    // 3) Integridad: 409 solo en escrituras; en GET usa 500 (o ajusta si prefieres 404/403 según tu caso)
+    // 3) Integridad: 409 solo en escrituras; en GET usa 500
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> onDataIntegrity(
             DataIntegrityViolationException ex,

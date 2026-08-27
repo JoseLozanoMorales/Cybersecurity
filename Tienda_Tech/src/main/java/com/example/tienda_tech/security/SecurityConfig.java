@@ -19,9 +19,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RequestRateMonitorFilter requestRateMonitorFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                           RequestRateMonitorFilter requestRateMonitorFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.requestRateMonitorFilter = requestRateMonitorFilter;
     }
 
     @Bean
@@ -94,7 +97,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestRateMonitorFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 
@@ -104,7 +108,13 @@ public class SecurityConfig {
         c.setAllowCredentials(false);
         c.setAllowedOrigins(List.of("http://localhost:8080", "http://127.0.0.1:8080"));
         c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        c.setAllowedHeaders(List.of("*"));
+        // Lista blanca de cabeceras: las únicas que el frontend realmente envía.
+        // Antes era "*" (cualquier cabecera); restringirla evita que un origen
+        // cruzado no autorizado pueda enviar cabeceras arbitrarias hacia la API.
+        c.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type",
+                "X-Usuario", "X-User-Id", "X-Username", "X-XSRF-TOKEN"
+        ));
         UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
         s.registerCorsConfiguration("/**", c);
         return s;

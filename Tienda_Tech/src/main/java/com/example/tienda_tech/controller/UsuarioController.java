@@ -271,7 +271,7 @@ public class UsuarioController {
 
     @GetMapping("/buscar-min")
     public ResponseEntity<List<UsuarioMinDTO>> buscarMin(
-            @RequestParam("q") String q,
+            @RequestParam(value = "q", required = false, defaultValue = "") String q,
             @RequestParam(value = "rolId", required = false) Integer rolId,
             @RequestParam(value = "limit", defaultValue = "20") int limit) {
 

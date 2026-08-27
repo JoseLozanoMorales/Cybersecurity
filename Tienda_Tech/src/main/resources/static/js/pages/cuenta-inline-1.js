@@ -1,5 +1,5 @@
 (function () {
-      const REDIRECT_TO = 'login.html';
+      const REDIRECT_TO = '/index.html';
       const menu = document.getElementById('hamburgerMenu');
       if (!menu) return;
 

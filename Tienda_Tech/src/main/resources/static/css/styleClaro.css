@@ -506,7 +506,7 @@ body.tt-no-scroll{ overflow: hidden; }
 .gal-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
 
 .gal-meta{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
-.gal-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.gal-actions{ display:flex; gap:6px; flex-wrap:wrap; margin-left:auto; }
 .gal-badge{ font-size:11px; padding:2px 6px; border-radius:999px; background:var(--tt-admin-surface-2); border:1px solid var(--tt-admin-border); }
 .gal-portada{ color:#f59e0b; }      /* estrella */
 .gal-drag{ cursor: grab; opacity:.75; }
@@ -548,4 +548,39 @@ body.tt-no-scroll{ overflow: hidden; }
 #au_tbl_prod_wrap::-webkit-scrollbar{ height: 12px; }
 #au_tbl_prod_wrap::-webkit-scrollbar-thumb{ background: rgba(0,0,0,.35); border-radius: 8px; }
 #au_tbl_prod_wrap::-webkit-scrollbar-track{ background: rgba(0,0,0,.1); border-radius: 8px; }
+
+/* Panel de historial de sugerencias (admin.js) — clases en vez de style="" inline, por la CSP (style-src-attr 'none') */
+#sh_listbox{ margin: 1rem 0; }
+.sh-listbox-header{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.sh-listbox-table{ margin-top:.5rem; }
+
+/* ===== Panel de Eventos SIEM: tabla ===== */
+.tt-admin .siem-table td.siem-detalle{ white-space:normal; word-break:break-word; color:var(--tt-admin-text); }
+.tt-admin .siem-table td.siem-ip{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; color:var(--tt-admin-muted); white-space:nowrap; }
+.tt-admin .siem-table td.siem-fecha{ white-space:nowrap; color:var(--tt-admin-muted); font-size:13px; }
+.tt-admin .siem-table td.siem-tipo{ font-weight:600; white-space:nowrap; }
+.tt-admin .siem-table tr.siem-row-alerta td{ background: rgba(244,67,54,.07); }
+.tt-admin .siem-table tr.siem-row-advertencia td{ background: rgba(255,152,0,.07); }
+
+.siem-badge{
+    display:inline-block; padding:3px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; letter-spacing:.02em; white-space:nowrap;
+}
+.siem-badge.siem-info{ background:rgba(59,130,246,.15); color:#1d4ed8; }
+.siem-badge.siem-advertencia{ background:rgba(255,152,0,.18); color:#b45309; }
+.siem-badge.siem-alerta{ background:rgba(244,67,54,.18); color:#b91c1c; }
+
+.siem-result{
+    display:inline-block; padding:2px 9px; border-radius:6px;
+    font-size:12px; font-weight:600;
+}
+.siem-result.siem-result-ok{ background:rgba(76,175,80,.15); color:#2e7d32; }
+.siem-result.siem-result-bad{ background:rgba(244,67,54,.15); color:#b91c1c; }
+.siem-result.siem-result-warn{ background:rgba(255,152,0,.15); color:#b45309; }
+
+/* Utilidades genéricas de mostrar/ocultar y feedback de botones (admin.js) — reemplazan el.style.* inline, bloqueado por style-src-attr 'none' */
+.tt-hidden{ display:none !important; }
+.tt-flex-shown{ display:flex !important; }
+.btn-flash-ok{ background-color:#4caf50 !important; }
+.btn-flash-danger{ background-color:#ff5722 !important; }
 

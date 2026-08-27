@@ -1,5 +1,20 @@
+// Abre/cierra el menú hamburguesa (faltaba en esta página; sí existe en index.html, cuenta.html, etc.)
+function toggleMenu() {
+  const menu = document.getElementById('hamburgerMenu');
+  const overlay = document.getElementById('overlay');
+  menu?.classList.toggle('active');
+  overlay?.classList.toggle('active');
+}
+
+function closeMenu() {
+  const menu = document.getElementById('hamburgerMenu');
+  const overlay = document.getElementById('overlay');
+  menu?.classList.remove('active');
+  overlay?.classList.remove('active');
+}
+
 (function () {
-        const REDIRECT_TO = 'login.html';
+        const REDIRECT_TO = '/index.html';
 
         const menu = document.getElementById('hamburgerMenu');
         if (!menu) return;

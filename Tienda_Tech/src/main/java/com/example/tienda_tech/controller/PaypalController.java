@@ -3,6 +3,7 @@ package com.example.tienda_tech.controller;
 import com.example.tienda_tech.service.CarritoService;
 import com.example.tienda_tech.service.PaymentService;
 import com.example.tienda_tech.service.PaypalClient;
+import com.example.tienda_tech.service.SiemAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ public class PaypalController {
     private final PaypalClient paypal;
     private final PaymentService payments;
     private final CarritoService carrito;
+    private final SiemAuditService siemAuditService;
 
     @PostMapping("/create-order")
     public Map<String,String> createOrder(
@@ -26,10 +28,34 @@ public class PaypalController {
         var r = carrito.resumen(u);
         var total = new BigDecimal(String.valueOf(r.getOrDefault("total","0")));
         var ref = "CART-" + u + "-" + System.currentTimeMillis();
-        return Map.of(
-                "orderId",     paypal.createOrder(total, ref),
-                "clientToken", paypal.generateClientToken()
-        );
+
+        try {
+            String orderId = paypal.createOrder(total, ref);
+
+            siemAuditService.registrarEvento(
+                    "PAGO_INICIADO",
+                    String.valueOf(u),
+                    "Pagos",
+                    "Exitoso",
+                    "El usuario pasó a pagar su carrito (ref=" + ref + "). Total: $" + total + ". Orden PayPal=" + orderId + ".",
+                    "INFO"
+            );
+
+            return Map.of(
+                    "orderId",     orderId,
+                    "clientToken", paypal.generateClientToken()
+            );
+        } catch (Exception e) {
+            siemAuditService.registrarEvento(
+                    "PAGO_ORDEN_ERROR",
+                    String.valueOf(u),
+                    "Pagos",
+                    "Fallido",
+                    "No se pudo crear la orden de pago (ref=" + ref + "): " + e.getMessage(),
+                    "ALERTA"
+            );
+            throw e;
+        }
     }
 
     // 1) SIN path param (el orderId viene en el body)
@@ -57,23 +83,54 @@ public class PaypalController {
         System.out.printf("[CAPTURE] uid=%s, order=%s, dir=%s, mp=%s%n", uidHdr, orderId, direccionId, metodopagoId);        if (orderId == null || orderId.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "Falta orderId"));
         }
-        var cap = paypal.captureOrder(orderId);
-        var status = cap.path("status").asText("");
-        if (!"COMPLETED".equalsIgnoreCase(status)) {
-            return ResponseEntity.status(409).body(Map.of("ok", false, "status", status));
-        }
-        var out = payments.confirmarOrdenDesdeCarrito(uidHdr, direccionId, metodopagoId);
 
-        return ResponseEntity.ok(Map.of(
-                "ok", true,
-                "status", status,
-                "ordenId",   out.getOrdenId(),
-                "subtotal",  out.getSubtotal(),
-                "impuestos", out.getImpuestos(),
-                "total",     out.getTotal(),
-                "facturaId", out.getFacturaId(),
-                "numero",    out.getNumero()
-        ));
+        try {
+            var cap = paypal.captureOrder(orderId);
+            var status = cap.path("status").asText("");
+            if (!"COMPLETED".equalsIgnoreCase(status)) {
+                siemAuditService.registrarEvento(
+                        "PAGO_RECHAZADO",
+                        String.valueOf(uidHdr),
+                        "Pagos",
+                        "Denegado",
+                        "PayPal no completó la orden " + orderId + " (status=" + status + ").",
+                        "ALERTA"
+                );
+                return ResponseEntity.status(409).body(Map.of("ok", false, "status", status));
+            }
+            var out = payments.confirmarOrdenDesdeCarrito(uidHdr, direccionId, metodopagoId);
+
+            siemAuditService.registrarEvento(
+                    "PAGO_EXITOSO",
+                    String.valueOf(uidHdr),
+                    "Pagos",
+                    "Exitoso",
+                    "Pago confirmado (orden PayPal=" + orderId + "). Factura #" + out.getNumero()
+                            + " (ID=" + out.getFacturaId() + "), total: $" + out.getTotal() + ".",
+                    "INFO"
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "ok", true,
+                    "status", status,
+                    "ordenId",   out.getOrdenId(),
+                    "subtotal",  out.getSubtotal(),
+                    "impuestos", out.getImpuestos(),
+                    "total",     out.getTotal(),
+                    "facturaId", out.getFacturaId(),
+                    "numero",    out.getNumero()
+            ));
+        } catch (Exception e) {
+            siemAuditService.registrarEvento(
+                    "PAGO_ERROR",
+                    String.valueOf(uidHdr),
+                    "Pagos",
+                    "Fallido",
+                    "Error al capturar/confirmar el pago (orden=" + orderId + "): " + e.getMessage(),
+                    "ALERTA"
+            );
+            throw e;
+        }
     }
 
     public record CaptureReq(String orderId, Integer direccionId, Integer metodopagoId) {}

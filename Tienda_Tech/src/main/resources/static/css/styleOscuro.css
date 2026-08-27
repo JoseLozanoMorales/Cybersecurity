@@ -354,3 +354,38 @@ xdxd
   .tt-admin .modal-grid{ grid-template-columns: 1fr; }
 }
 
+/* Panel de historial de sugerencias (admin.js) — clases en vez de style="" inline, por la CSP (style-src-attr 'none') */
+#sh_listbox{ margin: 1rem 0; }
+.sh-listbox-header{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.sh-listbox-table{ margin-top:.5rem; }
+
+/* ===== Panel de Eventos SIEM: tabla ===== */
+.tt-admin .siem-table td.siem-detalle{ white-space:normal; word-break:break-word; color:var(--tt-admin-text); }
+.tt-admin .siem-table td.siem-ip{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; color:var(--tt-admin-muted); white-space:nowrap; }
+.tt-admin .siem-table td.siem-fecha{ white-space:nowrap; color:var(--tt-admin-muted); font-size:13px; }
+.tt-admin .siem-table td.siem-tipo{ font-weight:600; white-space:nowrap; }
+.tt-admin .siem-table tr.siem-row-alerta td{ background: rgba(244,67,54,.14); }
+.tt-admin .siem-table tr.siem-row-advertencia td{ background: rgba(255,152,0,.13); }
+
+.siem-badge{
+    display:inline-block; padding:3px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; letter-spacing:.02em; white-space:nowrap;
+}
+.siem-badge.siem-info{ background:rgba(96,165,250,.22); color:#93c5fd; }
+.siem-badge.siem-advertencia{ background:rgba(255,152,0,.25); color:#ffc069; }
+.siem-badge.siem-alerta{ background:rgba(244,67,54,.28); color:#ff9d94; }
+
+.siem-result{
+    display:inline-block; padding:2px 9px; border-radius:6px;
+    font-size:12px; font-weight:600;
+}
+.siem-result.siem-result-ok{ background:rgba(76,175,80,.22); color:#a5d6a7; }
+.siem-result.siem-result-bad{ background:rgba(244,67,54,.22); color:#ff9d94; }
+.siem-result.siem-result-warn{ background:rgba(255,152,0,.22); color:#ffc069; }
+
+/* Utilidades genéricas de mostrar/ocultar y feedback de botones (admin.js) — reemplazan el.style.* inline, bloqueado por style-src-attr 'none' */
+.tt-hidden{ display:none !important; }
+.tt-flex-shown{ display:flex !important; }
+.btn-flash-ok{ background-color:#4caf50 !important; }
+.btn-flash-danger{ background-color:#ff5722 !important; }
+

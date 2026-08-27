@@ -180,7 +180,7 @@ const GAL_API = {
               <div class="gal-row">
                 <span class="gal-pill">#${x.galeria_id}</span>
                 ${inVista ? `<span class="gal-pill">pos: ${pos ?? '—'}</span>`: '<span class="gal-pill muted">fuera de vista</span>'}
-                <span class="gal-actions" style="margin-left:auto;">
+                <span class="gal-actions">
                   <span class="gal-star" title="Marcar portada" data-star="${x.galeria_id}">${star}</span>
                   <button class="btn btn--sm btn-outline gal-del" title="Eliminar" data-del="${x.galeria_id}">🗑</button>
                 </span>
@@ -415,12 +415,12 @@ const GAL_API = {
       btn.addEventListener('click', function(){
         const action = this.textContent.trim();
         if(action.match(/Agregar|Actualizar|Guardar/)){
-          this.style.backgroundColor = '#4caf50'; this.textContent = '✓ Completado';
-          setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+          this.classList.add('btn-flash-ok'); this.textContent = '✓ Completado';
+          setTimeout(()=>{ this.classList.remove('btn-flash-ok'); this.textContent = action; }, 2000);
         } else if(action.match(/Eliminar|Bloquear/)){
           if(confirm('¿Estás seguro de realizar esta acción?')){
-            this.style.backgroundColor = '#ff5722'; this.textContent = '✓ Realizado';
-            setTimeout(()=>{ this.style.backgroundColor=''; this.textContent = action; }, 2000);
+            this.classList.add('btn-flash-danger'); this.textContent = '✓ Realizado';
+            setTimeout(()=>{ this.classList.remove('btn-flash-danger'); this.textContent = action; }, 2000);
           }
         }
       });
@@ -711,11 +711,12 @@ function renderDynamicFields(cat){
   const box = $('#np_fields');
   const title = $('#np_fields_title');
   const empty = $('#np_fields_empty');
-  box.innerHTML = ''; title.innerHTML = ''; empty.style.display = 'flex';
+  box.innerHTML = ''; title.innerHTML = '';
+  empty.classList.remove('tt-hidden'); empty.classList.add('tt-flex-shown');
 
   if(!cat){ return; }
   title.innerHTML = `<h4>${cat}</h4>`;
-  empty.style.display = 'none';
+  empty.classList.remove('tt-flex-shown'); empty.classList.add('tt-hidden');
 
   // Caso especial: Almacenamiento (capacidad + unidad + tipo)
   if (cat === 'Almacenamiento') {
@@ -755,7 +756,7 @@ function renderDynamicFields(cat){
     box.appendChild(wrap);
   });
 }
-function clearDynamicFields(){ $('#np_fields').innerHTML=''; $('#np_fields_title').innerHTML=''; $('#np_fields_empty').style.display='flex'; }
+function clearDynamicFields(){ $('#np_fields').innerHTML=''; $('#np_fields_title').innerHTML=''; $('#np_fields_empty').classList.remove('tt-hidden'); $('#np_fields_empty').classList.add('tt-flex-shown'); }
 function updateImagesInfo(){
   const files = $('#np_imgs').files;
   $('#np_imgs_info').textContent = (files && files.length)? `${files.length} archivo(s) seleccionado(s)` : 'Ningún archivo seleccionado';
@@ -933,8 +934,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(data?.message || txt || ('HTTP ' + res.status));
       return data;
     }
-    function showBoxC(el){ if (el) el.style.removeProperty('display'); }
-    function hideBoxC(el){ if (el) el.style.display = 'none'; }
+    function showBoxC(el){ if (el) el.classList.remove('tt-hidden'); }
+    function hideBoxC(el){ if (el) el.classList.add('tt-hidden'); }
     function toIntC(v){ const n = parseInt(v,10); return isNaN(n) ? null : n; }
 
     // Map
@@ -1098,8 +1099,8 @@ const API_PROVINCIAS = '/api/provincias';
       if (!res.ok) throw new Error(data?.message || txt || ('HTTP ' + res.status));
       return data;
     }
-    function showBoxP(el){ if (el) el.style.removeProperty('display'); }
-    function hideBoxP(el){ if (el) el.style.display = 'none'; }
+    function showBoxP(el){ if (el) el.classList.remove('tt-hidden'); }
+    function hideBoxP(el){ if (el) el.classList.add('tt-hidden'); }
 
     // Mapeo DTO -> modelo de UI
     function mapProvincia(dto){ return { id: dto.provinciaId ?? dto.id ?? dto.provincia_id, nombre: dto.nombre }; }
@@ -2740,14 +2741,14 @@ function resetMovimientoModal() {
 
     // Tabs
     tabEncuestaBtn?.addEventListener("click", () => {
-      panelEncuesta.style.display = "";
-      panelHistorial.style.display = "none";
+      panelEncuesta.classList.remove("tt-hidden");
+      panelHistorial.classList.add("tt-hidden");
       tabEncuestaBtn.classList.add("active");
       tabHistorialBtn.classList.remove("active");
     });
     tabHistorialBtn?.addEventListener("click", () => {
-      panelEncuesta.style.display = "none";
-      panelHistorial.style.display = "";
+      panelEncuesta.classList.add("tt-hidden");
+      panelHistorial.classList.remove("tt-hidden");
       tabHistorialBtn.classList.add("active");
       tabEncuestaBtn.classList.remove("active");
     });
@@ -2809,14 +2810,13 @@ function resetMovimientoModal() {
       if (!listBox) {
         listBox = document.createElement("div");
         listBox.id = "sh_listbox";
-        listBox.style.margin = "1rem 0";
         listBox.innerHTML = `
-          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+          <div class="sh-listbox-header">
             <strong>Historial</strong>
             <button class="btn btn-outline" id="sh_cargar_hist">Cargar historial</button>
             <span id="sh_hist_status" class="tt-muted-row"></span>
           </div>
-          <div class="data-table" style="margin-top:.5rem;">
+          <div class="data-table sh-listbox-table">
             <table>
               <thead><tr><th>ID</th><th>Creado</th><th>Estado</th><th>Acción</th></tr></thead>
               <tbody id="sh_hist_tbody"><tr><td colspan="4" class="tt-muted-row">Sin datos…</td></tr></tbody>

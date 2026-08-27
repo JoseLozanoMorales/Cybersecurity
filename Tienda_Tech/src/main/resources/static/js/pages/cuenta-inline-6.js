@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
       if (window.isLoggedIn && !window.isLoggedIn()) {
         const next = location.pathname + location.search;
-        location.replace(`login.html?next=${encodeURIComponent(next)}`);
+        location.replace(`/Login.html?next=${encodeURIComponent(next)}`);
       }
     });
     function handleLoginSuccess(user, token){

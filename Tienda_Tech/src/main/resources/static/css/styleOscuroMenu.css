@@ -169,7 +169,7 @@ body{
 }
 .menu-item:hover{ background:#2f2f2f; }
 .menu-item.logout-disabled, .menu-item[aria-disabled="true"]{
-    color:#fff !important; border-bottom-color:#fff !important;
+    opacity:.45;
     pointer-events:none; cursor:default; user-select:none;
 }
 .overlay{

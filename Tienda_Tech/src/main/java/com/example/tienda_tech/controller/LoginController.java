@@ -180,7 +180,7 @@ public class LoginController {
 
             siemAuditService.registrarEvento(
                     "LOGIN_EXITOSO",
-                    correo,
+                    u.getUsuario(),
                     "Autenticación MFA",
                     "Permitido",
                     "El usuario completó correctamente el inicio de sesión con MFA en TiendaTech.",

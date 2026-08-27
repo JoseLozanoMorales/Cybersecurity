@@ -43,8 +43,8 @@
 
 
 (function () {
-  // === Ajusta si tu pantalla de login tiene otro nombre/ruta
-  const REDIRECT_TO = 'login.html';
+  // Tras cerrar sesión, el visitante debe volver al inicio público de la tienda.
+  const REDIRECT_TO = '/index.html';
 
   // -------- SESIÓN ----------
   function getSessionUser(){
@@ -223,7 +223,7 @@ async function sessionLogout(){
   ACCESS = null; ROLE = null;
   sessionStorage.removeItem('user');
   stopKeepalive(); hideIdleModal?.();
-  location.href = '/login.html';
+  location.href = '/index.html';
 }
 
 async function initAuthUI(){

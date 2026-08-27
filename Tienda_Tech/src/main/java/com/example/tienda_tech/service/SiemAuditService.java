@@ -43,6 +43,8 @@ public class SiemAuditService {
     public void registrarEvento(String tipo, String usuario, String modulo,
                                 String resultado, String detalle, String nivel) {
 
+        usuario = resolverNombreUsuario(usuario);
+
         tipo = safe(tipo); usuario = safe(usuario); modulo = safe(modulo);
         resultado = safe(resultado); detalle = safe(detalle); nivel = safe(nivel);
         String fecha = LocalDateTime.now().format(FORMATTER);
@@ -92,6 +94,31 @@ public class SiemAuditService {
                 "SIEM_CLEAR", "Sistema", "Seguridad",
                 "Exitoso", "Se limpió el historial en memoria. El archivo de log se conserva.", "INFO"
         );
+    }
+
+    // ── Utilidad: resolver el nombre de usuario legible para el log ─────
+    // Varios controladores solo tienen a mano el usuario_id numérico (ej. String.valueOf(uid))
+    // en vez del nombre de usuario. En esos casos, lo recuperamos de la cabecera X-Usuario
+    // que auth-menu.js ya envía en cada fetch autenticado (ver auth-menu.js: getLoggedUsername()).
+    private static final java.util.regex.Pattern SOLO_DIGITOS = java.util.regex.Pattern.compile("^\\d+$");
+
+    private String resolverNombreUsuario(String usuarioPasado) {
+        String limpio = usuarioPasado == null ? "" : usuarioPasado.trim();
+        if (!limpio.isEmpty() && !SOLO_DIGITOS.matcher(limpio).matches()) {
+            return limpio; // ya es un nombre de usuario/correo válido, no un ID crudo
+        }
+
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String header = request.getHeader("X-Usuario");
+            if (header != null && !header.isBlank()) {
+                return header.trim();
+            }
+        }
+
+        return "Anónimo";
     }
 
     // ── Utilidad: detectar IP real del cliente ──────────────────────────

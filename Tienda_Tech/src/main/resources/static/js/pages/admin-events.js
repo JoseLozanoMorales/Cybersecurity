@@ -173,3 +173,10 @@ eliminarCiudad()
 }).call(this, event);
   if (result === false) { event.preventDefault(); event.stopPropagation(); }
 });
+
+document.querySelector('[data-csp-handler-click="csp-admin-26"]')?.addEventListener('click', function(event) {
+  const result = (function(event) {
+exportSiemEvents()
+}).call(this, event);
+  if (result === false) { event.preventDefault(); event.stopPropagation(); }
+});

@@ -14,24 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-/**
- * Detecta ráfagas de peticiones (muchas peticiones en pocos segundos) desde la
- * misma IP, las registra como alerta en el SIEM y, mientras dure la ráfaga,
- * BLOQUEA temporalmente esa IP devolviendo 429 (Too Many Requests) — ya no es
- * solo detección, también corta el tráfico, igual que ya hacía el límite de
- * reenvíos de OTP en OtpService.
- *
- * Importante: NO cuenta ni bloquea recursos que el propio navegador carga en
- * cadena sin que el usuario haga nada extra (CSS, JS, imágenes de galería).
- * Una sola vista de producto puede disparar varias de esas por sí sola, y
- * contarlas generaría falsos bloqueos con solo navegar normalmente. Por eso
- * solo se cuentan/bloquean peticiones "de acción" real contra la API.
- *
- * Nota para el proyecto: los mapas de historial/bloqueo por IP no se limpian
- * solos con el tiempo (las IPs que dejan de usarse se quedan como entradas
- * "frías" en memoria). Para una demo/entrega académica no es un problema,
- * pero en un entorno real conviene una tarea programada que las purgue.
- */
+
 @Component
 public class RequestRateMonitorFilter extends OncePerRequestFilter {
 
@@ -81,7 +64,7 @@ public class RequestRateMonitorFilter extends OncePerRequestFilter {
         String ip = request.getRemoteAddr();
         long ahora = System.currentTimeMillis();
 
-        // ── 1) ¿Esta IP ya está bloqueada por una ráfaga anterior? ──────────
+        //Esta IP ya está bloqueada por una ráfaga anterior?
         Long bloqueadoHasta = bloqueadoHastaPorIp.get(ip);
         if (bloqueadoHasta != null) {
             if (ahora < bloqueadoHasta) {
@@ -91,7 +74,7 @@ public class RequestRateMonitorFilter extends OncePerRequestFilter {
             bloqueadoHastaPorIp.remove(ip); // el bloqueo ya expiró
         }
 
-        // ── 2) Conteo de peticiones en la ventana de análisis ───────────────
+        //  Conteo de peticiones en la ventana de análisis
         Deque<Long> historial = historialPorIp.computeIfAbsent(ip, k -> new ConcurrentLinkedDeque<>());
         historial.addLast(ahora);
 
@@ -102,7 +85,7 @@ public class RequestRateMonitorFilter extends OncePerRequestFilter {
 
         int peticionesEnVentana = historial.size();
 
-        // ── 3) Umbral superado: registrar alerta y bloquear ─────────────────
+        // Umbral superado: registrar alerta y bloquear ──
         if (peticionesEnVentana > UMBRAL_PETICIONES) {
             bloqueadoHastaPorIp.put(ip, ahora + DURACION_BLOQUEO_MS);
             historial.clear(); // reinicia el conteo para cuando se levante el bloqueo

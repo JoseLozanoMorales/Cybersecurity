@@ -8,6 +8,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -45,6 +46,29 @@ public class SecurityConfig {
                         .contentTypeOptions(cto -> {})
                         // X-Frame-Options: DENY — evita clickjacking
                         .frameOptions(frame -> frame.deny())
+
+                        // ── Cabeceras contra clonado/suplantación del sitio (phishing) ──
+                        // Ningún encabezado puede impedir que alguien copie el HTML/CSS y lo
+                        // publique en otro dominio (eso requiere medidas fuera del código: DNS,
+                        // certificados, SPF/DKIM/DMARC en el correo, reportes a Google Safe
+                        // Browsing, etc.). Lo que SÍ se puede controlar desde aquí es que ese
+                        // clon no pueda funcionar igual que el sitio real ni aprovecharse de él:
+                        //
+                        // Referrer-Policy: no manda la URL completa (con posibles tokens) como
+                        // referer cuando alguien sale del sitio hacia otro dominio.
+                        .addHeaderWriter(new StaticHeadersWriter(
+                                "Referrer-Policy", "strict-origin-when-cross-origin"))
+                        // Cross-Origin-Opener-Policy: same-origin — si un sitio clon abre el
+                        // real en una ventana/pestaña emergente, no puede quedarse con una
+                        // referencia (window.opener) para leerlo o manipularlo.
+                        .addHeaderWriter(new StaticHeadersWriter(
+                                "Cross-Origin-Opener-Policy", "same-origin"))
+                        // Cross-Origin-Resource-Policy: same-origin — impide que un dominio
+                        // distinto (el clon) cargue directamente imágenes/CSS/JS del sitio real
+                        // para hacerse pasar por él (ej. <img src="tu-dominio-real/logo.png">).
+                        .addHeaderWriter(new StaticHeadersWriter(
+                                "Cross-Origin-Resource-Policy", "same-origin"))
+
                         // Content-Security-Policy
                         // default-src 'self'        → solo recursos del mismo origen por defecto
                         // script-src  'self' + CDNs → permite JS propio y las CDNs que usa el proyecto
